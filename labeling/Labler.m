@@ -2,11 +2,13 @@ classdef Labler < handle
     
     properties(Access=private)
         image
+        labelStrings
         selecting = false;
         center
         radius
         selections = {};
         mode = 1;
+        currentLabel = 1;
         
         hFig
         hSelection
@@ -14,6 +16,7 @@ classdef Labler < handle
         hImage
         hButtons
         hToolMenu
+        hLabelMenu
     end
     
     methods(Access=private)
@@ -90,9 +93,15 @@ classdef Labler < handle
                         'ydata',points(:,2));
                 else
                     self.hLabels(end+1) = plot(points(:,1),points(:,2));
-                    set(self.hLabels(end),'LineWidth',2);
-                    set(self.hLabels(end),'Color',[0 1 1]);
                 end 
+                set(self.hLabels(i),'LineWidth',2);
+                if sel(4)==1
+                    % todo: make this an option
+                    color = [1 0 0];
+                else
+                    color = [0 1 1];
+                end
+                set(self.hLabels(i),'Color',color);
             end
         end
         
@@ -109,9 +118,13 @@ classdef Labler < handle
             self.hToolMenu = uicontrol('Style','popupmenu',...
                 'String',{'Select','Zoom','Mask'},...
                 'Position',[20,16,120,25],'Callback',cb);
+            self.hLabelMenu = uicontrol('Style','popupmenu',...
+                'String',self.labelStrings,...
+                'Position',[150,16,120,25],'Callback',cb);
+            set(self.hLabelMenu,'Value',self.currentLabel);
             self.hButtons{1} = uicontrol('Style', 'pushbutton',...
                                          'String', 'Zoom Reset',...
-                                         'Position', [150 20 80 25],...
+                                         'Position', [300 20 80 25],...
                                          'Callback', cb);
         end
         
@@ -124,6 +137,9 @@ classdef Labler < handle
             elseif object == self.hToolMenu
                 % tool menu
                 self.switchMode(get(object, 'Value'));
+            elseif object == self.hLabelMenu
+                % label menu
+                self.currentLabel = get(object, 'Value');
             end 
         end
         
@@ -139,14 +155,16 @@ classdef Labler < handle
         end
         
         function captureSelection(self)
-            self.selections{end+1} = [self.center self.radius];
+            self.selections{end+1} = [self.center self.radius... 
+                                      self.currentLabel];
             self.plotSelections();
         end
     end
     
     methods(Access=public)
-        function self = Labler(image)
+        function self = Labler(image, labelStrings)
             self.image = image;
+            self.labelStrings = labelStrings;
             self.hFig = figure;
             self.configureInterface();           
             self.plotImage(self.image);
