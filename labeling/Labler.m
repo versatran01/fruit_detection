@@ -35,7 +35,9 @@ classdef Labler < handle
             C = getMousePosition();
             if self.selecting
                 self.radius = norm(C - self.center);
-                self.plotCircleSelection(self.radius, C);
+                if self.radius > 3
+                    self.plotCircleSelection(self.radius, C);
+                end
             end
         end
         
@@ -48,6 +50,7 @@ classdef Labler < handle
                 % selecting circle
                 if ~self.selecting
                     self.center = getMousePosition();
+                    self.radius = 0;
                     self.selecting = true;
                 end
             elseif self.mode == 3
@@ -62,7 +65,6 @@ classdef Labler < handle
         function keyUp(self, object, eventdata)
             if self.mode == 1 && ~self.selecting
                 if ~isempty(self.radius)
-                    % have a valid selection, capture it
                     self.captureSelection();
                 end
             end
