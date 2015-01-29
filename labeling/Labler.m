@@ -4,12 +4,17 @@ classdef Labler < handle
         image
         labelStrings
         selecting = false;
+        mode = 1;
+        finished = false;
+        
+        % selection settings
         center
         radius
-        selections = {};
-        mode = 1;
         currentLabel = 1;
         
+        selections = {};
+        
+        % graphical UI objects
         hFig
         hSelection
         hLabels
@@ -17,6 +22,7 @@ classdef Labler < handle
         hButtons
         hToolMenu
         hLabelMenu
+        hContextMenu
     end
     
     methods(Access=private)
@@ -29,6 +35,19 @@ classdef Labler < handle
                @(object,eventdata)self.mouseUp(object,eventdata));
            set(fig, 'KeyReleaseFcn',...
                @(object,eventdata)self.keyUp(object,eventdata));
+           set(fig, 'CloseRequestFcn',...
+               @(object,eventdata)self.closeRequest(object,eventdata));
+        end
+        
+        function delete(self)
+            if ishandle(self.hFig)
+                close(self.hFig);
+            end
+            %set(self.hFig, 'WindowButtonMotionFcn', []);
+            %set(self.hFig, 'WindowButtonDownFcn', []);
+            %set(self.hFig, 'WindowButtonUpFcn', []);
+            %set(self.hFig, 'KeyReleaseFcn', []);
+            %set(self.hFig, 'CloseRequestFcn', []);
         end
         
         function mouseMove(self, object, eventdata)
@@ -53,8 +72,6 @@ classdef Labler < handle
                     self.radius = 0;
                     self.selecting = true;
                 end
-            elseif self.mode == 3
-                % creating mask
             end
         end
         
@@ -63,11 +80,19 @@ classdef Labler < handle
         end
         
         function keyUp(self, object, eventdata)
-            if self.mode == 1 && ~self.selecting
-                if ~isempty(self.radius)
-                    self.captureSelection();
+            if int32(eventdata.Character) == 13
+                % newline/enter
+                if self.mode == 1 && ~self.selecting
+                    if ~isempty(self.radius)
+                        self.captureSelection();
+                    end
                 end
             end
+        end
+        
+        function closeRequest(self, object, eventdata)
+            delete(self.hFig);
+            self.finished = true;
         end
         
         function plotCircleSelection(self, radius, mousePoint)
@@ -118,7 +143,7 @@ classdef Labler < handle
             set(self.hFig,'MenuBar', 'None');
             cb = @(obj,callbackdata)handleButton(self,obj,callbackdata);            
             self.hToolMenu = uicontrol('Style','popupmenu',...
-                'String',{'Select','Zoom','Mask'},...
+                'String',{'Select','Zoom'},...
                 'Position',[20,16,120,25],'Callback',cb);
             self.hLabelMenu = uicontrol('Style','popupmenu',...
                 'String',self.labelStrings,...
@@ -128,6 +153,12 @@ classdef Labler < handle
                                          'String', 'Zoom Reset',...
                                          'Position', [300 20 80 25],...
                                          'Callback', cb);
+%             self.hContextMenu = uicontextmenu;
+%             uimenu(self.hContextMenu, 'Label', 'Select',...
+%                 'Callback', @()self.handleTool());
+%             uimenu(self.hContextMenu, 'Label', 'Zoom',...
+%                 'Callback', @()self.handleTool());
+%             set(self.hFig,'uicontextmenu',self.hContextMenu);
         end
         
         function handleButton(self, object, callbackdata)
@@ -154,6 +185,11 @@ classdef Labler < handle
                 end
                 self.mode = mode;
             end
+            set(self.hToolMenu, 'Value', mode);
+        end
+        
+        function handleTool(self)
+            
         end
         
         function captureSelection(self)
@@ -171,6 +207,14 @@ classdef Labler < handle
             self.configureInterface();           
             self.plotImage(self.image);
             self.attachCallbacks(self.hFig);
+        end
+        
+        function value = isFinished(self)
+            value = self.finished;
+        end
+        
+        function value = getSelections(self)
+            value = self.selections;
         end
     end
 end
