@@ -8,6 +8,9 @@ images = {};
 if nargin < 3
     verbose = false;
 end
+if isempty(pattern)
+    pattern = '.+.(tiff|tif|jpg|jpeg|png|bmp|gif)';
+end
 if verbose
     fprintf('Loading directory %s\n', path);
 end
