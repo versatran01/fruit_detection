@@ -8,7 +8,8 @@ DATASET_PATH = '/Users/gareth/Public/Dropbox/agriculture_state_of_art/Field Data
 
 addpath('./labeling');
 addpath('./tools');
-addpath('./cpp');
+addpath('./kmeans');
+addpath('./vendor/fkmeans');
 
-images = loadImages(DATASET_PATH);
+%images = loadImages(DATASET_PATH);
 
