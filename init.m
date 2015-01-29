@@ -6,10 +6,9 @@ dbstop error;
 
 DATASET_PATH = '/Users/gareth/Public/Dropbox/agriculture_state_of_art/Field Data/Selected images';
 
-addpath('./labeling');
-addpath('./tools');
+addpath('./descriptors');
 addpath('./kmeans');
+addpath('./labeling');
+addpath('./scripts');
+addpath('./tools');
 addpath('./vendor/fkmeans');
-
-%images = loadImages(DATASET_PATH);
-
