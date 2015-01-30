@@ -11,7 +11,6 @@ classdef Labler < handle
         center
         radius
         currentLabel = 1;
-        
         selections = {};
         
         % graphical UI objects
@@ -26,7 +25,8 @@ classdef Labler < handle
     end
     
     methods(Access=private)
-        function attachCallbacks(self, fig)
+        function attachCallbacks(self)
+           fig = self.hFig;
            set(fig, 'WindowButtonMotionFcn',...
                @(object,eventdata)self.mouseMove(object,eventdata));
            set(fig, 'WindowButtonDownFcn',...
@@ -43,11 +43,6 @@ classdef Labler < handle
             if ishandle(self.hFig)
                 close(self.hFig);
             end
-            %set(self.hFig, 'WindowButtonMotionFcn', []);
-            %set(self.hFig, 'WindowButtonDownFcn', []);
-            %set(self.hFig, 'WindowButtonUpFcn', []);
-            %set(self.hFig, 'KeyReleaseFcn', []);
-            %set(self.hFig, 'CloseRequestFcn', []);
         end
         
         function mouseMove(self, object, eventdata)
@@ -132,15 +127,17 @@ classdef Labler < handle
             end
         end
         
-        function plotImage(self, image)
+        function plotImage(self)
             set(0,'CurrentFigure',self.hFig);
             hold off;
-            self.hImage = imshow(image);
+            self.hImage = imshow(self.image);
             hold on;
         end
         
         function configureInterface(self)
+            clf(self.hFig,'reset');
             set(self.hFig,'MenuBar', 'None');
+            set(self.hFig,'Name','Labeltron 9000');
             cb = @(obj,callbackdata)handleButton(self,obj,callbackdata);            
             self.hToolMenu = uicontrol('Style','popupmenu',...
                 'String',{'Select','Zoom'},...
@@ -153,12 +150,7 @@ classdef Labler < handle
                                          'String', 'Zoom Reset',...
                                          'Position', [300 20 80 25],...
                                          'Callback', cb);
-%             self.hContextMenu = uicontextmenu;
-%             uimenu(self.hContextMenu, 'Label', 'Select',...
-%                 'Callback', @()self.handleTool());
-%             uimenu(self.hContextMenu, 'Label', 'Zoom',...
-%                 'Callback', @()self.handleTool());
-%             set(self.hFig,'uicontextmenu',self.hContextMenu);
+            set(self.hFig, 'Units', 'normalized', 'Position', [0,0,1,1]);
         end
         
         function handleButton(self, object, callbackdata)
@@ -188,10 +180,6 @@ classdef Labler < handle
             set(self.hToolMenu, 'Value', mode);
         end
         
-        function handleTool(self)
-            
-        end
-        
         function captureSelection(self)
             self.selections{end+1} = [self.center self.radius... 
                                       self.currentLabel];
@@ -205,8 +193,8 @@ classdef Labler < handle
             self.labelStrings = labelStrings;
             self.hFig = figure;
             self.configureInterface();           
-            self.plotImage(self.image);
-            self.attachCallbacks(self.hFig);
+            self.plotImage();
+            self.attachCallbacks();
         end
         
         function value = isFinished(self)

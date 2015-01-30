@@ -1,5 +1,5 @@
 %% labelDataset.m
-close all;
+init;
 
 % prompt user to circle fruit
 selections = {};
