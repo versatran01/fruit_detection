@@ -39,14 +39,19 @@ classdef Masker < handle
         
         function mouseMove(self, object, eventdata)
             C = getMousePosition();
+            C = ceil(C);
             if self.mouseState
-                fprintf('Dragging...\n');
-                if self.mode==1
+                sz = size(self.image);
+                if self.mode == 1
                     % insert
-                    C = round(C);
-                    self.mask(C(2),C(1)) = 1;
-                elseif self.mode==2
+                    if self.pointInImage(C)
+                        self.mask(C(2),C(1)) = 1;
+                    end
+                elseif self.mode == 2
                     % clear
+                    if self.pointInImage(C)
+                        self.mask(C(2),C(1)) = 0;
+                    end
                 end
                 self.plotImage();
             end
@@ -73,10 +78,11 @@ classdef Masker < handle
                 hold on;
                 % add solid top layer
                 sz = size(self.image);
-                color(:,:,1) = self.maskColor(1)*ones(sz(1:2));
-                color(:,:,2) = self.maskColor(2)*ones(sz(1:2));
-                color(:,:,3) = self.maskColor(3)*ones(sz(1:2));
-                self.hMask = imshow(color);
+                full = ones(sz(1:2));
+                color(:,:,1) = self.maskColor(1)*full;
+                color(:,:,2) = self.maskColor(2)*full;
+                color(:,:,3) = self.maskColor(3)*full;
+                self.hMask = imshow(uint8(color*255));
             else
                 % update existing images
                 set(self.hImage, 'CData', self.image);
@@ -102,6 +108,11 @@ classdef Masker < handle
 %                                          'Callback', cb);
 %             set(self.hFig, 'Units', 'normalized', 'Position', [0,0,1,1]);
         end
+        
+        function value = pointInImage(self, pt)
+            sz = size(self.image);
+            value = all(pt > [0 0] & pt <= sz([2 1]));
+        end
     end
     
     methods
@@ -116,6 +127,10 @@ classdef Masker < handle
             self.configureInterface();
             self.plotImage();
             self.attachCallbacks();
+        end
+        
+        function value = isFinished(self)
+            value = self.finished;
         end
         
         function delete(self)

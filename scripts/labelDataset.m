@@ -21,8 +21,10 @@ else
 end
 
 start = 1;
-result = input('Enter starting image number (1,2,3...): ');
-if result > num_images || result < 1
+result = input('Start selections from which image? (1 ... N, 0 to skip): ');
+if result == 0
+    start = num_images+1;
+elseif result > num_images || result < 1
     fprintf('Error: Image number must fall in range [1,%i]\n', num_images);
     return;
 else
@@ -46,3 +48,14 @@ for n=start:num_images
 end
 
 % now mask selections
+for n=1:num_images
+    fprintf('Sampling %i selections from image %i.\n',...
+        numel(selections{n}), n);
+    [samples,regions] = sampleSelectionsFromImage(dataset_images{n},...
+        selections{n});
+    M = Masker(samples{n});
+    while ~M.isFinished()
+        drawnow;
+    end
+    
+end
