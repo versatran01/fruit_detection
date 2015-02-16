@@ -14,4 +14,4 @@ addpath('./tools');
 addpath('./vendor/fkmeans');
 
 %% Load dataset images
-dataset_images = loadImages(DATASET_PATH,[],true);
+[dataset_images, dataset_paths] = loadImages(DATASET_PATH,[],true);

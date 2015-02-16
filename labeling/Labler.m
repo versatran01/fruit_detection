@@ -1,18 +1,18 @@
 classdef Labler < handle
     
     properties(Access=private)
+        % inputs
         image
         labelStrings
+        % mode
         selecting = false;
         mode = 1;
         finished = false;
-        
-        % selection settings
+        currentLabel = 1;
+        % selections
         center
         radius
-        currentLabel = 1;
         selections = {};
-        
         % graphical UI objects
         hFig
         hSelection
@@ -37,12 +37,6 @@ classdef Labler < handle
                @(object,eventdata)self.keyUp(object,eventdata));
            set(fig, 'CloseRequestFcn',...
                @(object,eventdata)self.closeRequest(object,eventdata));
-        end
-        
-        function delete(self)
-            if ishandle(self.hFig)
-                close(self.hFig);
-            end
         end
         
         function mouseMove(self, object, eventdata)
@@ -188,12 +182,17 @@ classdef Labler < handle
     end
     
     methods(Access=public)
-        function self = Labler(image, labelStrings)
+        function self = Labler(image, labelStrings, selections)
+            if nargin < 3
+                selections = {};
+            end
             self.image = image;
             self.labelStrings = labelStrings;
             self.hFig = figure;
+            self.selections = selections;
             self.configureInterface();           
             self.plotImage();
+            self.plotSelections();
             self.attachCallbacks();
         end
         
@@ -203,6 +202,12 @@ classdef Labler < handle
         
         function value = getSelections(self)
             value = self.selections;
+        end
+        
+        function delete(self)
+            if ishandle(self.hFig)
+                close(self.hFig);
+            end
         end
     end
 end
