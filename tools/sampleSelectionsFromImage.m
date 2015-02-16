@@ -1,7 +1,9 @@
-function [ subImages ] = sampleSelectionsFromImage( image, selections )
+function [ samples, regions ] = sampleSelectionsFromImage( image,...
+    selections )
 %SAMPLESELECTIONSFROMIMAGE Sample a cell array of selections from an
 % image to create many small sub-images. (Selections are circular).
-subImages = cell(numel(selections), 1);
+samples = cell(numel(selections), 1);
+regions = samples;
 for i=1:numel(selections)
     circ = selections{i};
     % convert to square
@@ -16,9 +18,11 @@ for i=1:numel(selections)
     % check if we still have a square
     if prod(br - tl)==0
         % no area...
-        subImages{i} = [];
+        samples{i} = [];
+        regions{i} = [];
     else
-        subImages{i} = imcrop(image,[tl br-tl]);
+        samples{i} = imcrop(image,[tl br-tl]);
+        regions{i} = [tl br-tl];
     end    
 end
 end
