@@ -1,18 +1,27 @@
-function [ images, names ] = loadImages( path, pattern, verbose )
+function [ images, names ] = loadImages( path, pattern, varargin )
 %LOADIMAGES Load all images (recursively) that match a file pattern.
 % Example patterns:
 %   '.+.(tiff|tif|jpg|jpeg|png|bmp|gif)' : Most common image files.
 %   'img_[0-9]+.jpg' : JPG files with names like "img_001.jpg".
+%
+% Returns:
+%   images - Cell array of images.
+%   names - Full paths to the images.
+%
+% Options include:
+%   verbose - Output the directory names as they are loaded.
+%   noload - Skip loading images, only retrieve image paths.
+%
+defaults.verbose = true;
+defaults.noload = false;
+options = propval(varargin, defaults);
 items = dir(path);
 images = {};
 names = {};
-if nargin < 3
-    verbose = false;
-end
 if isempty(pattern)
     pattern = '.+.(tiff|tif|jpg|jpeg|png|bmp|gif)';
 end
-if verbose
+if options.verbose
     fprintf('Loading directory %s\n', path);
 end
 for i=1:numel(items)
@@ -21,7 +30,7 @@ for i=1:numel(items)
         % ignore the current directory and parent
         if ~strcmp(name,'.') && ~strcmp(name,'..')
             [sub, name] = loadImages(strcat(path,'/',name), pattern,...
-                verbose);
+                varargin);
             images = vertcat(images, sub);
             names = vertcat(names, name);
         end
@@ -30,7 +39,9 @@ for i=1:numel(items)
         if ~isempty(matches)
             % found a match
             fullpath = strcat(path,'/',name);
-            images{end+1} = imread(fullpath);
+            if ~options.noload
+                images{end+1} = imread(fullpath);
+            end
             names{end+1} = fullpath;
         end
     end
