@@ -8,6 +8,7 @@ classdef Labler < handle
         selecting = false;
         mode = 1;
         finished = false;
+        quit = false;
         currentLabel = 1;
         % selections
         center
@@ -148,6 +149,10 @@ classdef Labler < handle
                                          'String', 'Done',...
                                          'Position', [400 20 80 25],...
                                          'Callback', cb);
+            self.hButtons{3} = uicontrol('Style', 'pushbutton',...
+                                         'String', 'Quit',...
+                                         'Position', [500 20 80 25],...
+                                         'Callback', cb);
             set(self.hFig, 'Units', 'normalized', 'Position', [0,0,1,1]);
         end
         
@@ -158,7 +163,11 @@ classdef Labler < handle
                 sz = size(self.image);
                 axis([0 sz(2) 0 sz(1)]);
             elseif self.hButtons{2} == object
-                close(self.hFig); % quit
+                close(self.hFig); % close window
+            elseif self.hButtons{3} == object
+                % quit
+                self.quit = true;
+                close(self.hFig);
             elseif object == self.hToolMenu
                 % tool menu
                 self.switchMode(get(object, 'Value'));
@@ -204,6 +213,10 @@ classdef Labler < handle
         
         function value = isFinished(self)
             value = self.finished;
+        end
+        
+        function value = didQuit(self)
+            value = self.quit;
         end
         
         function value = getSelections(self)

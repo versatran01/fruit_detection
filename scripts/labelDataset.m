@@ -42,6 +42,9 @@ for n=start:num_images
     while ~L.isFinished()
         drawnow; % refresh the UI
     end
+    if L.didQuit()
+        break;
+    end
     % get selections
     selections{n} = L.getSelections();
     fprintf('Obtained %lu selections\n', numel(selections{end}));
