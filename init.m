@@ -2,7 +2,6 @@
 clear;
 close all;
 home;
-dbstop error;
 
 DATASET_PATH = '/Volumes/External/Datasets/booth_photo';
 

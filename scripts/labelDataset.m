@@ -53,9 +53,13 @@ for n=1:num_images
         numel(selections{n}), n);
     [samples,regions] = sampleSelectionsFromImage(dataset_images{n},...
         selections{n});
-    M = Masker(samples{n});
-    while ~M.isFinished()
-        drawnow;
+    image_masks = {};
+    for m=1:numel(samples)
+        M = Masker(samples{m});
+        while ~M.isFinished()
+            drawnow;
+        end
+        image_masks{m} = M.getMask();
     end
-    
+    masks{n} = image_masks;
 end

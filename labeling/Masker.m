@@ -15,6 +15,8 @@ classdef Masker < handle
         hFig
         hImage
         hMask
+        hToolMenu
+        hButtons
     end
     
     methods(Access=private)
@@ -26,8 +28,6 @@ classdef Masker < handle
                @(object,eventdata)self.mouseDown(object,eventdata));
            set(fig, 'WindowButtonUpFcn',...
                @(object,eventdata)self.mouseUp(object,eventdata));
-%            set(fig, 'KeyReleaseFcn',...
-%                @(object,eventdata)self.keyUp(object,eventdata));
            set(fig, 'CloseRequestFcn',...
                @(object,eventdata)self.closeRequest(object,eventdata));
         end
@@ -39,9 +39,8 @@ classdef Masker < handle
         
         function mouseMove(self, object, eventdata)
             C = getMousePosition();
-            C = ceil(C);
+            C = round(C);
             if self.mouseState
-                sz = size(self.image);
                 if self.mode == 1
                     % insert
                     if self.pointInImage(C)
@@ -83,6 +82,11 @@ classdef Masker < handle
                 color(:,:,2) = self.maskColor(2)*full;
                 color(:,:,3) = self.maskColor(3)*full;
                 self.hMask = imshow(uint8(color*255));
+                % make the window larger
+                pos = get(self.hFig, 'Position');
+                set(self.hFig,'Position',[pos(1:2) 560 420]);
+                % zoom image
+                set(gca,'Position',[0.2 0.2 0.6 0.6]);
             else
                 % update existing images
                 set(self.hImage, 'CData', self.image);
@@ -94,24 +98,28 @@ classdef Masker < handle
             clf(self.hFig,'reset');
             set(self.hFig,'MenuBar', 'None');
             set(self.hFig,'Name','Masktron 9000');
-%             cb = @(obj,callbackdata)handleButton(self,obj,callbackdata);            
-%             self.hToolMenu = uicontrol('Style','popupmenu',...
-%                 'String',{'Select','Zoom'},...
-%                 'Position',[20,16,120,25],'Callback',cb);
-%             self.hLabelMenu = uicontrol('Style','popupmenu',...
-%                 'String',self.labelStrings,...
-%                 'Position',[150,16,120,25],'Callback',cb);
-%             set(self.hLabelMenu,'Value',self.currentLabel);
-%             self.hButtons{1} = uicontrol('Style', 'pushbutton',...
-%                                          'String', 'Zoom Reset',...
-%                                          'Position', [300 20 80 25],...
-%                                          'Callback', cb);
-%             set(self.hFig, 'Units', 'normalized', 'Position', [0,0,1,1]);
+            cb = @(obj,callbackdata)handleButton(self,obj,callbackdata);            
+            self.hToolMenu = uicontrol('Style','popupmenu',...
+                 'String',{'Add','Remove'},...
+                 'Position',[20,16,120,25],'Callback',cb);
+            self.hButtons{1} = uicontrol('Style', 'pushbutton',...
+                                         'String', 'Done',...
+                                         'Position', [300 20 80 25],...
+                                         'Callback', cb);
         end
         
         function value = pointInImage(self, pt)
             sz = size(self.image);
             value = all(pt > [0 0] & pt <= sz([2 1]));
+        end
+        
+        function handleButton(self, object, callbackdata)
+            set(0,'CurrentFigure',self.hFig);
+            if object == self.hToolMenu
+                self.mode = get(object,'Value');
+            elseif object == self.hButtons{1}
+                % label menu
+            end
         end
     end
     
@@ -131,6 +139,10 @@ classdef Masker < handle
         
         function value = isFinished(self)
             value = self.finished;
+        end
+        
+        function value = getMask(self)
+            value = self.mask;
         end
         
         function delete(self)
