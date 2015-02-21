@@ -118,7 +118,8 @@ classdef Masker < handle
             if object == self.hToolMenu
                 self.mode = get(object,'Value');
             elseif object == self.hButtons{1}
-                % label menu
+                % done button
+                close(self.hFig);
             end
         end
     end

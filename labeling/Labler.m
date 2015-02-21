@@ -144,6 +144,10 @@ classdef Labler < handle
                                          'String', 'Zoom Reset',...
                                          'Position', [300 20 80 25],...
                                          'Callback', cb);
+            self.hButtons{2} = uicontrol('Style', 'pushbutton',...
+                                         'String', 'Done',...
+                                         'Position', [400 20 80 25],...
+                                         'Callback', cb);
             set(self.hFig, 'Units', 'normalized', 'Position', [0,0,1,1]);
         end
         
@@ -153,6 +157,8 @@ classdef Labler < handle
                 % zoom reset button
                 sz = size(self.image);
                 axis([0 sz(2) 0 sz(1)]);
+            elseif self.hButtons{2} == object
+                close(self.hFig); % quit
             elseif object == self.hToolMenu
                 % tool menu
                 self.switchMode(get(object, 'Value'));

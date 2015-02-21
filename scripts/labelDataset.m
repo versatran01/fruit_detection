@@ -45,10 +45,8 @@ for n=start:num_images
     % get selections
     selections{n} = L.getSelections();
     fprintf('Obtained %lu selections\n', numel(selections{end}));
-end
-
-% now mask selections
-for n=1:num_images
+    
+    % now mask selections
     fprintf('Sampling %i selections from image %i.\n',...
         numel(selections{n}), n);
     [samples,regions] = sampleSelectionsFromImage(dataset_images{n},...
@@ -63,3 +61,4 @@ for n=1:num_images
     end
     masks{n} = image_masks;
 end
+
