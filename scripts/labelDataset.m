@@ -54,7 +54,11 @@ for n=start:num_images
         numel(selections{n}), n);
     [samples,regions] = sampleSelectionsFromImage(dataset_images{n},...
         selections{n});
-    image_masks = {};
+    if numel(masks) >= n
+        image_masks = masks{n};
+    else
+        image_masks = {};
+    end
     for m=1:numel(samples)
         M = Masker(samples{m});
         while ~M.isFinished()
@@ -65,3 +69,6 @@ for n=start:num_images
     masks{n} = image_masks;
 end
 
+fprintf('Saving selections.\n');
+labels.selections = selections;
+labels.masks = masks;

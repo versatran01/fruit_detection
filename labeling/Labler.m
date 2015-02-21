@@ -70,13 +70,17 @@ classdef Labler < handle
         end
         
         function keyUp(self, object, eventdata)
-            if int32(eventdata.Character) == 13
+            char = int32(eventdata.Character);
+            if char == 13
                 % newline/enter
                 if self.mode == 1 && ~self.selecting
                     if ~isempty(self.radius)
                         self.captureSelection();
                     end
                 end
+            elseif char >= 49 && char <= 50
+                % number
+               % self.switchMode(char - 48);
             end
         end
         
@@ -153,7 +157,7 @@ classdef Labler < handle
                                          'String', 'Quit',...
                                          'Position', [500 20 80 25],...
                                          'Callback', cb);
-            set(self.hFig, 'Units', 'normalized', 'Position', [0,0,1,1]);
+            %set(self.hFig, 'Units', 'normalized', 'Position', [0,0,1,1]);
         end
         
         function handleButton(self, object, callbackdata)
@@ -174,7 +178,7 @@ classdef Labler < handle
             elseif object == self.hLabelMenu
                 % label menu
                 self.currentLabel = get(object, 'Value');
-            end 
+            end
         end
         
         function switchMode(self, mode)
