@@ -14,6 +14,7 @@ function [ images, names ] = loadImages( path, pattern, varargin )
 %
 defaults.verbose = true;
 defaults.noload = false;
+defaults.recursive = true;
 options = propval(varargin, defaults);
 items = dir(path);
 images = {};
@@ -26,7 +27,7 @@ if options.verbose
 end
 for i=1:numel(items)
     name = items(i).name;
-    if items(i).isdir
+    if items(i).isdir && options.recursive
         % ignore the current directory and parent
         if ~strcmp(name,'.') && ~strcmp(name,'..')
             [sub, name] = loadImages(strcat(path,'/',name), pattern,...
