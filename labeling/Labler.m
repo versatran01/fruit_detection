@@ -220,6 +220,15 @@ classdef Labler < handle
                     zoom off;
                 end
                 self.mode = mode;
+                if self.mode ~= 1
+                    % not in selection mode, get rid of selection plot
+                    self.selecting = false;
+                    if ~isempty(self.hSelection)
+                        delete(self.hSelection{1});
+                        delete(self.hSelection{2});
+                        self.hSelection = {};
+                    end
+                end
             end
             set(self.hToolMenu, 'Value', mode);
         end
