@@ -188,7 +188,7 @@ classdef Labler < handle
                                          'String', 'Quit',...
                                          'Position', [500 20 80 25],...
                                          'Callback', cb);
-            set(self.hFig, 'Units', 'normalized', 'Position', [0,0,1,1]);
+            %set(self.hFig, 'Units', 'normalized', 'Position', [0,0,1,1]);
         end
         
         function handleButton(self, object, callbackdata)

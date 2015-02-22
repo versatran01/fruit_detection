@@ -10,6 +10,9 @@ classdef Masker < handle
         mouseClickPosition
         brushSize = 1;
         finished = false;
+        % kmeans data
+        kmCentroids = [];
+        kmLabels = [];
         % graphical UI objects/settings
         maskColor = [0 0.75 1];
         maskAlpha = 0.4;
@@ -66,8 +69,25 @@ classdef Masker < handle
             if ~strcmp(selType,'normal')
                 return; % ignore right clicks
             end
+            C = getMousePosition();
             self.mouseState = 1;
-            self.mouseClickPosition = getMousePosition();
+            self.mouseClickPosition = C;
+            if self.mode == 3
+                sz = size(self.image);
+                % kmeans add, convert index to linear
+                C = round(C);
+                C = C([2 1]);   % swap to row/col order
+                if all(C > [1 1]) && all(C < sz(1:2))
+                    Cidx = sub2ind(sz(1:2), C(1), C(2));
+                    % get label for this mouse position
+                    label = self.kmLabels(Cidx);
+                    % find all places where this label exists in image
+                    found = find(self.kmLabels == label);
+                    % update the mask accordingly
+                    self.mask(found) = 1;
+                    self.plotImage();   % re-plot
+                end
+            end
         end
         
         function mouseUp(self, object, eventdata)
@@ -76,12 +96,12 @@ classdef Masker < handle
         
         function plotImage(self)
             set(0,'CurrentFigure',self.hFig);
+            sz = size(self.image);
             if isempty(self.hImage)
                 hold off;
                 self.hImage = imshow(self.image);
                 hold on;
                 % add solid top layer
-                sz = size(self.image);
                 full = ones(sz(1:2));
                 color(:,:,1) = self.maskColor(1)*full;
                 color(:,:,2) = self.maskColor(2)*full;
@@ -94,7 +114,15 @@ classdef Masker < handle
                 set(gca,'Position',[0.2 0.2 0.6 0.6]);
             else
                 % update existing images
-                set(self.hImage, 'CData', self.image);
+                if self.mode == 3
+                    % use k-means data to draw
+                    colors = self.kmCentroids(self.kmLabels,:);
+                    colors = reshape(colors, sz(1), sz(2), size(colors,2));
+                    colors = uint8(colors);
+                    set(self.hImage, 'CData', colors);
+                else
+                    set(self.hImage, 'CData', self.image);
+                end
             end
             set(self.hMask, 'AlphaData', self.mask * self.maskAlpha);
         end
@@ -106,7 +134,7 @@ classdef Masker < handle
             set(self.hFig,'WindowStyle','modal');
             cb = @(obj,callbackdata)handleButton(self,obj,callbackdata);            
             self.hToolMenu = uicontrol('Style','popupmenu',...
-                 'String',{'Add','Remove'},...
+                 'String',{'Add','Remove','Group Add'},...
                  'Position',[20,16,120,25],'Callback',cb);
              self.hSizeMenu = uicontrol('Style','popupmenu',...
                  'String',{'1','3','5','10'},...
@@ -125,7 +153,7 @@ classdef Masker < handle
         function handleButton(self, object, callbackdata)
             set(0,'CurrentFigure',self.hFig);
             if object == self.hToolMenu
-                self.mode = get(object,'Value');
+                self.switchMode(get(object,'Value'));
             elseif object == self.hSizeMenu
                 value = get(object,'Value');
                 str = object.String{value};
@@ -134,6 +162,24 @@ classdef Masker < handle
             elseif object == self.hButtons{1}
                 % done button
                 close(self.hFig);
+            end
+        end
+        
+        function switchMode(self, mode)
+            if self.mode ~= mode
+                self.mode = mode;
+                if mode == 3
+                    % group select mode, perform K-means
+                    sz = size(self.image);
+                    X = reshape(self.image, prod(sz(1:2)), sz(3));
+                    [self.kmLabels, self.kmCentroids] = ...
+                        fkmeans(double(X), 4);
+                else
+                    % other mode
+                    self.kmCentroids = [];
+                    self.kmLabels = [];
+                end
+                self.plotImage();
             end
         end
     end

@@ -26,8 +26,7 @@ for n=start:num_images
     % get selections
     dataset.selections{n} = L.getSelections();
     dataset.masks{n} = L.getMasks();
-    fprintf('Obtained %lu selections\n',... 
-        numel(dataset.selections{n}));
+    fprintf('Obtained %lu selections\n', numel(dataset.selections{n}));
     if L.didQuit()
         % user wants to exit early
         break;
