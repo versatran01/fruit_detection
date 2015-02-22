@@ -301,7 +301,12 @@ classdef Labler < handle
             self.labelStrings = labelStrings;
             self.hFig = figure;
             self.selections = reshape(selections, numel(selections), 1);
-            self.masks = reshape(masks, numel(masks), 1);
+            if ~isempty(masks)
+                self.masks = reshape(masks, numel(masks), 1);
+            else
+                % start with cell array of empty masks
+                self.masks = cell(numel(selections), 1);
+            end
             self.configureInterface();           
             self.plotImage();
             self.plotSelections();

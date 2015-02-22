@@ -15,6 +15,3 @@ addpath('./vendor/fkmeans');
 % Re-seed random
 rng('shuffle', 'twister');
 
-%% Load dataset images
-[dataset_images, dataset_paths] = loadImages(DATASET_PATH,[],...
-    'verbose', true);
