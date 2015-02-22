@@ -1,5 +1,5 @@
 %% labelDataset.m
-init;
+%init;
 
 num_images = numel(dataset_images);
 fprintf('Working with %i images.\n', num_images);
@@ -69,6 +69,7 @@ for n=start:num_images
     masks{n} = image_masks;
 end
 
-fprintf('Saving selections.\n');
+fprintf('Saving selections to %s.\n', labels_path);
 labels.selections = selections;
 labels.masks = masks;
+save(labels_path, 'labels');

@@ -8,6 +8,7 @@ classdef Masker < handle
         mode = 1;
         mouseState
         mouseClickPosition
+        brushSize = 1;
         finished = false;
         % graphical UI objects/settings
         maskColor = [0 0.75 1];
@@ -16,6 +17,7 @@ classdef Masker < handle
         hImage
         hMask
         hToolMenu
+        hSizeMenu
         hButtons
     end
     
@@ -39,18 +41,21 @@ classdef Masker < handle
         
         function mouseMove(self, object, eventdata)
             C = getMousePosition();
-            C = round(C);
+            % determine region
+            sz = size(self.image);
+            Cmin = ceil(C - self.brushSize*0.5);
+            Cmax = floor(C + self.brushSize*0.5);
+            Cmin = max(Cmin([2 1]), [1 1]);      % flip order
+            Cmax = min(Cmax([2 1]), sz(1:2));    % flip order
             if self.mouseState
                 if self.mode == 1
                     % insert
-                    if self.pointInImage(C)
-                        self.mask(C(2),C(1)) = 1;
-                    end
+                    self.mask(Cmin(1):Cmax(1),...
+                              Cmin(2):Cmax(2)) = 1;
                 elseif self.mode == 2
                     % clear
-                    if self.pointInImage(C)
-                        self.mask(C(2),C(1)) = 0;
-                    end
+                    self.mask(Cmin(1):Cmax(1),...
+                              Cmin(2):Cmax(2)) = 0;
                 end
                 self.plotImage();
             end
@@ -102,6 +107,9 @@ classdef Masker < handle
             self.hToolMenu = uicontrol('Style','popupmenu',...
                  'String',{'Add','Remove'},...
                  'Position',[20,16,120,25],'Callback',cb);
+             self.hSizeMenu = uicontrol('Style','popupmenu',...
+                 'String',{'1','3','5','10'},...
+                 'Position',[160,16,120,25],'Callback',cb);
             self.hButtons{1} = uicontrol('Style', 'pushbutton',...
                                          'String', 'Done',...
                                          'Position', [300 20 80 25],...
@@ -117,6 +125,11 @@ classdef Masker < handle
             set(0,'CurrentFigure',self.hFig);
             if object == self.hToolMenu
                 self.mode = get(object,'Value');
+            elseif object == self.hSizeMenu
+                value = get(object,'Value');
+                str = object.String{value};
+                num = str2double(str);
+                self.brushSize = num;
             elseif object == self.hButtons{1}
                 % done button
                 close(self.hFig);
