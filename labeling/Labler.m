@@ -14,11 +14,16 @@ classdef Labler < handle
         center
         radius
         selections = {};
+        masks = {};
+        maskLayer = [];
         % graphical UI objects
+        maskColor = [0 0.75 1];
+        maskAlpha = 0.4;
         hFig
         hSelection
         hLabels
         hImage
+        hMask
         hButtons
         hToolMenu
         hLabelMenu
@@ -55,12 +60,26 @@ classdef Labler < handle
             if ~strcmp(selType,'normal')
                 return; % ignore right clicks
             end
+            pos = getMousePosition();
             if self.mode == 1
                 % selecting circle
                 if ~self.selecting
-                    self.center = getMousePosition();
+                    self.center = pos;
                     self.radius = 0;
                     self.selecting = true;
+                end
+            elseif self.mode == 3
+                % find selected fruit
+                selindex = self.getSelectionAtPosition(pos);
+                if ~isempty(selindex)
+                    % run the masker
+                    self.launchMasker(selindex);
+                end
+            elseif self.mode == 4
+                % delete current selection
+                selindex = self.getSelectionAtPosition(pos);
+                if ~isempty(selindex)
+                    self.deleteSelection(selindex);
                 end
             end
         end
@@ -78,9 +97,6 @@ classdef Labler < handle
                         self.captureSelection();
                     end
                 end
-            elseif char >= 49 && char <= 50
-                % number
-               % self.switchMode(char - 48);
             end
         end
         
@@ -128,9 +144,24 @@ classdef Labler < handle
         
         function plotImage(self)
             set(0,'CurrentFigure',self.hFig);
-            hold off;
-            self.hImage = imshow(self.image);
-            hold on;
+            if isempty(self.hImage)
+                hold off;
+                self.hImage = imshow(self.image);
+                hold on;
+                % add solid top layer in color of mask
+                sz = size(self.image);
+                full = ones(sz(1:2));
+                color(:,:,1) = self.maskColor(1)*full;
+                color(:,:,2) = self.maskColor(2)*full;
+                color(:,:,3) = self.maskColor(3)*full;
+                self.hMask = imshow(uint8(color*255));
+            else
+                % update existing
+                set(self.hImage,'CData',self.image);
+            end
+            self.rebuildMaskLayer();
+            % update alpha of mask layer
+            set(self.hMask, 'AlphaData', self.maskLayer * self.maskAlpha);
         end
         
         function configureInterface(self)
@@ -139,7 +170,7 @@ classdef Labler < handle
             set(self.hFig,'Name','Labeltron 9000');
             cb = @(obj,callbackdata)handleButton(self,obj,callbackdata);            
             self.hToolMenu = uicontrol('Style','popupmenu',...
-                'String',{'Select','Zoom'},...
+                'String',{'Select','Zoom','Mask','Delete'},...
                 'Position',[20,16,120,25],'Callback',cb);
             self.hLabelMenu = uicontrol('Style','popupmenu',...
                 'String',self.labelStrings,...
@@ -196,19 +227,81 @@ classdef Labler < handle
         function captureSelection(self)
             self.selections{end+1} = [self.center self.radius... 
                                       self.currentLabel];
+            self.masks{end+1} = []; % new empty mask
             self.plotSelections();
+        end
+        
+        function [index] = getSelectionAtPosition(self, pos)
+            sel = cell2mat(self.selections);
+            dists = bsxfun(@minus, sel(:,1:2), pos);
+            dists = sqrt(sum(dists.^2, 2));
+            valid = dists < sel(:,3);   % inside radius
+            if ~any(valid)
+                index = []; % no selection
+                return;
+            end
+            % find closest selection
+            [~,smallest] = min(dists(valid,:));
+            indices = find(valid);
+            index = indices(smallest);
+        end
+        
+        function launchMasker(self, index)
+            selection = self.selections{index};
+            mask = self.masks{index};
+            % pull the selection out of the image
+            [sample,~] = sampleSelectionsFromImage(self.image,...
+                {selection}); % don't need the region for this...
+            sample = sample{1};
+            % now launch and run the masker
+            M = Masker(sample, mask);
+            while ~M.isFinished()
+                drawnow;
+            end
+            % copy back to masks
+            self.masks{index} = M.getMask();
+            % bring our figure back to foreground
+            figure(self.hFig);
+            % update plots
+            self.plotImage();
+        end
+        
+        function rebuildMaskLayer(self)
+            % todo: this is kind of inefficient, maybe improve it later
+            sz = size(self.image);
+            self.maskLayer = zeros(sz(1:2));
+            [~,regions] = sampleSelectionsFromImage(self.image,...
+                self.selections);
+            for i=1:numel(self.selections)
+                region = regions{i};
+                mask = self.masks{i};
+                if ~isempty(mask)
+                    % copy to larger mask
+                    o = region([2 1]); % convert to row/col format
+                    d = region([4 3]);
+                    self.maskLayer(o(1):(o(1)+d(1)), o(2):(o(2)+d(2))) =...
+                        mask;
+                end
+            end
+        end
+        
+        function deleteSelection(self, index)
+            % delete selection, mask, and plot, then re-plot image
+            self.selections(index) = [];
+            self.masks(index) = [];
+            delete(self.hLabels(index));
+            self.hLabels(index) = [];
+            self.plotImage();
         end
     end
     
     methods(Access=public)
-        function self = Labler(image, labelStrings, selections)
-            if nargin < 3
-                selections = {};
-            end
+        function self = Labler(image, labelStrings, selections, masks)
             self.image = image;
             self.labelStrings = labelStrings;
             self.hFig = figure;
-            self.selections = selections;
+            self.selections = reshape(selections, numel(selections), 1);
+            self.masks = reshape(masks, numel(masks), 1);
             self.configureInterface();           
             self.plotImage();
             self.plotSelections();
@@ -225,6 +318,10 @@ classdef Labler < handle
         
         function value = getSelections(self)
             value = self.selections;
+        end
+        
+        function value = getMasks(self)
+            value = self.masks;
         end
         
         function delete(self)

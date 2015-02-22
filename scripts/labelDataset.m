@@ -1,5 +1,5 @@
 %% labelDataset.m
-%init;
+close all;
 
 num_images = numel(dataset_images);
 fprintf('Working with %i images.\n', num_images);
@@ -34,39 +34,25 @@ end
 % prompt user to circle fruit
 for n=start:num_images
     sel = {};
+    msk = {};
     if numel(selections) >= n
         % use existing selections if we have them
         sel = selections{n};
     end
-    L = Labler(dataset_images{n}, 'orange', sel);
+    if numel(masks) >= n
+        % use existing masks if we have them
+        msk = masks{n};
+    end
+    L = Labler(dataset_images{n}, 'orange', sel, msk);
     while ~L.isFinished()
         drawnow; % refresh the UI
-    end
-    if L.didQuit()
-        break;
     end
     % get selections
     selections{n} = L.getSelections();
     fprintf('Obtained %lu selections\n', numel(selections{end}));
-    
-    % now mask selections
-    fprintf('Sampling %i selections from image %i.\n',...
-        numel(selections{n}), n);
-    [samples,regions] = sampleSelectionsFromImage(dataset_images{n},...
-        selections{n});
-    if numel(masks) >= n
-        image_masks = masks{n};
-    else
-        image_masks = {};
+    if L.didQuit()
+        break;
     end
-    for m=1:numel(samples)
-        M = Masker(samples{m});
-        while ~M.isFinished()
-            drawnow;
-        end
-        image_masks{m} = M.getMask();
-    end
-    masks{n} = image_masks;
 end
 
 fprintf('Saving selections to %s.\n', labels_path);

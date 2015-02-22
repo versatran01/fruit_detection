@@ -1,5 +1,5 @@
 classdef Masker < handle
-    
+    % todo: merge this and labler to the same base class...
     properties(Access=private)
         % inputs
         image
@@ -103,6 +103,7 @@ classdef Masker < handle
             clf(self.hFig,'reset');
             set(self.hFig,'MenuBar', 'None');
             set(self.hFig,'Name','Masktron 9000');
+            set(self.hFig,'WindowStyle','modal');
             cb = @(obj,callbackdata)handleButton(self,obj,callbackdata);            
             self.hToolMenu = uicontrol('Style','popupmenu',...
                  'String',{'Add','Remove'},...
@@ -139,7 +140,7 @@ classdef Masker < handle
     
     methods
         function self = Masker(image, mask)
-            if nargin < 2
+            if nargin < 2 || isempty(mask)
                 % initialize a new mask
                 mask = zeros(size(image,1), size(image,2));
             end
