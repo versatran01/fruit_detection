@@ -241,6 +241,9 @@ classdef Labler < handle
         end
         
         function [index] = getSelectionAtPosition(self, pos)
+            % make sure dimensions are ok
+            self.selections = reshape(self.selections,...
+                numel(self.selections), 1);
             sel = cell2mat(self.selections);
             dists = bsxfun(@minus, sel(:,1:2), pos);
             dists = sqrt(sum(dists.^2, 2));
