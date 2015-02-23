@@ -44,35 +44,45 @@ classdef Masker < handle
         
         function mouseMove(self, object, eventdata)
             C = getMousePosition();
-            % determine region
-            sz = size(self.image);
-            Cmin = ceil(C - self.brushSize*0.5);
-            Cmax = floor(C + self.brushSize*0.5);
-            Cmin = max(Cmin([2 1]), [1 1]);      % flip order
-            Cmax = min(Cmax([2 1]), sz(1:2));    % flip order
-            if self.mouseState
-                if self.mode == 1
-                    % insert
-                    self.mask(Cmin(1):Cmax(1),...
-                              Cmin(2):Cmax(2)) = 1;
-                elseif self.mode == 2
-                    % clear
-                    self.mask(Cmin(1):Cmax(1),...
-                              Cmin(2):Cmax(2)) = 0;
-                end
-                self.plotImage();
-            end
+            self.performMouseAction(C);
         end
         
         function mouseDown(self, object, eventdata)
             selType = get(self.hFig,'SelectionType');
-            if ~strcmp(selType,'normal')
-                return; % ignore right clicks
-            end
             C = getMousePosition();
-            self.mouseState = 1;
+            if strcmp(selType,'normal')
+                self.mouseState = 1;
+            elseif strcmp(selType, 'alt') || strcmp(selType,'open')
+                self.mouseState = 2;
+            else
+                return;
+            end
             self.mouseClickPosition = C;
-            if self.mode == 3
+            self.performMouseAction(C);
+        end
+        
+        function mouseUp(self, object, eventdata)
+            self.mouseState = 0;
+        end
+        
+        function performMouseAction(self, C)
+            if self.mouseState == 1
+                adding = true;
+            elseif self.mouseState == 2
+                adding = false;
+            else
+                return; % not pressed
+            end
+            if self.mode == 1
+                % determine region
+                sz = size(self.image);
+                Cmin = ceil(C - self.brushSize*0.5);
+                Cmax = floor(C + self.brushSize*0.5);
+                Cmin = max(Cmin([2 1]), [1 1]);      % flip order
+                Cmax = min(Cmax([2 1]), sz(1:2));    % flip order
+                self.mask(Cmin(1):Cmax(1),...
+                              Cmin(2):Cmax(2)) = adding;
+            elseif self.mode == 2
                 sz = size(self.image);
                 % kmeans add, convert index to linear
                 C = round(C);
@@ -81,17 +91,11 @@ classdef Masker < handle
                     Cidx = sub2ind(sz(1:2), C(1), C(2));
                     % get label for this mouse position
                     label = self.kmLabels(Cidx);
-                    % find all places where this label exists in image
-                    found = find(self.kmLabels == label);
                     % update the mask accordingly
-                    self.mask(found) = 1;
-                    self.plotImage();   % re-plot
+                    self.mask(self.kmLabels == label) = adding;
                 end
             end
-        end
-        
-        function mouseUp(self, object, eventdata)
-            self.mouseState = 0;
+            self.plotImage();   % re-plot
         end
         
         function plotImage(self)
@@ -114,7 +118,7 @@ classdef Masker < handle
                 set(gca,'Position',[0.2 0.2 0.6 0.6]);
             else
                 % update existing images
-                if self.mode == 3
+                if self.mode == 2
                     % use k-means data to draw
                     colors = self.kmCentroids(self.kmLabels,:);
                     colors = reshape(colors, sz(1), sz(2), size(colors,2));
@@ -134,7 +138,7 @@ classdef Masker < handle
             set(self.hFig,'WindowStyle','modal');
             cb = @(obj,callbackdata)handleButton(self,obj,callbackdata);            
             self.hToolMenu = uicontrol('Style','popupmenu',...
-                 'String',{'Add','Remove','Group Add'},...
+                 'String',{'Brush','Group'},...
                  'Position',[20,16,120,25],'Callback',cb);
              self.hSizeMenu = uicontrol('Style','popupmenu',...
                  'String',{'1','3','5','10'},...
@@ -168,7 +172,7 @@ classdef Masker < handle
         function switchMode(self, mode)
             if self.mode ~= mode
                 self.mode = mode;
-                if mode == 3
+                if mode == 2
                     % group select mode, perform K-means
                     sz = size(self.image);
                     X = reshape(self.image, prod(sz(1:2)), sz(3));
