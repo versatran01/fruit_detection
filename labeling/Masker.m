@@ -9,6 +9,7 @@ classdef Masker < handle
         mouseState
         mouseClickPosition
         brushSize = 1;
+        kValue = 4;
         finished = false;
         % kmeans data
         kmCentroids = [];
@@ -20,7 +21,7 @@ classdef Masker < handle
         hImage
         hMask
         hToolMenu
-        hSizeMenu
+        hSizeSlider
         hButtons
     end
     
@@ -81,7 +82,7 @@ classdef Masker < handle
                 Cmin = max(Cmin([2 1]), [1 1]);      % flip order
                 Cmax = min(Cmax([2 1]), sz(1:2));    % flip order
                 self.mask(Cmin(1):Cmax(1),...
-                              Cmin(2):Cmax(2)) = adding;
+                          Cmin(2):Cmax(2)) = adding;
             elseif self.mode == 2
                 sz = size(self.image);
                 % kmeans add, convert index to linear
@@ -140,9 +141,10 @@ classdef Masker < handle
             self.hToolMenu = uicontrol('Style','popupmenu',...
                  'String',{'Brush','Group'},...
                  'Position',[20,16,120,25],'Callback',cb);
-             self.hSizeMenu = uicontrol('Style','popupmenu',...
-                 'String',{'1','3','5','10'},...
+             self.hSizeSlider = uicontrol('Style','slider',...
+                 'Min',1,'Max',10,'Value',5,...
                  'Position',[160,16,120,25],'Callback',cb);
+            self.adjustSliderValue(5);
             self.hButtons{1} = uicontrol('Style', 'pushbutton',...
                                          'String', 'Done',...
                                          'Position', [300 20 80 25],...
@@ -158,15 +160,29 @@ classdef Masker < handle
             set(0,'CurrentFigure',self.hFig);
             if object == self.hToolMenu
                 self.switchMode(get(object,'Value'));
-            elseif object == self.hSizeMenu
+            elseif object == self.hSizeSlider
                 value = get(object,'Value');
-                str = object.String{value};
-                num = str2double(str);
-                self.brushSize = num;
+                self.adjustSliderValue(value);
             elseif object == self.hButtons{1}
                 % done button
                 close(self.hFig);
             end
+        end
+        
+        function adjustSliderValue(self, value)
+            if self.mode==1
+                % brush mode
+                self.brushSize = value;
+            elseif self.mode==2
+                self.kValue = round(value);
+                % todo: rebuild clusters
+                sz = size(self.image);
+                X = reshape(self.image, prod(sz(1:2)), sz(3));
+                [self.kmLabels, self.kmCentroids] = ...
+                    fkmeans(double(X), self.kValue);
+            end
+            set(self.hSizeSlider,'Value',value);
+            self.plotImage();
         end
         
         function switchMode(self, mode)
@@ -174,14 +190,12 @@ classdef Masker < handle
                 self.mode = mode;
                 if mode == 2
                     % group select mode, perform K-means
-                    sz = size(self.image);
-                    X = reshape(self.image, prod(sz(1:2)), sz(3));
-                    [self.kmLabels, self.kmCentroids] = ...
-                        fkmeans(double(X), 4);
+                    self.adjustSliderValue(self.kValue);
                 else
                     % other mode
                     self.kmCentroids = [];
                     self.kmLabels = [];
+                    self.adjustSliderValue(self.brushSize);
                 end
                 self.plotImage();
             end
