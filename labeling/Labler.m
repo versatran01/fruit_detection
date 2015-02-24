@@ -242,6 +242,10 @@ classdef Labler < handle
         end
         
         function [index] = getSelectionAtPosition(self, pos)
+            if isempty(self.selections)
+                index = []; % no possible labels
+                return;
+            end
             % make sure dimensions are ok
             self.selections = reshape(self.selections,...
                 numel(self.selections), 1);
