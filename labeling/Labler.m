@@ -283,20 +283,22 @@ classdef Labler < handle
         function rebuildMaskLayer(self)
             % todo: this is kind of inefficient, maybe improve it later
             sz = size(self.image);
-            self.maskLayer = zeros(sz(1:2));
-            [~,regions] = sampleSelectionsFromImage(self.image,...
-                self.selections);
-            for i=1:numel(self.selections)
-                region = regions{i};
-                mask = self.masks{i};
-                if ~isempty(mask)
-                    % copy to larger mask
-                    o = region([2 1]); % convert to row/col format
-                    d = region([4 3]);
-                    self.maskLayer(o(1):(o(1)+d(1)), o(2):(o(2)+d(2))) =...
-                        mask;
-                end
-            end
+            self.maskLayer = createLargeMask(sz, ...
+                self.selections, self.masks);
+%             self.maskLayer = zeros(sz(1:2));
+%             [~,regions] = sampleSelectionsFromImage(self.image,...
+%                 self.selections);
+%             for i=1:numel(self.selections)
+%                 region = regions{i};
+%                 mask = self.masks{i};
+%                 if ~isempty(mask)
+%                     % copy to larger mask
+%                     o = region([2 1]); % convert to row/col format
+%                     d = region([4 3]);
+%                     self.maskLayer(o(1):(o(1)+d(1)), o(2):(o(2)+d(2))) =...
+%                         mask;
+%                 end
+%             end
         end
         
         function deleteSelection(self, index)
