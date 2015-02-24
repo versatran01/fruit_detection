@@ -124,6 +124,7 @@ classdef Labler < handle
         function plotSelections(self)
             for i=1:length(self.selections)
                 sel = self.selections{i};   % [x y radius]
+                hasmask = ~isempty(self.masks{i});
                 points = createCirclePoints(sel(1:2), sel(3));
                 if length(self.hLabels) >= i
                     set(self.hLabels(i),'xdata',points(:,1),...
@@ -132,11 +133,11 @@ classdef Labler < handle
                     self.hLabels(end+1) = plot(points(:,1),points(:,2));
                 end 
                 set(self.hLabels(i),'LineWidth',2);
-                if sel(4)==1
+                if ~hasmask
                     % todo: make this an option
                     color = [1 0 0];
                 else
-                    color = [0 1 1];
+                    color = [0 0.5 1];
                 end
                 set(self.hLabels(i),'Color',color);
             end
@@ -276,6 +277,7 @@ classdef Labler < handle
             figure(self.hFig);
             % update plots
             self.plotImage();
+            self.plotSelections();
         end
         
         function rebuildMaskLayer(self)
