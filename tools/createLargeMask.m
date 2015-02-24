@@ -12,6 +12,9 @@ end
 for i=1:N
     [tl,wh] = regionForSelection(selections{i}, dims);
     msk = logical(masks{i});
+    if isempty(msk)
+        continue;
+    end
     irow = tl(2):(tl(2)+wh(2)); % y
     icol = tl(1):(tl(1)+wh(1)); % x
     bigMask(irow,icol) = bigMask(irow,icol) | msk;
