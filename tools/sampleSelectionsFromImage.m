@@ -6,23 +6,15 @@ samples = cell(numel(selections), 1);
 regions = samples;
 for i=1:numel(selections)
     circ = selections{i};
-    % convert to square
-    tl = circ(1:2) - circ(3);  % top left
-    br = circ(1:2) + circ(3);  % bottom right
-    tl = floor(tl);
-    br = ceil(br);
-    % clamp to size of image
-    dims = size(image);
-    tl = max(tl, 1);
-    br = min(br, dims([2 1]));
+    [tl,wh] = regionForSelection(circ, size(image));
     % check if we still have a square
-    if prod(br - tl)==0
+    if prod(wh)==0
         % no area...
         samples{i} = [];
         regions{i} = [];
     else
-        samples{i} = imcrop(image,[tl br-tl]);
-        regions{i} = [tl br-tl];
-    end    
+        samples{i} = imcrop(image,[tl wh]);
+        regions{i} = [tl wh];
+    end
 end
 end
