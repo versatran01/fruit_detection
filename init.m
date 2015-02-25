@@ -10,6 +10,7 @@ addpath('./kmeans');
 addpath('./labeling');
 addpath('./scripts');
 addpath('./tools');
+addpath('./train');
 addpath('./vendor/fkmeans');
 
 % Re-seed random
