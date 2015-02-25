@@ -19,6 +19,6 @@ for d=1:size(weights,4)
         x(:,:,c) = imfilter(image(:,:,c), h(:,:,c));
     end
     % average over per-channel response
-    responses(:,:,d) = sig(sum(x,3) / 3);
+    responses(:,:,d) = sum(x,3) / 3;
 end
 end
