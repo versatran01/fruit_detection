@@ -3,18 +3,18 @@ function [error_out] = crossValidate(observations, labels, k,...
 % CROSSVALIDATE Performs k-fold cross-validation on a model.
 %
 %   Returns the mean error of k-fold cross-validation on a model built
-%   using 'observations' and 'labels', using train_function to build and 
+%   using 'observations' and 'labels', using train_function to build and
 %   predict_function to test the model on each fold.
 %
-%   USAGE: 
-%       
+%   USAGE:
+%
 %   [error] = crossValidate(X, Y, 10, @train_nb, @predict_nb)
 %
 %   The above example uses X = train.counts, Y = train.labels and 10 as the
 %   number of folds to use.
 %
 %   The 'train_function' must have the following signature:
-%   
+%
 %       function [model] = train(X_train, Y_train)
 %
 %   The 'predict_function' must have the following signature:
@@ -51,9 +51,9 @@ parfor i=1:k
     % train the model WITHOUT metadata
     model = train_function(X_train, Y_train);
     % predict the test labels, given training data and test observations
-    Y_pred = predict_function(model, X_test); 
-    
-    % calculate the errors for this fold    
+    Y_pred = predict_function(model, X_test);
+
+    % calculate the errors for this fold
     tp = nnz( Y_test & Y_pred );
     tn = nnz(~Y_test & ~Y_pred);
     fp = nnz(~Y_test & Y_pred);
@@ -63,7 +63,7 @@ parfor i=1:k
     errs_acc(i) = (tp+tn) / (tp+tn+fp+fn);    % accuracy
     errs_pre(i) = tp / (tp + fp);             % precision
     errs_rec(i) = tp / (tp + fn);             % recall
-    
+
     fprintf('- Finished fold %i\n', i);
 end
 % average the error

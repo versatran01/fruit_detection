@@ -21,20 +21,7 @@ function model = trainLiblinear(Xtrain, Ytrain, s, c, verbose)
 % s      - type for -s option
 % c      - cost parameter
 
-type_id_list = [0:7, 11:13];
-type_name_list = {...
-    'L2-regularized logistic regression (primal)', ...
-    'L2-regularized L2-loss support vector classification (dual)', ...
-    'L2-regularized L2-loss support vector classification (primal)', ...
-    'L2-regularized L1-loss support vector classification (dual)', ...
-    'support vector classification by Crammer and Singer', ...
-    'L1-regularized L2-loss support vector classification', ...
-    'L1-regularized logistic regression', ...
-    'L2-regularized logistic regression (dual)', ...
-    'L2-regularized L2-loss support vector regression (primal)', ...
-    'L2-regularized L2-loss support vector regression (dual)', ...
-    'L2-regularized L1-loss support vector regression (dual)'};
-
+[type_id_list, type_name_list] = getLiblinearTypes();
 
 % Handle default option
 if nargin < 3, s = 1; end
@@ -44,21 +31,25 @@ if nargin < 5, verbose = false; end
 % Display type
 type_ind = (type_id_list == s);
 type_name = type_name_list{type_ind};
-if ~nnz(type_list), error('Wrong model type: %d.', s); end
+if ~nnz(type_ind), error('Wrong model type: %d.', s); end
 
-% Train model
-tic
-if verbose
-	fprintf('+++ Start training %s with C = %g.\n', type_name, c)
+% Handle data sparsity
+if ~issparse(Xtrain)
+	Xtrain = sparse(Xtrain);
 end
 
-option = sprintf('-s %d -q -c %g', s, c)
+% Train model
+if verbose
+	fprintf('+++ Start training %s with C = %g.\n', type_name, c);
+	tic
+end
 
-model = liblinear_train(Ytrain, Xtrain, option)
-time = toc
+option = sprintf('-s %d -c %g -q', s, c);
+model = liblineartrain(Ytrain, Xtrain, option);
 
 if verbose
-	fprintf('--- Finish training %s with time: %f.\n', type_name, time)
+	time = toc;
+	fprintf('--- Finish training %s with time: %f.\n', type_name, time);
 end
 
 end
