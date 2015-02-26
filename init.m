@@ -12,11 +12,13 @@ OBSERVATION_PATH = getenv('BOOTH_OBSERVATION_PATH');
 addpath('./descriptors');
 addpath('./kmeans');
 addpath('./labeling');
+addpath('./predict');
 addpath('./scripts');
 addpath('./tools');
 addpath('./train');
 addpath('./vendor/fkmeans');
 addpath('./vendor/liblinear/matlab')
+addpath('./vendor/libsvm/matlab');
 
 % Re-seed random
 rng('shuffle', 'twister');
