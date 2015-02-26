@@ -3,7 +3,11 @@ clear;
 close all;
 home;
 
-DATASET_PATH = '/Volumes/External/Datasets/booth_combined';
+% Path for raw images
+DATASET_PATH = getenv('BOOTH_DATASET_PATH');
+
+% path for generated observation dataset
+OBSERVATION_PATH = getenv('BOOTH_OBSERVATION_PATH');
 
 addpath('./descriptors');
 addpath('./kmeans');
