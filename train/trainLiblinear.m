@@ -16,10 +16,14 @@ function model = trainLiblinear(Xtrain, Ytrain, s, c, verbose)
 %	 12 -- L2-regularized L2-loss support vector regression (dual)
 %	 13 -- L2-regularized L1-loss support vector regression (dual)
 %
+% INPUT:
 % Xtrain - train data
 % Ytrain - train label
 % s      - type for -s option
 % c      - cost parameter
+%
+% OUTPUT:
+% model  - liblinear model
 
 [type_id_list, type_name_list] = getLiblinearTypes();
 
