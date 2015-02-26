@@ -12,6 +12,11 @@ function Yhat = predictLiblinear(model, Xtest, clamp)
 
 if nargin < 3, clamp = true; end
 
+% Handle data sparsity
+if ~issparse(Xtest)
+	Xtest = sparse(Xtest);
+end
+
 N = size(Xtest, 1);
 Yhat = liblinearpredict(ones(N, 1), Xtest, model, '-q');
 

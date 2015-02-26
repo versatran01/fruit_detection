@@ -1,5 +1,5 @@
-function [error_out] = crossValidate(observations, labels, k,...
-    train_function, predict_function)
+function [error_out] = crossValidate(observations, labels, k, ...
+                                     train_function, predict_function)
 % CROSSVALIDATE Performs k-fold cross-validation on a model.
 %
 %   Returns the mean error of k-fold cross-validation on a model built
@@ -40,7 +40,7 @@ errs_rms = zeros(k,1);
 errs_acc = zeros(k,1);
 errs_pre = zeros(k,1);
 errs_rec = zeros(k,1);
-parfor i=1:k
+for i=1:k
     % collect training data for k'th fold
     indices_train = fold_asgn ~= i;
     indices_test = ~indices_train;
