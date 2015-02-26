@@ -26,6 +26,8 @@ classdef Dataset < handle
                     imgpath = sprintf('%s/%s',path,name);
                     self.images{i} = imread(imgpath);
                 end
+                self.images = reshape(self.images,...
+                    numel(self.images), 1);
             else
                 fprintf('Initializing a new dataset.\n');
                 % this is a new dataset, try to load images
@@ -64,6 +66,16 @@ classdef Dataset < handle
             if saveimages
                 % todo: add this logic...
             end
+        end
+        
+        function append(self, other)
+            if ~isa(other,'Dataset')
+                error('other must be of type Dataset');
+            end
+            self.images = vertcat(self.images, other.images);
+            self.selections = vertcat(self.selections, other.selections);
+            self.masks = vertcat(self.masks, other.masks);
+            self.names = vertcat(self.names, other.names);
         end
         
         function value = get.size(self)

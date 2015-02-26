@@ -3,7 +3,7 @@ clear;
 close all;
 home;
 
-DATASET_PATH = '/home/chao/Workspace/bag/booth_feb2';
+DATASET_PATH = '/Volumes/External/Datasets/booth_combined';
 
 addpath('./descriptors');
 addpath('./kmeans');

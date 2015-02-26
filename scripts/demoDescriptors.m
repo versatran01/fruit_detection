@@ -9,8 +9,8 @@ load('descriptors/kmeans.mat');
 displayPatches(models{1}.weights, true);
 
 %% apply descriptors
-filtered = applyDescriptors(images{96}, models{1});
+filtered = applyDescriptors(images{1}, models{1});
 
 %% preview image (14,41,12,25)
 figure;
-imshow(filtered(:,:,25));
+imshow(filtered(:,:,14));

@@ -126,6 +126,7 @@ classdef Masker < handle
                     colors = uint8(colors);
                     set(self.hImage, 'CData', colors);
                 else
+                    % use color data
                     set(self.hImage, 'CData', self.image);
                 end
             end
