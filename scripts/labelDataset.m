@@ -2,7 +2,7 @@
 init;
 
 % load data
-dataset = Dataset(IMAGE_PATH);
+dataset = Dataset(DATASET_PATH);
 
 start = 1;
 num_images = dataset.size();

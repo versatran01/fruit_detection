@@ -4,10 +4,10 @@ close all;
 home;
 
 % Path for raw images
-IMAGE_PATH = getenv('BOOTH_IMAGE_PATH');
+DATASET_PATH = getenv('BOOTH_DATASET_PATH');
 
 % path for generated observation dataset
-DATASET_PATH = getenv('BOOTH_DATASET_PATH');
+OBSERVATION_PATH = getenv('BOOTH_OBSERVATION_PATH');
 
 addpath('./descriptors');
 addpath('./kmeans');
