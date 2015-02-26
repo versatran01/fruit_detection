@@ -18,6 +18,7 @@ addpath('./predict');
 addpath('./scripts');
 addpath('./tools');
 addpath('./train');
+addpath('./tune');
 addpath('./vendor/fkmeans');
 addpath('./vendor/liblinear/matlab')
 addpath('./vendor/libsvm/matlab');
