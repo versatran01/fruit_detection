@@ -16,7 +16,7 @@ addpath('./scripts');
 addpath('./tools');
 addpath('./train');
 addpath('./vendor/fkmeans');
-addpath('./lib/liblinear/matlab');
+addpath('./vendor/liblinear/matlab')
 
 % Re-seed random
 rng('shuffle', 'twister');
