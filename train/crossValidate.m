@@ -1,5 +1,5 @@
-function [error_out] = crossValidate(observations, labels, k, ...
-                                     train_function, predict_function)
+function [error_out] = crossValidate(observations, labels, k,...
+    train_function, predict_function, varargin)
 % CROSSVALIDATE Performs k-fold cross-validation on a model.
 %
 %   Returns the mean error of k-fold cross-validation on a model built
@@ -25,6 +25,9 @@ function [error_out] = crossValidate(observations, labels, k, ...
 % TODO: Modified this to assume single-class labels,
 % correct for this later.
 
+defaults.verbose = true;
+options = propval(varargin, defaults);
+
 % seed random number generator with time
 rng(cputime, 'twister');
 % number of observations
@@ -40,7 +43,8 @@ errs_rms = zeros(k,1);
 errs_acc = zeros(k,1);
 errs_pre = zeros(k,1);
 errs_rec = zeros(k,1);
-for i=1:k
+times = zeros(k,2);
+parfor i=1:k
     % collect training data for k'th fold
     indices_train = fold_asgn ~= i;
     indices_test = ~indices_train;
@@ -48,10 +52,17 @@ for i=1:k
     Y_train = labels(indices_train, :);
     X_test = observations(indices_test, :);
     Y_test = labels(indices_test, :);
+
     % train the model WITHOUT metadata
+    tic;
     model = train_function(X_train, Y_train);
+    time_train = toc;
     % predict the test labels, given training data and test observations
+    tic;
     Y_pred = predict_function(model, X_test);
+    time_predict = toc;
+
+    times(i,:) = [time_train time_predict];
 
     % calculate the errors for this fold
     tp = nnz( Y_test & Y_pred );
@@ -59,12 +70,19 @@ for i=1:k
     fp = nnz(~Y_test & Y_pred);
     fn = nnz( Y_test & ~Y_pred);
 
-    errs_rms(i) = rms(Y_test - Y_pred);       % rms error
+    errs_rms(i) = rootMeanSquare(Y_test - Y_pred);  % rms error
     errs_acc(i) = (tp+tn) / (tp+tn+fp+fn);    % accuracy
     errs_pre(i) = tp / (tp + fp);             % precision
     errs_rec(i) = tp / (tp + fn);             % recall
 
-    fprintf('- Finished fold %i\n', i);
+    if options.verbose
+        fprintf('- Finished fold %i\n', i);
+    end
+end
+if options.verbose
+    times = mean(times);
+    fprintf('Mean time per fold (train): %f seconds\n', times(1));
+    fprintf('Mean time per fold (predict): %f seconds\n', times(2));
 end
 % average the error
 error_out = mean([errs_rms errs_acc errs_pre errs_rec], 1);
