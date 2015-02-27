@@ -1,6 +1,4 @@
-function [best_cost, best_error] = tuneLiblinear(Xtrain, Ytrain, ...
-												 nlevel, nfolds, ...
-												 cost, s, verbose)
+function result = tuneLiblinear(Xtrain, Ytrain, nlevel, nfolds, cost, s, verbose)
 % TUNELIBLINEAR Tune liblinear model with cross validation
 
 if nargin < 7, verbose = false; end
@@ -23,7 +21,7 @@ for level = 1:nlevel
     end
 
 	% Initialize cross validation rmse
-	xval_result = zeros(size(cost_range, 1), 4);
+	xval_errors = zeros(size(cost_range, 1), 4);
 
 	for i = 1:numel(cost_range)
 		c = cost_range(i);
@@ -31,30 +29,34 @@ for level = 1:nlevel
 		train_fun = @(x, y) trainLiblinear(x, y, s, c);
 		predict_fun = @(mdl, x) predictLiblinear(mdl, x);
 		% cross validate
-		xval_result(i, :) = crossValidate(Xtrain, Ytrain, nfolds, ...
+		xval_errors(i, :) = crossValidate(Xtrain, Ytrain, nfolds, ...
                                           train_fun, predict_fun);
 		if verbose
 			fprintf('-- Finished evaluating c = %0.4f\n', c);
 			fprintf('-- Accuracy on this fold is %.3f\n', ...
-				    xval_result(i, acc_col));
+				    xval_errors(i, acc_col));
 		end
 	end
 
 	% Using accuracy as the tuning parameter
-	[~, best_idx] = max(xval_result(:, acc_col));
+	[~, best_idx] = max(xval_errors(:, acc_col));
 	best_cost_so_far = cost_range(best_idx);
-	best_error_so_far = xval_result(best_idx, :);
+	best_errors_so_far = xval_errors(best_idx, :);
 
 	if verbose
     	fprintf('** Level %i results:\n', level);
     	fprintf('Cost: %0.3f, RMS: %0.3f, Acc: %0.3f, Pre: %0.3f, Rec: %0.3f', ...
-    		    best_cost_so_far, best_error_so_far(1), ...
-    		    best_error_so_far(2), best_error_so_far(3), ...
-    		    best_error_so_far(4));
+    		    best_cost_so_far, best_errors_so_far(1), ...
+    		    best_errors_so_far(2), best_errors_so_far(3), ...
+    		    best_errors_so_far(4));
     end
 end
 
-best_error = best_error_so_far;
-best_cost = best_cost_so_far;
+result.model = trainLiblinear(Xtrain, Ytrain, s, best_cost_so_far);
+result.dimension = size(Xtrain, 2);
+result.datetime = datetime;
+result.cost = best_cost_so_far;
+result.errors = best_errors_so_far;
+result.predict = @(modle, X) predictLiblinear(model, X);
 
 end
