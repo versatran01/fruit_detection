@@ -1,4 +1,4 @@
-function [ cost, errors ] = tuneLibsvm(X,Y,~,nfolds,cost)
+function [ result ] = tuneLibsvm(X,Y,~,nfolds,cost)
 %TUNELIBSVM Tune the cost parameter of an SVM for best accuracy.
 % Observations should be in rows of X and labels in rows of Y.
 start=1;
@@ -35,5 +35,15 @@ for level=start:2
     fprintf('\tPrecision: %f\n',errors(3));
     fprintf('\tRecall: %f\n',errors(4));
     fprintf('\tNew cost: %f\n', cost);
+    
+    if level == 2
+        fprintf('Starting final training...\n');
+        % last level, update result parameter
+        result.model = trainLibsvm(X,Y,0,cost);
+        result.datetime = datetime;
+        result.cost = cost;
+        result.errors = errors;
+        result.predict = @(model, X)predictLibsvm(model, X);
+    end
 end
 end
