@@ -23,6 +23,7 @@ addpath('./tune');
 addpath('./vendor/fkmeans');
 addpath('./vendor/liblinear/matlab')
 addpath('./vendor/libsvm/matlab');
+addpath('./vendor/matlab_rosbag-linux64');
 
 if LOAD_OBSERVATIONS
     obs = initObservations(OBSERVATION_PATH, OBSERVATION_NAME, 5000, 0.8);
