@@ -6,10 +6,10 @@ images = loadImages(DATASET_PATH,[]);
 
 %% load descriptors
 load('descriptors/kmeans.mat');
-displayPatches(models{1}.weights, true);
+displayPatches(descriptors{1}.weights, true);
 
 %% apply descriptors
-filtered = applyDescriptors(images{1}, models{1});
+filtered = applyDescriptors(images{1}, descriptors{1});
 
 %% preview image (14,41,12,25)
 figure;

@@ -1,11 +1,11 @@
-function [ models ] = trainKMeans( patches, M, verbose )
+function [ descriptors ] = trainKMeans( patches, M, verbose )
 %TRAINKMEANS Train multi-scale K-means learned features.
 % Generate M clusters from multi-scale examples in patches.
 if nargin < 3
     verbose = true;
 end
 PATCH_SIZE = 8;
-models = {};
+descriptors = {};
 parfor s=0:(numel(patches)-1)
     % scales: 1, 0.5, 0.25, etc...
     scale = 1 / (2^s);
@@ -18,7 +18,7 @@ parfor s=0:(numel(patches)-1)
     [~,C] = fkmeans(Xtrain',nnodes);
     C=C';
     W = reshape(C,PATCH_SIZE,PATCH_SIZE,size(patches{s+1},3),nnodes);
-    models{s+1} = struct('weights',W,'scale',scale);
+    descriptors{s+1} = struct('weights',W,'scale',scale);
     if verbose
         fprintf('- Finished training scale %.2f\n',scale);
     end

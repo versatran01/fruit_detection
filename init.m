@@ -12,6 +12,7 @@ OBSERVATION_NAME = 'observations_24-Feb-2015.mat';
 LOAD_OBSERVATIONS = true;
 
 addpath('./descriptors');
+addpath('./detection');
 addpath('./kmeans');
 addpath('./labeling');
 addpath('./predict');

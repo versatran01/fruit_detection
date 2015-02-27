@@ -13,8 +13,8 @@ patches = samplePatchesFromSet(images, 8, NTRAIN,...
 patches = {patches};
 
 %% Train
-models = trainKMeans(patches, NODES);
+descriptors = trainKMeans(patches, NODES);
 
 %% Display results
-W1 = models{1}.weights;
+W1 = descriptors{1}.weights;
 displayPatches(W1, true);
