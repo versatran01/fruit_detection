@@ -1,8 +1,8 @@
-function [ cost, errors ] = tuneLibsvm(X,Y,nfolds,cost)
+function [ cost, errors ] = tuneLibsvm(X,Y,~,nfolds,cost)
 %TUNELIBSVM Tune the cost parameter of an SVM for best accuracy.
 % Observations should be in rows of X and labels in rows of Y.
 start=1;
-if nargin == 4
+if nargin == 5
     % initial cost is provided
     start=2;
 end
