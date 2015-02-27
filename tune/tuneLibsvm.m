@@ -40,6 +40,7 @@ for level=start:2
         fprintf('Starting final training...\n');
         % last level, update result parameter
         result.model = trainLibsvm(X,Y,0,cost);
+        result.dimension = size(X,2);   % size of feature space
         result.datetime = datetime;
         result.cost = cost;
         result.errors = errors;
