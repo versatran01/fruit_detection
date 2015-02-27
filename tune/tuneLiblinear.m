@@ -4,8 +4,8 @@ function [best_cost, best_error] = tuneLiblinear(Xtrain, Ytrain, ...
 % TUNELIBLINEAR Tune liblinear model with cross validation
 
 if nargin < 7, verbose = false; end
-if nlevel ~= 1 || nlevel ~= 2
-	error(sprintf('nlevel [%g] should be either 1 or 2', nlevel));
+if ~(nlevel ~= 1 || nlevel ~= 2)
+	error('nlevel [%g] should be either 1 or 2', nlevel);
 end
 
 acc_col = 2;
@@ -14,16 +14,16 @@ best_cost_so_far = 0;
 for level = 1:nlevel
 	if level == 1
 		cost_range = 10.^(-2:2);
-	elseif level == 2
+    elseif level == 2
 		if best_cost_so_far == 0
 			error('Oops!');
 		end
-		cost_range = logspace(log10(best_cost_so_far) - 0.9, ...
-			                  log10(best_cost_so_far) + 0.9, 10);
-	end
+		cost_range = logspace(log10(best_cost_so_far) - 0.95, ...
+			                  log10(best_cost_so_far) + 0.95, 20);
+    end
 
 	% Initialize cross validation rmse
-	xval_result = zeros(size(cost_range), 4);
+	xval_result = zeros(size(cost_range, 1), 4);
 
 	for i = 1:numel(cost_range)
 		c = cost_range(i);
@@ -31,8 +31,8 @@ for level = 1:nlevel
 		train_fun = @(x, y) trainLiblinear(x, y, s, c);
 		predict_fun = @(mdl, x) predictLiblinear(mdl, x);
 		% cross validate
-		xval_result(i, :) = crossValidate(X, Y, nfolds, train_fun, ...
-			                              predict_fun);
+		xval_result(i, :) = crossValidate(Xtrain, Ytrain, nfolds, ...
+                                          train_fun, predict_fun);
 		if verbose
 			fprintf('-- Finished evaluating c = %0.4f\n', c);
 			fprintf('-- Accuracy on this fold is %.3f\n', ...
@@ -46,9 +46,8 @@ for level = 1:nlevel
 	best_error_so_far = xval_result(best_idx, :);
 
 	if verbose
-    	fprintf('** Tuning level %i results:\n', level);
-    	fprintf('Cost: %0.4f, RMS: %0.4f, Accuracy: %0.4f, ...
-    			Precision: %0.4f, Recall: %0.4f', ...
+    	fprintf('** Level %i results:\n', level);
+    	fprintf('Cost: %0.3f, RMS: %0.3f, Acc: %0.3f, Pre: %0.3f, Rec: %0.3f', ...
     		    best_cost_so_far, best_error_so_far(1), ...
     		    best_error_so_far(2), best_error_so_far(3), ...
     		    best_error_so_far(4));
