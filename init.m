@@ -10,6 +10,7 @@ DATASET_PATH = getenv('BOOTH_DATASET_PATH');
 OBSERVATION_PATH = getenv('BOOTH_OBSERVATION_PATH');
 OBSERVATION_NAME = 'observations_24-Feb-2015.mat';
 LOAD_OBSERVATIONS = true;
+NUM_OBSERVATIONS = 5000;
 
 addpath('./descriptors');
 addpath('./detection');
@@ -27,8 +28,13 @@ if ~ismac()
     addpath('./vendor/matlab_rosbag-linux64');
 end
 
+if ~isempty(DATASET_PATH)
+    dataset = Dataset(DATASET_PATH);
+end
+
 if LOAD_OBSERVATIONS
-    obs = initObservations(OBSERVATION_PATH, OBSERVATION_NAME, 5000, 0.8);
+    obs = initObservations(OBSERVATION_PATH, OBSERVATION_NAME,...
+        NUM_OBSERVATIONS, 0.8);
 end
 
 % load descriptors

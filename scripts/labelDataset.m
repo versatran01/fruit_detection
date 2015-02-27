@@ -1,8 +1,14 @@
 %% labelDataset.m
 init;
 
+dataset_path = input('Please enter the dataset path: ', 's');
+if isempty(dataset_path)
+    % use DATASET_PATH constant
+    dataset_path = DATASET_PATH;
+end
+
 % load data
-dataset = Dataset(DATASET_PATH);
+dataset = Dataset(dataset_path);
 
 start = 1;
 num_images = dataset.size();
@@ -33,5 +39,5 @@ for n=start:num_images
     end
 end
 
-fprintf('Saving dataset to %s.\n', DATASET_PATH);
-dataset.save(DATASET_PATH);
+fprintf('Saving dataset to %s.\n', dataset_path);
+dataset.save(dataset_path);
