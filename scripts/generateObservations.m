@@ -2,13 +2,15 @@
 init;
 RATIO = 1;  % ratio of negative to positive training examples
 DESCRIPTORS_PATH = 'descriptors/kmeans.mat';
+IMAGE_SCALE = 0.5;
 
 %% load dataset
-dataset = Dataset(DATASET_PATH);
 N = dataset.size();
 
-%% load descriptors
-load(DESCRIPTORS_PATH);
+% scale all images down...
+for i=1:N
+    dataset.images{i} = imresize(dataset.images{i}, IMAGE_SCALE);
+end
 
 %% generate feature space
 Xpos = {};
@@ -20,7 +22,7 @@ parfor i=1:N
     desc = applyDescriptors(dataset.images{i}, descriptors{1});
     % sample the examples
     [Xp,Xn] = sampleExamples(desc,...
-        dataset.selections{i}, dataset.masks{i}, RATIO);
+        dataset.selections{i}, dataset.masks{i}, RATIO, IMAGE_SCALE);
     Xpos{i} = Xp;
     Xneg{i} = Xn;
 end

@@ -1,5 +1,5 @@
 function [ Xpos, Xneg ] = sampleExamples( image, selections, masks, ...
-    ratio )
+    ratio, scale )
 %SAMPLEEXAMPLES Sample examples (pixel level) from an
 % image. The size of the feature-space will be equal to the number of 
 % channels in the image.
@@ -11,7 +11,7 @@ C = size(image, 3);
 image = im2double(image);
 % create two large masks - one for positive and one for negative
 sz = size(image);
-[mask_pos,mask_neg] = createLargeMask(sz, selections, masks);
+[mask_pos,mask_neg] = createLargeMask(sz, selections, masks, scale);
 mask_pos = logical(mask_pos);
 mask_neg = ~logical(mask_neg);  % flip here to get negative mask
 % sample positive examples
