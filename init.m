@@ -28,6 +28,9 @@ if LOAD_OBSERVATIONS
     obs = initObservations(OBSERVATION_PATH, OBSERVATION_NAME, 5000, 0.8);
 end
 
+% load descriptors
+load('descriptors/kmeans.mat');
+
 % Re-seed random
 rng('shuffle', 'twister');
 
