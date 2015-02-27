@@ -17,7 +17,7 @@ parfor i=1:N
     fprintf('Processing image %i\n...', i);
     % process the image
     % todo: assume one model for now, add support for multi-scale later
-    desc = applyDescriptors(dataset.images{i}, models{1});
+    desc = applyDescriptors(dataset.images{i}, descriptors{1});
     % sample the examples
     [Xp,Xn] = sampleExamples(desc,...
         dataset.selections{i}, dataset.masks{i}, RATIO);
