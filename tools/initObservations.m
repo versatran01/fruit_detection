@@ -51,12 +51,16 @@ function observations = loadObservations(observations_dir, observations_name)
 %  observations_dir  - directory
 %  observations_name - mat file name
 
-if ~exist(observations_dir, 'dir')
-	error(sprintf('%s does not exist', observations_dir))
+if ~isempty(observations_dir)
+    if ~exist(observations_dir, 'dir')
+        error(sprintf('%s does not exist', observations_dir))
+    end
+    observations_path = [observations_dir, '/', observations_name];
+else
+    observations_path = observations_name;
 end
 
 % Load observation
-observations_path = [observations_dir, '/', observations_name];
 obs = load(observations_path);
 observations = obs.observations;
 

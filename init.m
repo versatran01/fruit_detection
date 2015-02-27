@@ -9,6 +9,7 @@ DATASET_PATH = getenv('BOOTH_DATASET_PATH');
 % path for generated observation dataset
 OBSERVATION_PATH = getenv('BOOTH_OBSERVATION_PATH');
 OBSERVATION_NAME = 'observations_24-Feb-2015.mat';
+LOAD_OBSERVATIONS = true;
 
 addpath('./descriptors');
 addpath('./kmeans');
@@ -17,11 +18,14 @@ addpath('./predict');
 addpath('./scripts');
 addpath('./tools');
 addpath('./train');
+addpath('./tune');
 addpath('./vendor/fkmeans');
 addpath('./vendor/liblinear/matlab')
 addpath('./vendor/libsvm/matlab');
 
-obs = initObservations(OBSERVATION_PATH, OBSERVATION_NAME, 5000, 0.8);
+if LOAD_OBSERVATIONS
+    obs = initObservations(OBSERVATION_PATH, OBSERVATION_NAME, 5000, 0.8);
+end
 
 % Re-seed random
 rng('shuffle', 'twister');
