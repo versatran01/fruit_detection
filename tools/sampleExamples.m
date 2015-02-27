@@ -23,7 +23,7 @@ for i=1:C
     Xpos(:,i) = chan;
 end
 % sample negative examples
-nneg = npos*ratio;
+nneg = floor(npos*ratio);
 Xneg = zeros(nneg,C);
 % generate sample positions for negative examples
 idx = find(mask_neg);

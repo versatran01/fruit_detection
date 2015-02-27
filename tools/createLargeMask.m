@@ -20,7 +20,7 @@ for i=1:N
     else
         sz = size(msk);
         sz = sz([2 1]); % width, height order
-        if any(sz ~= wh)
+        if any(sz ~= wh+1)
             if scale==1
                 error('Scale is 1 but mask resizing is required, this should not happen');
             end

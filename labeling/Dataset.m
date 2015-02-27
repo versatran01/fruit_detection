@@ -64,7 +64,10 @@ classdef Dataset < handle
             labels_path = strcat(path, '/labels.mat');
             save(labels_path,'dataset');
             if saveimages
-                % todo: add this logic...
+                for i=1:self.size()
+                    fullpath = strcat(path,'/',dataset.names{i});
+                    imwrite(self.images{i}, fullpath);
+                end
             end
         end
         
