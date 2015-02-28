@@ -21,7 +21,7 @@ end
 descriptors = load([descriptors_path, descriptors_file]);
 descriptors = descriptors.descriptors;
 
-observations = generate_observations(dataset, descriptors, 0.5, 1);
+observations = generate_observations(dataset, descriptors, 0.5);
 
 % Save descriptors
 if do_save
@@ -31,7 +31,7 @@ end
 end
 
 function observations = generate_observations(dataset, descriptors, ...
-                                              image_scale, ratio)
+                                              image_scale)
 %GENERATE_OBSERVATIONS 
 
 n_data = dataset.size();
@@ -49,7 +49,7 @@ parfor i = 1:n_data
     desc = applyDescriptors(dataset.images{i}, descriptors{1});
     % sample the examples
     [Xp, Xn] = sampleExamples(desc, dataset.selections{i}, ...
-                              dataset.masks{i}, ratio, image_scale);
+                              dataset.masks{i}, image_scale);
     Xpos{i} = Xp;
     Xneg{i} = Xn;
 end
