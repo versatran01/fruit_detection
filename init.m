@@ -10,7 +10,7 @@ DATASET_PATH = getenv('BOOTH_DATASET_PATH');
 OBSERVATION_PATH = getenv('BOOTH_OBSERVATION_PATH');
 OBSERVATION_NAME = 'observations_27-Feb-2015.mat';
 LOAD_OBSERVATIONS = true;
-NUM_OBSERVATIONS = 5000;
+NUM_OBSERVATIONS = [];
 
 addpath('./descriptors');
 addpath('./detection');
