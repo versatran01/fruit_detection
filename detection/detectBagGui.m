@@ -57,6 +57,12 @@ handles.output = hObject;
 
 set(handles.play_pause_togglebutton, 'Enable', 'off');
 
+% some hack here to load descriptors and result, fix later
+descriptors = load('descriptors/kmeans.mat');
+handles.descriptors = descriptors.descriptors;
+
+result = load('result.mat');
+handles.result = result.result;
 
 % Update handles structure
 guidata(hObject, handles);
@@ -111,9 +117,17 @@ if get(hObject, 'Value') == get(hObject, 'Max')
         [msg, meta] = handles.bag.read();
         if strcmp(meta.topic, '/color/image_raw')
             % todo: add time control
-            matlab_image = ros_image_msg_to_matlab_image(msg);
-            imagesc(matlab_image, 'Parent', handles.original_axes);
-            set(handles.original_axes, 'YDir', 'normal');
+            original_image = ros_image_msg_to_matlab_image(msg);
+            original_image = imresize(original_image, 0.25);
+            % draw origina image
+            draw_image_on(handles.original_axes, original_image);
+            
+            detection_image = detectPixels(original_image, ...
+                                           handles.descriptors, ...
+                                           handles.result);
+            
+            % draw result
+            draw_image_on(handles.detection_axes, detection_image);
             drawnow;
             pause(0.1);
             if get(hObject, 'Value') == get(hObject, 'Min')
@@ -127,6 +141,14 @@ end
 % Hint: get(hObject,'Value') returns toggle state of play_pause_togglebutton
 
 function bag_path_text_CreateFcn(hObject, eventdata, handles)
+
+function original_axes_CreateFcn(hObject, eventdata, handles)
+
+%% Helper functions
+function draw_image_on(axes, image)
+imagesc(image, 'Parent', axes);
+set(axes, 'YDir', 'normal');
+
 
 function matlab_image = ros_image_msg_to_matlab_image(ros_image_msg)
 b = ros_image_msg.data(1:3:end);
