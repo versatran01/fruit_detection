@@ -10,7 +10,6 @@ DATASET_PATH = getenv('BOOTH_DATASET_PATH');
 OBSERVATION_PATH = getenv('BOOTH_OBSERVATION_PATH');
 OBSERVATION_NAME = 'observations_27-Feb-2015.mat';
 LOAD_OBSERVATIONS = true;
-LOAD_DATASET = false;
 NUM_OBSERVATIONS = 5000;
 
 addpath('./descriptors');
@@ -27,10 +26,6 @@ addpath('./vendor/liblinear/matlab')
 addpath('./vendor/libsvm/matlab');
 if ~ismac()
     addpath('./vendor/matlab_rosbag-linux64');
-end
-
-if ~isempty(DATASET_PATH) && LOAD_DATASET
-    dataset = Dataset(DATASET_PATH);
 end
 
 if LOAD_OBSERVATIONS
