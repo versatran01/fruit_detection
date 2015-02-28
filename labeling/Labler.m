@@ -133,11 +133,17 @@ classdef Labler < handle
                     self.hLabels(end+1) = plot(points(:,1),points(:,2));
                 end 
                 set(self.hLabels(i),'LineWidth',2);
-                if ~hasmask
-                    % todo: make this an option
-                    color = [1 0 0];
-                else
-                    color = [0 0.5 1];
+                if sel(4) == 1
+                    % todo: unhardcode all this
+                    % 1 is orange
+                    if ~hasmask
+                        color = [1 0 0];
+                    else
+                        color = [0 0.5 1];
+                    end
+                elseif sel(4) == 2
+                    % 2 is not orange, color cyan?
+                    color = [0 1 1];
                 end
                 set(self.hLabels(i),'Color',color);
             end
@@ -287,7 +293,7 @@ classdef Labler < handle
         function rebuildMaskLayer(self)
             sz = size(self.image);
             self.maskLayer = createLargeMask(sz, ...
-                self.selections, self.masks);
+                self.selections, self.masks, 1);
         end
         
         function deleteSelection(self, index)
@@ -301,9 +307,9 @@ classdef Labler < handle
     end
     
     methods(Access=public)
-        function self = Labler(image, labelStrings, selections, masks)
+        function self = Labler(image, selections, masks)
             self.image = image;
-            self.labelStrings = labelStrings;
+            self.labelStrings = {'orange', 'other stuff'};
             self.hFig = figure;
             self.selections = reshape(selections, numel(selections), 1);
             if ~isempty(masks)
