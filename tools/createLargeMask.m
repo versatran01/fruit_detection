@@ -7,6 +7,7 @@ function [ bigMask ] = createLargeMask( dims, selections,...
 % `masks` is cell array of masks, one per selection.
 % `scale` is the scale factor being applied to the selections/masks
 defaults.scale = 1;
+defaults.fillEmpty = true;
 defaults.warnOnEmptyMask = true;
 defaults.filter = [];
 options = propval(varargin, defaults);
@@ -27,6 +28,9 @@ for i=1:N
     [tl,wh] = regionForSelection(sel, dims, options.scale);
     msk = logical(masks{i});
     if isempty(msk)
+        if ~options.fillEmpty
+            continue;
+        end
         if options.warnOnEmptyMask
             warning('A mask was empty, using full region!');
         end
@@ -65,5 +69,4 @@ for i=1:N
     icol = tl(1):(tl(1)+wh(1)); % x indices
     bigMask(irow,icol) = bigMask(irow,icol) | msk;
 end
-bigMask = double(bigMask);
 end

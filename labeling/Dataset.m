@@ -81,6 +81,13 @@ classdef Dataset < handle
             self.names = vertcat(self.names, other.names);
         end
         
+        function remove(self, index)
+            self.images(index) = [];
+            self.selections(index) = [];
+            self.masks(index) = [];
+            self.names(index) = [];
+        end
+        
         function value = get.size(self)
             value = numel(self.images);
         end

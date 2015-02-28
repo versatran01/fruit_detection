@@ -17,8 +17,6 @@ mask_pos = createLargeMask(sz, selections, masks,...
 % mask non-fruit
 mask_neg = createLargeMask(sz, selections, masks,...
     'scale', scale, 'filter', 2, 'warnOnEmptyMask', false);
-mask_pos = logical(mask_pos);
-mask_neg = logical(mask_neg);
 
 % sample positive examples
 npos = nnz(mask_pos);
