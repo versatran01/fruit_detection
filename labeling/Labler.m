@@ -245,6 +245,7 @@ classdef Labler < handle
                                       self.currentLabel];
             self.masks{end+1} = []; % new empty mask
             self.plotSelections();
+            self.plotImage();
         end
         
         function [index] = getSelectionAtPosition(self, pos)
@@ -292,8 +293,15 @@ classdef Labler < handle
         
         function rebuildMaskLayer(self)
             sz = size(self.image);
-            self.maskLayer = createLargeMask(sz, ...
-                self.selections, self.masks, 1);
+            % fruit
+            mask1 = createLargeMask(sz, ...
+                self.selections, self.masks,...
+                'filter', 1, 'fillEmpty', false);
+            % not fruit
+            mask2 = createLargeMask(sz, ...
+                self.selections, self.masks,...
+                'filter', 2, 'fillEmpty', true, 'warnOnEmptyMask', false);
+            self.maskLayer = double(mask1 | mask2);
         end
         
         function deleteSelection(self, index)
