@@ -29,8 +29,11 @@ if ~ismac()
 end
 
 if LOAD_OBSERVATIONS
-    obs = initObservations(OBSERVATION_PATH, OBSERVATION_NAME,...
-        NUM_OBSERVATIONS, 0.8);
+    fullpath = sprintf('%s/%s',OBSERVATION_PATH,OBSERVATION_NAME);
+    if exist(fullpath,'file')
+        obs = initObservations(OBSERVATION_PATH, OBSERVATION_NAME,...
+          NUM_OBSERVATIONS, 0.8);
+    end
 end
 
 % load descriptors
