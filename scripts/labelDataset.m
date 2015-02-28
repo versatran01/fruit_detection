@@ -1,24 +1,24 @@
 %% labelDataset.m
 init;
 
-dataset_path = input('Please enter the dataset path: ', 's');
-if isempty(dataset_path)
-    % use DATASET_PATH constant
-    dataset_path = DATASET_PATH;
+dataset_path = uigetdir(DATASET_PATH, 'Select dataset directory');
+if isempty(dataset_path) || (isnumeric(dataset_path) && dataset_path==0)
+    return; % exit early
 end
 
 % load data
 dataset = Dataset(dataset_path);
-
-start = 1;
 num_images = dataset.size();
-iptstr = sprintf('Start selections from which image? (1 ... %i): ', num_images);
-result = input(iptstr);
-if result > num_images || result < 1
-    fprintf('Error: Image number must fall in range [1,%i]\n', num_images);
-    return;
+
+prompt = {'Enter matrix size: '};
+answer = inputdlg({'Enter start image: '},...
+    'Inputbox 9000', 1, {'1'});
+answer = answer{1};
+answer = str2double(answer);
+if answer > num_images || answer < 1
+    error('Image number must fall in range [1,%i]\n', num_images);
 else
-    start = result;
+    start = answer;
 end
 
 % prompt user to circle fruit
