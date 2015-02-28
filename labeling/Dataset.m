@@ -75,6 +75,13 @@ classdef Dataset < handle
             if ~isa(other,'Dataset')
                 error('other must be of type Dataset');
             end
+            for i=1:other.size()
+                name = other.names{i};
+                exists = find(ismember(self.names, name));
+                if exists
+                    error('Tried to add duplicates! Adding nothing.');
+                end
+            end
             self.images = vertcat(self.images, other.images);
             self.selections = vertcat(self.selections, other.selections);
             self.masks = vertcat(self.masks, other.masks);
