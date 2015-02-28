@@ -293,7 +293,7 @@ classdef Labler < handle
         function rebuildMaskLayer(self)
             sz = size(self.image);
             self.maskLayer = createLargeMask(sz, ...
-                self.selections, self.masks, 1);
+                self.selections, self.masks);
         end
         
         function deleteSelection(self, index)
