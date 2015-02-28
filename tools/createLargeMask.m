@@ -44,7 +44,7 @@ for i=1:N
         % find points inside the selection region
         % todo: for now we assume circular, add other selections later...
         coords = [xvals yvals];
-        center = (wh+1)/2;
+        center = sel(1:2) - tl;
         dists = bsxfun(@minus,coords,center);
         dists = sqrt( sum(dists.^2, 2) );
         inside = dists < sel(3);
