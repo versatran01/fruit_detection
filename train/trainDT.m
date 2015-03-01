@@ -22,7 +22,6 @@ Xrange = [Xmin; Xmax];
 % train model
 model.root = splitNode(X, Y, Xrange, mean(Y), 1:size(X,2), 1, options);
 model.options = options;
-model.dimension = size(X,2);
 end
 
 function [node] = splitNode(X, Y, Xrange, value,...
