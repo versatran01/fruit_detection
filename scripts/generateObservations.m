@@ -11,20 +11,9 @@ if ~dataset_path
 end
 dataset = Dataset(dataset_path);
 
-% Load descriptors
-%[descriptors_file, descriptors_path] = uigetfile('*.mat', ...
- %                                                'Select descriptor file');
-%if ~descriptors_file
-%    error('No descriptors selected');
-%end
-%descriptors = load([descriptors_path, descriptors_file]);
-%descriptors = descriptors.descriptors;
-
-%applyDescriptors(dataset.images{i}, descriptors{1});
-
 scale = 0.5;
 maxRatio = 5;
-observations = extractObservations(dataset, @(x)someCallback(x),...
+observations = extractObservations(dataset, @rgb2fullcs,...
     'scale', scale, 'maxRatio', maxRatio);
 
 % Save descriptors
