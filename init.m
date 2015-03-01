@@ -8,7 +8,7 @@ DATASET_PATH = getenv('BOOTH_DATASET_PATH');
 
 % path for generated observation dataset
 OBSERVATION_PATH = getenv('BOOTH_OBSERVATION_PATH');
-OBSERVATION_NAME = 'observations_27-Feb-2015.mat';
+OBSERVATION_NAME = 'observations_28-Feb-2015.mat';
 LOAD_OBSERVATIONS = true;
 NUM_OBSERVATIONS = [];
 
