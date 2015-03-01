@@ -10,9 +10,11 @@ function [model] = trainDT(X, Y, varargin)
 %   `numSplits` is number of levels of possible splits to consider at each
 %   level.
 %   `verbose` turns on and off verbose output.
+%   `rounded` governs if the output should be rounded or not.
 defaults.maxDepth = 3;
 defaults.numSplits = 10;
 defaults.verbose = false;
+defaults.rounded = true;
 options = propval(varargin, defaults);
 
 % determine range of values in X
