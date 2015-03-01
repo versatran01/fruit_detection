@@ -119,6 +119,7 @@ if get(hObject, 'Value') == get(hObject, 'Max')
             % draw origina image
             draw_image_on(handles.original_axes, original_image);
             
+            original_image = im2double(original_image);
             original_image = rgb2rgbhsvlab(original_image);
             detection_image = detectPixels(handles.model, ...
                                            original_image);
