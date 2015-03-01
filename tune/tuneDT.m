@@ -9,6 +9,7 @@ numSplits = 20;
 if isempty(featidx)
     featidx = true(1, size(Xtrain,2));
 end
+D = size(Xtrain,2);
 Xtrain = Xtrain(:,featidx);
 for l=1:nlevels
    train_cb = @(x,y)trainDT(x,y, 'maxDepth', l, 'numSplits', numSplits);
@@ -37,7 +38,7 @@ errors = errors(best_idx,:);
 % retrain final model
 result.model = trainDT(Xtrain, Ytrain, 'maxDepth', best_idx,...
     'numSplits', numSplits);
-result.dimension = size(Xtrain,2);
+result.dimension = D;
 result.featIndex = featidx;
 result.datetime = datetime;
 result.maxDepth = best_idx;
