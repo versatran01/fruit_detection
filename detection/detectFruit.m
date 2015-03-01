@@ -9,5 +9,15 @@ image = rgb2fullcs(image);
 mask = detectPixels(pixel_model, image);
 
 % todo: connected components, etc...
+mask = mask > 0.5;
+CC = bwconncomp(mask);
+
+area = regionprops(CC,'Area');
+area = [area.Area];
+
+idx = area > 15;
+
+strip = cell2mat( CC.PixelIdxList(~idx)' );
+mask(strip) = false;
 
 end
