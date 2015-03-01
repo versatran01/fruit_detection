@@ -1,5 +1,5 @@
 function [observations] = extractObservations(dataset, imageProcessor,...
-    varargin)
+                                              varargin)
 % EXTRACTOBSERVATIONS Create an Xpos and Xneg from a dataset.
 %
 % `dataset` is an instance of a dataset.
