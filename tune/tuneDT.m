@@ -1,0 +1,39 @@
+function [ result ] = tuneDT( Xtrain, Ytrain, nlevels, nfolds, errorIndex )
+%TUNEDT Tune binary classification decision tree.
+% `nlevels` is the number of different depths to try.
+% `errorIndex` is the type of error metric to optimize (see crossValidate).
+errors = [];
+numSplits = 20;
+for l=1:nlevels
+   train_cb = @(x,y)trainDT(x,y, 'maxDepth', l, 'numSplits', numSplits);
+   predict_cb = @predictDT;
+   errs = crossValidate(Xtrain, Ytrain, nfolds, train_cb, predict_cb);
+   errors(l,:) = errs;
+   fprintf('- Finished evaluating depth = %i\n', l);
+end
+if errorIndex==1    % rms, use min
+    [~, best_idx] = min(errors(:,errorIndex),[],1);
+else
+    [~, best_idx] = max(errors(:,errorIndex),[],1);
+end
+% output all errors
+for l=1:nlevels
+    errs = errors(l,:);
+    if l==best_idx
+        char = '*'; % denote the selected param
+    else
+        char = '-';
+    end
+    fprintf('%s Metrics for depth = %i are %.4f/%.4f/%.4f/%.4f\n',...
+       char, l, errs(1), errs(2), errs(3), errs(4));
+end
+errors = errors(best_idx,:);
+% retrain final model
+result.model = trainDT(Xtrain, Ytrain, 'maxDepth', best_idx,...
+    'numSplits', numSplits);
+result.dimension = size(Xtrain,2);
+result.datetime = datetime;
+result.maxDepth = best_idx;
+result.errors = errors;
+result.predict = @predictDT;
+end
