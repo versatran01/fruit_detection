@@ -1,8 +1,11 @@
-function [ Y ] = predictDT( model, X )
+function [ Y ] = predictDT( model, X, rounded )
 %PREDICT Predict using a binary-tree based classifier.
-if model.dimension ~= size(X,2)
-    error('This model was trained on a different size feature space');
+if nargin < 3
+    rounded = true;
 end
 X = X';
-Y = round(getValueDT(model.root, X)');
+Y = getValueDT(model.root, X)';
+if rounded
+    Y = round(Y);
+end
 end
