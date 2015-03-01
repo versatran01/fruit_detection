@@ -4,7 +4,7 @@ function [model] = trainDT(X, Y, varargin)
 % use for classification. Assumes that labels are binary (0/1).
 defaults.maxDepth = 3;
 defaults.numSplits = 10;
-defaults.verbose = true;
+defaults.verbose = false;
 options = propval(varargin, defaults);
 
 % determine range of values in X
