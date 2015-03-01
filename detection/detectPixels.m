@@ -16,7 +16,7 @@ sz = size(image);
 N = prod(sz(1:2));  % number of pixels
 X = applyDescriptors(image, descriptors{1});
 % convert to a set of observations in rows [NxD]
-X = reshape(X,N,D);
+X = reshape(X,N,size(X,3));
 % generate labels (assume for now these are simply 1/0)
 Y = result.predict(result.model, X);
 % convert into mask

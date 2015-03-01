@@ -9,6 +9,9 @@ observations = loadObservations(observations_dir, observations_name);
 
 npos = size(observations.Xpos, 1);
 nneg = size(observations.Xneg, 1);
+if isempty(num_samples)
+    num_samples = npos+nneg;
+end
 
 if num_samples > (npos + nneg)
 	error(sprintf('num_samples [%g] is bigger then num_observations [%g]', ...
