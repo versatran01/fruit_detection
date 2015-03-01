@@ -1,4 +1,4 @@
-function ensemble_model = tuneEnsemble(model_names)
+function ensemble_result = tuneEnsemble(model_names)
 
 % model_names - cell array of strings of model names that can be found in
 %               folder models. If not specified or empty, tuneEnsemble will
