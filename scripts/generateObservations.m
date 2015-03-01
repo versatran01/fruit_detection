@@ -21,7 +21,8 @@ end
 descriptors = load([descriptors_path, descriptors_file]);
 descriptors = descriptors.descriptors;
 
-observations = generate_observations(dataset, descriptors, 0.5);
+maxRatio = 3;
+observations = generate_observations(dataset, descriptors, 0.5, maxRatio);
 
 % Save descriptors
 if do_save
@@ -31,7 +32,7 @@ end
 end
 
 function observations = generate_observations(dataset, descriptors, ...
-                                              image_scale)
+                                              image_scale, maxRatio)
 %GENERATE_OBSERVATIONS 
 
 n_data = dataset.size();
@@ -50,6 +51,15 @@ parfor i = 1:n_data
     % sample the examples
     [Xp, Xn] = sampleExamples(desc, dataset.selections{i}, ...
                               dataset.masks{i}, image_scale);
+              
+    npos = size(Xp,1);
+    nneg = size(Xn,1);
+    maxPos = maxRatio*npos;
+    if nneg > maxPos
+        idx = randperm(nneg);
+        idx = idx(1:maxPos);
+        Xn = Xn(idx,:); % throw away some negative to bring down the ratio
+    end
     Xpos{i} = Xp;
     Xneg{i} = Xn;
 end
