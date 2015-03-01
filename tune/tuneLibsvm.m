@@ -22,7 +22,7 @@ for level=start:2
         % cross-validate
         errors(i,:) = crossValidate(X,Y,nfolds,train_cb,predict_cb);
         fprintf('- Finished evaluating c = %.4f\n', c);
-        fprintf('- Accuracy on this fold is %.3f\n', errors(i,2));
+        fprintf('- Accuracy on this value is %.3f\n', errors(i,2));
     end
     % using the accuracy as the tuning parameter here (2nd column)
     [~,max_idx] = max(errors(:,2));
