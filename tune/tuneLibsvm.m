@@ -44,7 +44,7 @@ for level=start:2
         result.datetime = datetime;
         result.cost = cost;
         result.errors = errors;
-        result.predict = @(model, X)predictLibsvm(model, X);
+        result.predict = @predictLibsvm;
     end
 end
 end

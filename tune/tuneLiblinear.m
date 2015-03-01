@@ -60,6 +60,6 @@ result.dimension = size(Xtrain, 2);
 result.datetime = datetime;
 result.cost = best_cost_so_far;
 result.errors = best_errors_so_far;
-result.predict = @(model, X) predictLiblinear(model, X);
+result.predict = @predictLiblinear;
 
 end
