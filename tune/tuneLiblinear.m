@@ -1,7 +1,7 @@
-function result = tuneLiblinear(Xtrain, Ytrain, nlevel, nfolds, cost, s, verbose)
+function result = tuneLiblinear(Xtrain, Ytrain, nlevel, nfolds, s, verbose)
 % TUNELIBLINEAR Tune liblinear model with cross validation
 
-if nargin < 7, verbose = false; end
+if nargin < 6, verbose = false; end
 if ~(nlevel ~= 1 || nlevel ~= 2)
 	error('nlevel [%g] should be either 1 or 2', nlevel);
 end
@@ -12,7 +12,7 @@ best_cost_so_far = 0;
 for level = 1:nlevel
 	if level == 1
 		cost_range = 10.^(-2:2);
-    elseif level == 2
+    else
 		if best_cost_so_far == 0
 			error('Oops!');
 		end
@@ -30,7 +30,8 @@ for level = 1:nlevel
 		predict_fun = @(mdl, x) predictLiblinear(mdl, x);
 		% cross validate
 		xval_errors(i, :) = crossValidate(Xtrain, Ytrain, nfolds, ...
-                                          train_fun, predict_fun);
+                                          train_fun, predict_fun, ...
+                                          'verbose', verbose);
 		if verbose
 			fprintf('-- Finished evaluating c = %0.4f\n', c);
 			fprintf('-- Accuracy on this fold is %.3f\n', ...
