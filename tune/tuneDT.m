@@ -1,9 +1,11 @@
 function [ result ] = tuneDT( Xtrain, Ytrain, featidx, ...
-    nlevels, nfolds, errorIndex )
+    nlevels, nfolds, errorIndex, rounded )
 %TUNEDT Tune binary classification decision tree.
 % `featidx` are the indices of features to use.
 % `nlevels` is the number of different depths to try.
 % `errorIndex` is the type of error metric to optimize (see crossValidate).
+% `rounded` indicates whether outputs of the model should be rounded. This
+% only applies to the final model - not the cross-validated intermediates.
 errors = [];
 numSplits = 20;
 if isempty(featidx)
@@ -37,7 +39,7 @@ end
 errors = errors(best_idx,:);
 % retrain final model
 result.model = trainDT(Xtrain, Ytrain, 'maxDepth', best_idx,...
-    'numSplits', numSplits);
+    'numSplits', numSplits, 'rounded', rounded);
 result.dimension = D;
 result.featIndex = featidx;
 result.datetime = datetime;

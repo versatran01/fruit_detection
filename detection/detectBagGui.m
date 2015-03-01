@@ -119,9 +119,7 @@ if get(hObject, 'Value') == get(hObject, 'Max')
             % draw origina image
             draw_image_on(handles.original_axes, original_image);
             
-            original_image = rgb2fullcs(original_image);
-            detection_image = detectPixels(handles.model, ...
-                                           original_image);
+            detection_image = detectFruit(handles.model, original_image);
             
             % draw result
             draw_image_on(handles.detection_axes, detection_image);
