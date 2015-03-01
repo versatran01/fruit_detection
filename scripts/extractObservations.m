@@ -21,7 +21,7 @@ end
 n_data = dataset.size();
 Xpos = {};
 Xneg = {};
-for i = 1:n_data
+parfor i = 1:n_data
     if options.verbose
         fprintf('Processing image %i...\n', i);
     end
