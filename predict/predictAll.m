@@ -12,6 +12,10 @@ else
     if model.dimension ~= D
         error('Model was trained on a different dimension feature space');
     end
+    if isfield(model, 'featIndex')
+        % apply feature indices to feature space
+        X = X(:, model.featIndex);
+    end
     Y = model.predict(model.model, X);
 end
 end

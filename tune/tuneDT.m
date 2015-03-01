@@ -1,9 +1,16 @@
-function [ result ] = tuneDT( Xtrain, Ytrain, nlevels, nfolds, errorIndex )
+function [ result ] = tuneDT( Xtrain, Ytrain, featidx, ...
+    nlevels, nfolds, errorIndex )
 %TUNEDT Tune binary classification decision tree.
+% `featidx` are the indices of features to use.
 % `nlevels` is the number of different depths to try.
 % `errorIndex` is the type of error metric to optimize (see crossValidate).
 errors = [];
 numSplits = 20;
+if isempty(featidx)
+    featidx = true(1, size(Xtrain,2));
+end
+D = size(Xtrain,2);
+Xtrain = Xtrain(:,featidx);
 for l=1:nlevels
    train_cb = @(x,y)trainDT(x,y, 'maxDepth', l, 'numSplits', numSplits);
    predict_cb = @predictDT;
@@ -31,7 +38,8 @@ errors = errors(best_idx,:);
 % retrain final model
 result.model = trainDT(Xtrain, Ytrain, 'maxDepth', best_idx,...
     'numSplits', numSplits);
-result.dimension = size(Xtrain,2);
+result.dimension = D;
+result.featIndex = featidx;
 result.datetime = datetime;
 result.maxDepth = best_idx;
 result.errors = errors;
