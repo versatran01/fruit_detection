@@ -9,7 +9,8 @@ image = im2double(image);
 channels = size(image, 3);
 sig = @(z)(1 ./ (1 + exp(-z))); % sigmoid activation function
 
-responses = zeros(size(image, 1), size(image, 2), size(weights, 2));
+responses = zeros(size(image, 1), size(image, 2),...
+    size(weights, 2));
 x = zeros(size(image, 1), size(image, 2), 3);
 for d=1:size(weights,4)
     h = weights(:,:,:,d);
@@ -18,7 +19,6 @@ for d=1:size(weights,4)
     for c=1:channels
         x(:,:,c) = imfilter(image(:,:,c), h(:,:,c));
     end
-    % average over per-channel response
     responses(:,:,d) = sum(x,3) / 3;
 end
 end

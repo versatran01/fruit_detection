@@ -75,17 +75,59 @@ classdef Dataset < handle
             if ~isa(other,'Dataset')
                 error('other must be of type Dataset');
             end
+            for i=1:other.size()
+                name = other.names{i};
+                exists = find(ismember(self.names, name));
+                if exists
+                    error('Tried to add duplicates! Adding nothing.');
+                end
+            end
             self.images = vertcat(self.images, other.images);
             self.selections = vertcat(self.selections, other.selections);
             self.masks = vertcat(self.masks, other.masks);
             self.names = vertcat(self.names, other.names);
         end
         
-        function remove(self, index)
+        function removeImage(self, index)
             self.images(index) = [];
             self.selections(index) = [];
             self.masks(index) = [];
             self.names(index) = [];
+        end
+                
+        function [indices, seldata] = findEmptyMasks(self, filter)
+            if nargin < 2
+                filter = 1;
+            end
+            indices = [];
+            seldata = [];
+            for i=1:self.size()
+                M = self.masks{i};
+                S = self.selections{i};
+                for j=1:numel(M)
+                    sel = S{j};
+                    % matches the filter and is empty!
+                    if sel(4) == filter
+                        if isempty(M{j})
+                            indices(end+1,:) = [i j];
+                            seldata(end+1,:) = sel;
+                        end
+                    end
+                end
+            end
+        end
+        
+        function launchLabler(self, index)
+            if index > self.size()
+                error('Invalid image index');
+            end
+            L = Labler(self.images{index}, ...
+                    self.selections{index}, self.masks{index});
+            while ~L.isFinished()
+                drawnow;
+            end
+            self.selections{index} = L.getSelections();
+            self.masks{index} = L.getMasks();
         end
         
         function value = get.size(self)

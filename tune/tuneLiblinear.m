@@ -7,6 +7,8 @@ if ~(nlevel ~= 1 || nlevel ~= 2)
 end
 
 acc_col = 2;
+pre_col = 3;
+rec_col = 4;
 best_cost_so_far = 0;
 
 for level = 1:nlevel
@@ -34,8 +36,9 @@ for level = 1:nlevel
                                           'verbose', verbose);
 		if verbose
 			fprintf('-- Finished evaluating c = %0.4f\n', c);
-			fprintf('-- Accuracy on this fold is %.3f\n', ...
-				    xval_errors(i, acc_col));
+			fprintf('-- Accuracy/precision/recall on this fold are %.3f/%.3f/%.3f\n', ...
+				    xval_errors(i, acc_col), xval_errors(i, pre_col), ...
+                    xval_errors(i, rec_col));
 		end
 	end
 
