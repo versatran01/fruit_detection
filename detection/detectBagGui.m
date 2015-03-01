@@ -116,7 +116,7 @@ if get(hObject, 'Value') == get(hObject, 'Max')
             original_image = ros_image_msg_to_matlab_image(msg);
             original_image = imresize(original_image, 0.25);
             
-            % draw origina image
+            % draw original image
             draw_image_on(handles.original_axes, original_image);
             
             detection_image = detectFruit(handles.model, original_image);

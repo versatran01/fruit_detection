@@ -1,9 +1,9 @@
-function Yhat = predictLiblinear(model, Xtest, clamp)
+function Yhat = predictLiblinear(param, Xtest, clamp)
 % PREDICTLIBLINEAR Generate predictions using a liblinear model
 %  Predict Yhat for Xtest using liblinearpredict with any liblinear model
 %
 % INPUT:
-%  model - liblinear model
+%  model - liblinear param
 %  Xtest - testing instance matrix
 %  clamp - clamp predicted label between [0,1]
 %
@@ -18,7 +18,7 @@ if ~issparse(Xtest)
 end
 
 N = size(Xtest, 1);
-Yhat = liblinearpredict(ones(N, 1), Xtest, model, '-q');
+Yhat = liblinearpredict(ones(N, 1), Xtest, param, '-q');
 
 % Clamp predicted labels
 if clamp
