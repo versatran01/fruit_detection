@@ -35,7 +35,7 @@ for level = 1:nlevel
                                           train_fun, predict_fun);
 		if verbose
 			fprintf('-- Finished evaluating c = %0.4f\n', c);
-			fprintf('-- Accuracy/precision/recall on this fold are %.3f/%.3f/%.3f\n', ...
+			fprintf('-- Accuracy/precision/recall on this value are %.3f/%.3f/%.3f\n', ...
 				    xval_errors(i, acc_col), xval_errors(i, pre_col), ...
                     xval_errors(i, rec_col));
 		end
@@ -60,6 +60,6 @@ result.dimension = size(Xtrain, 2);
 result.datetime = datetime;
 result.cost = best_cost_so_far;
 result.errors = best_errors_so_far;
-result.predict = @(model, X) predictLiblinear(model, X);
+result.predict = @predictLiblinear;
 
 end

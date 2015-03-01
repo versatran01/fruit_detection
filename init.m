@@ -8,7 +8,7 @@ DATASET_PATH = getenv('BOOTH_DATASET_PATH');
 
 % path for generated observation dataset
 OBSERVATION_PATH = getenv('BOOTH_OBSERVATION_PATH');
-OBSERVATION_NAME = 'observations_27-Feb-2015.mat';
+OBSERVATION_NAME = 'observations_28-Feb-2015.mat';
 LOAD_OBSERVATIONS = true;
 NUM_OBSERVATIONS = [];
 
@@ -16,6 +16,7 @@ addpath('./descriptors');
 addpath('./detection');
 addpath('./kmeans');
 addpath('./labeling');
+addpath('./mex');
 addpath('./predict');
 addpath('./scripts');
 addpath('./tools');
@@ -26,6 +27,8 @@ addpath('./vendor/liblinear/matlab')
 addpath('./vendor/libsvm/matlab');
 if ~ismac()
     addpath('./vendor/matlab_rosbag-linux64');
+else
+    addpath('./vendor/matlab_rosbag-mac64/');
 end
 
 if LOAD_OBSERVATIONS
