@@ -48,10 +48,10 @@ for i=1:N
         % find points inside the selection region
         % todo: for now we assume circular, add other selections later...
         coords = [xvals yvals];
-        center = sel(1:2) - tl;
+        center = sel(1:2)*options.scale - tl;
         dists = bsxfun(@minus,coords,center);
         dists = sqrt( sum(dists.^2, 2) );
-        inside = dists < sel(3);
+        inside = dists < sel(3)*options.scale;
         msk(inside) = true;
     else
         sz = size(msk);
