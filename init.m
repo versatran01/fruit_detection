@@ -27,6 +27,8 @@ addpath('./vendor/liblinear/matlab')
 addpath('./vendor/libsvm/matlab');
 if ~ismac()
     addpath('./vendor/matlab_rosbag-linux64');
+else
+    addpath('./vendor/matlab_rosbag-mac64/');
 end
 
 if LOAD_OBSERVATIONS

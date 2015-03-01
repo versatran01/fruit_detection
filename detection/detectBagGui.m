@@ -57,12 +57,8 @@ handles.output = hObject;
 
 set(handles.play_pause_togglebutton, 'Enable', 'off');
 
-% some hack here to load descriptors and result, fix later
-descriptors = load('descriptors/kmeans.mat');
-handles.descriptors = descriptors.descriptors;
-
-result = load('result.mat');
-handles.result = result.result;
+load('result.mat');
+handles.model = model;
 
 % Update handles structure
 guidata(hObject, handles);
@@ -119,12 +115,13 @@ if get(hObject, 'Value') == get(hObject, 'Max')
             % todo: add time control
             original_image = ros_image_msg_to_matlab_image(msg);
             original_image = imresize(original_image, 0.25);
+            
             % draw origina image
             draw_image_on(handles.original_axes, original_image);
             
-            detection_image = detectPixels(original_image, ...
-                                           handles.descriptors, ...
-                                           handles.result);
+            original_image = rgb2rgbhsvlab(original_image);
+            detection_image = detectPixels(handles.model, ...
+                                           original_image);
             
             % draw result
             draw_image_on(handles.detection_axes, detection_image);
