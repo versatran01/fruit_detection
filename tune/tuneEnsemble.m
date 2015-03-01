@@ -32,9 +32,9 @@ ensemble_rmse = rootMeanSquare(Yvalid - mean(Yvalid_hat, 2));
 weights = 1./valid_rmse;
 weights = weights / sum(weights);
 weighted_rmse = rootMeanSquare(Yvalid - sum(bsxfun(@times, Yvalid_hat, weights), 2));
-resgression_weights = inv(Ytrain_hat' * Ytrain_hat + 1000 * eye(size(Ytrain_hat, 2))) ...
+regression_weights = inv(Ytrain_hat' * Ytrain_hat + 1000 * eye(size(Ytrain_hat, 2))) ...
                      * Ytrain_hat' * Ytrain;
-regression_rmse = rootMeanSquare(Yvalid - Yvalid_hat * resgression_weights);
+regression_rmse = rootMeanSquare(Yvalid - Yvalid_hat * regression_weights);
 
 fprintf('\n=========================================');
 fprintf('\n ** Average Ensemble RMSE: %.4f **\n', ensemble_rmse)
@@ -45,7 +45,8 @@ fprintf('\n ** Regression Ensemble RMSE: %.4f **\n', regression_rmse)
 fprintf('=========================================\n');
 
 ensemble.weights = regression_weights;
-ensemble.models = models;
+ensemble.sub_models = models;
+ensemble.predict = @(model, X) predictEnsemble(model, X, ensemble.weights);
 
 end
 
