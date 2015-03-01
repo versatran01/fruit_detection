@@ -21,8 +21,9 @@ end
 descriptors = load([descriptors_path, descriptors_file]);
 descriptors = descriptors.descriptors;
 
-maxRatio = 3;
-observations = generate_observations(dataset, descriptors, 0.5, maxRatio);
+scale = 0.5;
+maxRatio = 5;
+observations = generate_observations(dataset, descriptors, scale, maxRatio);
 
 % Save descriptors
 if do_save
