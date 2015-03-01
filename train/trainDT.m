@@ -1,7 +1,15 @@
 function [model] = trainDT(X, Y, varargin)
 %TRAINDT - Train a binary tree decision classifier. Information gain is
 % used at every level of the tree in order to determine the best feature to
-% use for classification. Assumes that labels are binary (0/1).
+% use for classification.
+%
+% Parameters:
+%   `X` is an NxD matrix of observations.
+%   `Y` is an Nx1 matrix of (only) binary labels (0/1).
+%   `maxDepth` is the max depth of the tree.
+%   `numSplits` is number of levels of possible splits to consider at each
+%   level.
+%   `verbose` turns on and off verbose output.
 defaults.maxDepth = 3;
 defaults.numSplits = 10;
 defaults.verbose = false;
