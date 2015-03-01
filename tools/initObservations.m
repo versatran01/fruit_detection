@@ -14,18 +14,18 @@ if isempty(num_samples)
 end
 
 if num_samples > (npos + nneg)
-	error(sprintf('num_samples [%g] is bigger then num_observations [%g]', ...
-		           num_samples, npos + nneg));
+	error('num_samples [%g] is bigger then num_observations [%g]', ...
+		  num_samples, npos + nneg);
 elseif num_samples <= 0
-	error(sprintf('num_samples [%g] should be positive', num_samples));
+	error('num_samples [%g] should be positive', num_samples);
 elseif fraction_train <= 0 || fraction_train >= 1
-	error(sprintf('fraction_train [%0.2f] should be in (0, 1)', ...
-		          fraction_train));
+	error('fraction_train [%0.2f] should be in (0, 1)', ...
+		  fraction_train);
 end
 
 % create X matrix and sample the set to work with
 X = [observations.Xpos; observations.Xneg];
-Y = [ones(npos, 1);, zeros(nneg, 1)];
+Y = [ones(npos, 1); zeros(nneg, 1)];
 idx = randperm(npos + nneg);
 idx = idx(1:num_samples);
 X = X(idx, :);
@@ -56,7 +56,7 @@ function observations = loadObservations(observations_dir, observations_name)
 
 if ~isempty(observations_dir)
     if ~exist(observations_dir, 'dir')
-        error(sprintf('%s does not exist', observations_dir))
+        error('%s does not exist', observations_dir);
     end
     observations_path = [observations_dir, '/', observations_name];
 else
