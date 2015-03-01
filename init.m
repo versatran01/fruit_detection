@@ -16,6 +16,7 @@ addpath('./descriptors');
 addpath('./detection');
 addpath('./kmeans');
 addpath('./labeling');
+addpath('./mex');
 addpath('./predict');
 addpath('./scripts');
 addpath('./tools');
