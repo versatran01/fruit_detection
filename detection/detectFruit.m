@@ -1,4 +1,4 @@
-function [ mask ] = detectFruit( pixel_model, image )
+function [ mask, bbox ] = detectFruit( pixel_model, image )
 %DETECTFRUIT Detect fruit in an image.
 % `pixel_model` is the detection model trained at the pixel level.
 % `image` is the input image in the RGB color space.
@@ -12,12 +12,18 @@ mask = detectPixels(pixel_model, image);
 mask = mask > 0.5;
 CC = bwconncomp(mask);
 
-properties = regionprops(CC,'Area');
-
+properties = regionprops(CC,'Area','BoundingBox','Centroid');
 area = [properties.Area];
+bbox = vertcat(properties.BoundingBox);
 
-idx = area > 5;
+% throw away the pixels below the treshold
+idx = area > 70;
 strip = cell2mat( CC.PixelIdxList(~idx)' );
 mask(strip) = false;
+
+% get bounding boxes
+bbox = bbox(idx,:);
+
+% todo: more stuff
 
 end
