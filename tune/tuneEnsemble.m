@@ -20,8 +20,8 @@ valid_rmse = [];
 
 for i = 1:length(sub_models)
     sub_model = sub_models{i};
-    Ytrain_n = sub_model.predict(sub_model.param, Xtrain(:, sub_model.feat_ind));
-    Yvalid_n = sub_model.predict(sub_model.param, Xvalid(:, sub_model.feat_ind));
+    Ytrain_n = predictAll(sub_model, Xtrain);
+    Yvalid_n = predictAll(sub_model, Xvalid);
     sum(Ytrain_n)
     Ytrain_hat = [Ytrain_hat Ytrain_n];
     Yvalid_hat = [Yvalid_hat Yvalid_n];
@@ -46,7 +46,7 @@ fprintf('\n ** Regression Ensemble RMSE: %.4f **\n', regression_rmse)
 fprintf('=========================================\n');
 
 ensemble.weights = regression_weights;
-ensemble.sub_models = sub_models;
+ensemble.param = sub_models;
 ensemble.predict = @predictEnsemble;
 
 end
@@ -63,7 +63,7 @@ for i = 1:numel(listings)
     if ~listing.isdir
         if ~isempty(strfind(listing.name, '.mat'))
             model = load([models_dir, '/', listing.name]);
-            models{k} = model.model;
+            models{k} = model.param;
             k = k + 1;
         end
     end

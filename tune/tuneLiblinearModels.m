@@ -20,7 +20,7 @@ for i = 1:length(tune_param_types)
                            nlevel, nfolds, param_type);
     model.name = model_name;
     model.acronym = model_acronym;
-    model.feat_ind = feat_ind;
+    model.featIndex = feat_ind;
     % Save model to disk
     model_path = [models_dir, '/', model_acronym];
     save(model_path, 'model');
