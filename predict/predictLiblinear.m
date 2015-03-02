@@ -18,7 +18,11 @@ if ~issparse(X)
 end
 
 N = size(X, 1);
-Yhat = liblinearpredict(ones(N, 1), X, param, '-q');
+if param.Parameters == 7 || param.Parameters == 0 || param.Parameters == 6
+    Yhat = liblinearpredict(ones(N, 1), X, param, '-b 1 -q');
+else
+    Yhat = liblinearpredict(ones(N, 1), X, param, '-q');
+end
 
 % Clamp predicted labels
 if clamp

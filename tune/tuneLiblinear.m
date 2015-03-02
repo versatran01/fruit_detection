@@ -1,4 +1,4 @@
-function result = tuneLiblinear(Xtrain, Ytrain, nlevel, nfolds, s, verbose)
+function model = tuneLiblinear(Xtrain, Ytrain, nlevel, nfolds, s, verbose)
 % TUNELIBLINEAR Tune liblinear model with cross validation
 
 if nargin < 6, verbose = false; end
@@ -56,11 +56,11 @@ for level = 1:nlevel
     end
 end
 
-result.param = trainLiblinear(Xtrain, Ytrain, s, best_cost_so_far);
-result.dimension = size(Xtrain, 2);
-result.datetime = datetime;
-result.cost = best_cost_so_far;
-result.errors = best_errors_so_far;
-result.predict = @predictLiblinear;
+model.param = trainLiblinear(Xtrain, Ytrain, s, best_cost_so_far);
+model.dimension = size(Xtrain, 2);
+model.datetime = datetime;
+model.cost = best_cost_so_far;
+model.errors = best_errors_so_far;
+model.predict = @predictLiblinear;
 
 end

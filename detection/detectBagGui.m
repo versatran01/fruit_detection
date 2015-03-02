@@ -57,7 +57,7 @@ handles.output = hObject;
 
 set(handles.play_pause_togglebutton, 'Enable', 'off');
 
-load('models/liblinear_ensemble.mat');
+load('models/ensemble.mat');
 handles.model = model;
 
 % Update handles structure
