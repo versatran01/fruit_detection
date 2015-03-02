@@ -57,8 +57,8 @@ handles.output = hObject;
 
 set(handles.play_pause_togglebutton, 'Enable', 'off');
 
-load('result.mat');
-handles.model = model;
+load('ensemble.mat');
+handles.model = ensemble;
 
 % Update handles structure
 guidata(hObject, handles);
@@ -124,7 +124,7 @@ if get(hObject, 'Value') == get(hObject, 'Max')
             % draw result
             draw_image_on(handles.detection_axes, detection_image);
             drawnow;
-            pause(0.1);
+            pause(0.01);
             if get(hObject, 'Value') == get(hObject, 'Min')
                 break
             end

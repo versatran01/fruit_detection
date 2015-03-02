@@ -1,11 +1,11 @@
-function ensemble = tuneEnsemble(observations, model_names)
+function ensemble = tuneEnsemble(observations, sub_model_names)
 
 % model_names - cell array of strings of model names that can be found in
 %               folder models. If not specified or empty, tuneEnsemble will
 %               try to use all the models that can be found
 
-if nargin < 2, model_names = {}; end
-models = loadModels(model_names);
+if nargin < 2, sub_model_names = {}; end
+sub_models = loadModels(sub_model_names);
 
 Xtrain = observations.Xtrain;
 Xvalid = observations.Xtest;
@@ -18,14 +18,15 @@ Yvalid_hat = [];
 
 valid_rmse = [];
 
-for i = 1:length(models)
-    model = models{i};
-    Ytrain_n = model.predict(model.param, Xtrain(:, model.feat_ind));
-    Yvalid_n = model.predict(model.param, Xvalid(:, model.feat_ind));
+for i = 1:length(sub_models)
+    sub_model = sub_models{i};
+    Ytrain_n = sub_model.predict(sub_model.param, Xtrain(:, sub_model.feat_ind));
+    Yvalid_n = sub_model.predict(sub_model.param, Xvalid(:, sub_model.feat_ind));
+    sum(Ytrain_n)
     Ytrain_hat = [Ytrain_hat Ytrain_n];
     Yvalid_hat = [Yvalid_hat Yvalid_n];
     valid_rmse(i) = rootMeanSquare(Yvalid_n - Yvalid);
-    fprintf('Validation RMSE for %s -> %f.\n', model.name, valid_rmse(end));
+    fprintf('Validation RMSE for %s -> %f.\n', sub_model.name, valid_rmse(end));
 end
 
 ensemble_rmse = rootMeanSquare(Yvalid - mean(Yvalid_hat, 2));
@@ -45,8 +46,8 @@ fprintf('\n ** Regression Ensemble RMSE: %.4f **\n', regression_rmse)
 fprintf('=========================================\n');
 
 ensemble.weights = regression_weights;
-ensemble.sub_models = models;
-ensemble.predict = @(model, X) predictEnsemble(model, X, ensemble.weights);
+ensemble.sub_models = sub_models;
+ensemble.predict = @predictEnsemble;
 
 end
 
