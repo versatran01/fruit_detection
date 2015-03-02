@@ -6,7 +6,7 @@ models_dir = 'models';
 
 [liblinear_types, liblinear_names, liblinear_acronyms] = getLiblinearTypes();
 if nargin < 2, tune_param_types = 0:7; end
-if nargin < 3, feat_ind = 1:6; end
+if nargin < 3, feat_ind = [1:6, 11, 12]; end
 
 for i = 1:length(tune_param_types)
     param_type = tune_param_types(i);

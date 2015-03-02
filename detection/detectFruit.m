@@ -12,7 +12,7 @@ mask = detectPixels(pixel_model, image);
 mask = mask > 0.5;
 CC = bwconncomp(mask);
 
-properties = regionprops(CC,'Area');
+properties = regionprops(CC, 'Area');
 
 area = [properties.Area];
 

@@ -22,7 +22,6 @@ for i = 1:length(sub_models)
     sub_model = sub_models{i};
     Ytrain_n = predictAll(sub_model, Xtrain);
     Yvalid_n = predictAll(sub_model, Xvalid);
-    sum(Ytrain_n)
     Ytrain_hat = [Ytrain_hat Ytrain_n];
     Yvalid_hat = [Yvalid_hat Yvalid_n];
     valid_rmse(i) = rootMeanSquare(Yvalid_n - Yvalid);
@@ -34,7 +33,7 @@ weights = 1./valid_rmse;
 weights = weights / sum(weights);
 weighted_rmse = rootMeanSquare(Yvalid - sum(bsxfun(@times, Yvalid_hat, weights), 2));
 regression_weights = inv(Ytrain_hat' * Ytrain_hat + 1000 * eye(size(Ytrain_hat, 2))) ...
-                     * Ytrain_hat' * Ytrain;
+    * Ytrain_hat' * Ytrain;
 regression_rmse = rootMeanSquare(Yvalid - Yvalid_hat * regression_weights);
 
 fprintf('\n=========================================');
@@ -57,16 +56,25 @@ if nargin < 2, models_dir = 'models'; end
 listings = dir(models_dir);
 
 models = {};
-k = 1;
-for i = 1:numel(listings)
-    listing = listings(i);
-    if ~listing.isdir
-        if ~isempty(strfind(listing.name, '.mat'))
-            load([models_dir, '/', listing.name]);
-            models{k} = model;
-            k = k + 1;
+
+if isempty(model_names)
+    k = 1;
+    for i = 1:numel(listings)
+        listing = listings(i);
+        if ~listing.isdir
+            if ~isempty(strfind(listing.name, '.mat'))
+                load([models_dir, '/', listing.name]);
+                models{k} = model;
+                k = k + 1;
+            end
         end
     end
+else
+    k = 1;
+    for i = 1:numel(model_names)
+        load([models_dir, '/', model_names{i}])
+        models{k} = model;
+        k = k + 1;
+    end
 end
-
 end
