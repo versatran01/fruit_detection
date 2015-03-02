@@ -46,7 +46,7 @@ fprintf('\n ** Regression Ensemble RMSE: %.4f **\n', regression_rmse)
 fprintf('=========================================\n');
 
 ensemble.weights = regression_weights;
-ensemble.sub_models = sub_models;
+ensemble.param = sub_models;
 ensemble.predict = @predictEnsemble;
 
 end
