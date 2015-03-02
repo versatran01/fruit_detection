@@ -12,11 +12,11 @@ mask = detectPixels(pixel_model, image);
 mask = mask > 0.5;
 CC = bwconncomp(mask);
 
-area = regionprops(CC,'Area');
-area = [area.Area];
+properties = regionprops(CC,'Area');
 
-idx = area > 15;
+area = [properties.Area];
 
+idx = area > 5;
 strip = cell2mat( CC.PixelIdxList(~idx)' );
 mask(strip) = false;
 

@@ -62,8 +62,8 @@ for i = 1:numel(listings)
     listing = listings(i);
     if ~listing.isdir
         if ~isempty(strfind(listing.name, '.mat'))
-            model = load([models_dir, '/', listing.name]);
-            models{k} = model.param;
+            load([models_dir, '/', listing.name]);
+            models{k} = model;
             k = k + 1;
         end
     end

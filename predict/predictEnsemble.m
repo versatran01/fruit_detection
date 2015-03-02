@@ -10,5 +10,7 @@ for i = 1:num_models
     Yhat_all = [Yhat_all Yhat];
 end
 Yhat = Yhat_all * model.weights(:);
+Yhat(Yhat > 1) = 1;
+Yhat(Yhat < 0) = 0;
 end
 
