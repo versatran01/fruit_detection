@@ -57,8 +57,8 @@ handles.output = hObject;
 
 set(handles.play_pause_togglebutton, 'Enable', 'off');
 
-load('result.mat');
-handles.model = model;
+load('ensemble.mat');
+handles.model = ensemble;
 
 % Update handles structure
 guidata(hObject, handles);
@@ -116,7 +116,7 @@ if get(hObject, 'Value') == get(hObject, 'Max')
             original_image = ros_image_msg_to_matlab_image(msg);
             original_image = imresize(original_image, 0.25);
             
-            % draw origina image
+            % draw original image
             draw_image_on(handles.original_axes, original_image);
             
             detection_image = detectFruit(handles.model, original_image);
@@ -124,7 +124,7 @@ if get(hObject, 'Value') == get(hObject, 'Max')
             % draw result
             draw_image_on(handles.detection_axes, detection_image);
             drawnow;
-            pause(0.1);
+            pause(0.01);
             if get(hObject, 'Value') == get(hObject, 'Min')
                 break
             end

@@ -29,7 +29,7 @@ for level = 1:nlevel
 		c = cost_range(i);
 		% From train and predict functions
 		train_fun = @(x, y) trainLiblinear(x, y, s, c);
-		predict_fun = @(mdl, x) predictLiblinear(mdl, x);
+		predict_fun = @(param, x) predictLiblinear(param, x);
 		% cross validate
 		xval_errors(i, :) = crossValidate(Xtrain, Ytrain, nfolds, ...
                                           train_fun, predict_fun, ...
@@ -56,7 +56,7 @@ for level = 1:nlevel
     end
 end
 
-result.model = trainLiblinear(Xtrain, Ytrain, s, best_cost_so_far);
+result.param = trainLiblinear(Xtrain, Ytrain, s, best_cost_so_far);
 result.dimension = size(Xtrain, 2);
 result.datetime = datetime;
 result.cost = best_cost_so_far;

@@ -1,4 +1,4 @@
-function model = trainLiblinear(Xtrain, Ytrain, s, c, verbose)
+function param = trainLiblinear(Xtrain, Ytrain, s, c, verbose)
 % TRAINLIBLINEAR Trains a SVM using liblinear.
 %  type : set type of solver (default 1)
 %  for multi-class classification
@@ -22,7 +22,7 @@ function model = trainLiblinear(Xtrain, Ytrain, s, c, verbose)
 %  c      - cost parameter
 %
 % OUTPUT:
-%  model  - liblinear model
+%  param  - liblinear model
 
 [type_id_list, type_name_list] = getLiblinearTypes();
 
@@ -33,7 +33,7 @@ if nargin < 5, verbose = false; end
 
 % Display type
 type_ind = (type_id_list == s);
-if ~nnz(type_ind), error('Wrong model type: %d.', s); end
+if ~nnz(type_ind), error('Wrong liblinear type: %d.', s); end
 type_name = type_name_list{type_ind};
 
 % Handle data sparsity
@@ -48,7 +48,7 @@ if verbose
 end
 
 option = sprintf('-s %d -c %g -q', s, c);
-model = liblineartrain(Ytrain, Xtrain, option);
+param = liblineartrain(Ytrain, Xtrain, option);
 
 if verbose
 	time = toc;

@@ -4,10 +4,9 @@ function [ Y ] = predictAll( model, X )
 % `X` is NxD input pixels. N pixels, in D-dimensional feature space.
 N = size(X,1);
 D = size(X,2);
-is_ensemble = false;    % todo: add support for ensemble model
+is_ensemble = true;    % todo: add support for ensemble model
 if is_ensemble
-    % run on all models and combine results
-    
+    Y = model.predict(model, X);
 else
     if model.dimension ~= D
         error('Model was trained on a different dimension feature space');
