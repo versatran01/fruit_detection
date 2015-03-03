@@ -22,7 +22,7 @@ function varargout = detectBagGui(varargin)
 
 % Edit the above text to modify the response to help detectBagGui
 
-% Last Modified by GUIDE v2.5 03-Mar-2015 09:37:15
+% Last Modified by GUIDE v2.5 03-Mar-2015 10:50:18
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -63,33 +63,11 @@ set(handles.step_forward_pushbutton, 'Enable', 'off')
 set(handles.step_backward_pushbutton, 'Enable', 'off')
 
 % Load all model names from models dir
-model_names = getAllModelNames(handles.data.model_dir);
-set(handles.model_listbox, 'String', model_names)
-handles.data.model_name = getModelFromListbox(handles.model_listbox);
-load([handles.data.model_dir, '/', handles.data.model_name])
+handles = updateModelListbox(handles);
 
-handles.data.model = model;
 % Update handles structure
 guidata(hObject, handles);
 
-function model_name = getModelFromListbox(handle)
-model_ind = get(handle, 'Value');
-all_models = get(handle, 'String');
-model_name = all_models{model_ind};
-
-function model_names = getAllModelNames(model_directory)
-model_names = {};
-listings = dir(model_directory);
-k = 1;
-for i = 1:numel(listings)
-    listing = listings(i);
-    if ~listing.isdir
-        if ~isempty(strfind(listing.name, '.mat'))
-            model_names{k} = listing.name;
-            k = k + 1;
-        end
-    end
-end
 
 % UIWAIT makes detectBagGui wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -127,7 +105,7 @@ set(handles.play_pause_togglebutton, 'Enable', 'on');
 image_topics = {};
 for i = 1:numel(bag.topics)
     if strcmp(bag.topicType(bag.topics{i}), 'sensor_msgs/Image')
-
+        
         image_topics{end+1} = bag.topics{i};
     end
 end
@@ -168,7 +146,6 @@ if get(hObject, 'Value') == get(hObject, 'Max')
             process_image(image, handles);
             drawnow;
             pause(0.001);
-
             % Update time_slider value
             time_current = meta.time.time - handles.data.bag.time_begin;
             set(handles.time_slider, 'Value', time_current)
@@ -267,6 +244,31 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
+% --- Executes on selection change in model_listbox.
+function model_listbox_Callback(hObject, eventdata, handles)
+% hObject    handle to model_listbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+handles = updateModelListbox(handles);
+
+% Update handles structure
+guidata(hObject, handles);
+% Hints: contents = cellstr(get(hObject,'String')) returns model_listbox contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from model_listbox
+
+
+% --- Executes during object creation, after setting all properties.
+function model_listbox_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to model_listbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
 
 %% Helper functions
 function draw_image_on(axes, image)
@@ -284,29 +286,36 @@ r = reshape(r, ros_image_msg.width, ros_image_msg.height);
 matlab_image = cat(3, r, g, b);
 
 
-% --- Executes on selection change in model_listbox.
-function model_listbox_Callback(hObject, eventdata, handles)
-% hObject    handle to model_listbox (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+function model_name = getModelFromModelListbox(handle)
+model_ind = get(handle, 'Value');
+all_models = get(handle, 'String');
+model_name = all_models{model_ind};
 
 
-
-% Hints: contents = cellstr(get(hObject,'String')) returns model_listbox contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from model_listbox
-
-
-% --- Executes during object creation, after setting all properties.
-function model_listbox_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to model_listbox (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: listbox controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+function handles = updateModelListbox(handles)
+model_names = getAllModelNames(handles.data.model_dir);
+set(handles.model_listbox, 'String', model_names)
+handles.data.model_name = getModelFromModelListbox(handles.model_listbox);
+model = load([handles.data.model_dir, '/', handles.data.model_name]);
+model = model.model;
+handles.data.model = model;
+errors_string = sprintf('rmse: %0.3f, acc: %0.3f\nprec: %0.3f, rec: %0.3f', ...
+                        model.errors(1), model.errors(2), model.errors(3), ...
+                        model.errors(4));
+set(handles.model_errors_text, 'String', errors_string)
+set(handles.model_text, 'String', handles.data.model_name)
 
 
+function model_names = getAllModelNames(model_directory)
+model_names = {};
+listings = dir(model_directory);
+k = 1;
+for i = 1:numel(listings)
+    listing = listings(i);
+    if ~listing.isdir
+        if ~isempty(strfind(listing.name, '.mat'))
+            model_names{k} = listing.name;
+            k = k + 1;
+        end
+    end
 end
-
