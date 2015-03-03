@@ -40,7 +40,7 @@ errors = errors(best_idx,:);
 % retrain final model
 result.param = trainDT(Xtrain, Ytrain, 'maxDepth', best_idx,...
     'numSplits', numSplits, 'rounded', rounded);
-result.dimension = D;
+result.dimension = size(Xtrain,2);
 result.featIndex = featidx;
 result.datetime = datetime;
 result.maxDepth = best_idx;
