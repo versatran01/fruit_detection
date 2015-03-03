@@ -121,11 +121,13 @@ classdef Dataset < handle
             if index > self.size()
                 error('Invalid image index');
             end
-            L = Labler(self.images{index}, ...
-                    self.selections{index}, self.masks{index});
+            L = Labler();
+            L.editImage(self.images{index}, self.names{index},...
+                self.selections{index}, self.masks{index});
             while ~L.isFinished()
                 drawnow;
             end
+            L.close();
             self.selections{index} = L.getSelections();
             self.masks{index} = L.getMasks();
         end
