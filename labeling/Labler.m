@@ -144,6 +144,9 @@ classdef Labler < handle
                 elseif sel(4) == 2
                     % 2 is not orange, color cyan?
                     color = [0 1 1];
+                elseif sel(4) == 3
+                    % 3 is orange, but not included for training
+                    color = [1 0.4 1];
                 end
                 set(self.hLabels(i),'Color',color);
             end
@@ -317,7 +320,8 @@ classdef Labler < handle
     methods(Access=public)
         function self = Labler(image, selections, masks)
             self.image = image;
-            self.labelStrings = {'orange', 'other stuff'};
+            self.labelStrings = {'orange', 'other stuff', ...
+                'orange (unmasked)'};
             self.hFig = figure;
             self.selections = reshape(selections, numel(selections), 1);
             if ~isempty(masks)
