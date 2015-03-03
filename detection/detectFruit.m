@@ -10,6 +10,8 @@ mask = detectPixels(pixel_model, image);
 
 % todo: connected components, etc...
 mask = mask > 0.5;
+%mask = imerode(mask,strel('disk',2));
+
 CC = bwconncomp(mask);
 
 properties = regionprops(CC,'Area','BoundingBox','Centroid');
