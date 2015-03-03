@@ -22,7 +22,7 @@ function varargout = detectBagGui(varargin)
 
 % Edit the above text to modify the response to help detectBagGui
 
-% Last Modified by GUIDE v2.5 02-Mar-2015 17:55:59
+% Last Modified by GUIDE v2.5 02-Mar-2015 19:41:12
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -162,8 +162,8 @@ matlab_image = cat(3, r, g, b);
 
 
 % --- Executes on slider movement.
-function slider1_Callback(hObject, eventdata, handles)
-% hObject    handle to slider1 (see GCBO)
+function progress_slider_Callback(hObject, eventdata, handles)
+% hObject    handle to progress_slider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
@@ -172,8 +172,8 @@ function slider1_Callback(hObject, eventdata, handles)
 
 
 % --- Executes during object creation, after setting all properties.
-function slider1_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider1 (see GCBO)
+function progress_slider_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to progress_slider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
