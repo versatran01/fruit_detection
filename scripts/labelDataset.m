@@ -22,10 +22,11 @@ else
 end
 
 % prompt user to circle fruit
+L = Labler();
 for n=start:num_images
     sel = dataset.selections{n};
     msk = dataset.masks{n};
-    L = Labler(dataset.images{n}, dataset.names{n}, sel, msk);
+    L.editImage(dataset.images{n}, dataset.names{n}, sel, msk);
     while ~L.isFinished()
         drawnow; % refresh the UI
     end
@@ -38,6 +39,8 @@ for n=start:num_images
         break;
     end
 end
+L.close();  % make sure the labler closed
+clear L;    % destroy the labler
 
 fprintf('Saving dataset to %s.\n', dataset_path);
 dataset.save(dataset_path);

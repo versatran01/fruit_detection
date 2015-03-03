@@ -103,7 +103,6 @@ classdef Labler < handle
         
         function closeRequest(self, object, eventdata)
             delete(self.hFig);
-            self.finished = true;
         end
         
         function plotCircleSelection(self, radius, mousePoint)
@@ -211,11 +210,13 @@ classdef Labler < handle
                 sz = size(self.image);
                 axis([0 sz(2) 0 sz(1)]);
             elseif self.hButtons{2} == object
-                close(self.hFig); % close window
+                % done button
+                self.finished = true;
             elseif self.hButtons{3} == object
                 % quit
+                self.finished = true;
                 self.quit = true;
-                close(self.hFig);
+                self.close();
             elseif object == self.hToolMenu
                 % tool menu
                 self.switchMode(get(object, 'Value'));
@@ -325,14 +326,12 @@ classdef Labler < handle
     end
     
     methods(Access=public)
-        function self = Labler(image, name, selections, masks)
-            self.labelStrings = {'orange', 'other stuff', ...
+        function self = Labler()
+            self.labelStrings = {'orange', 'non-orange', ...
                 'orange (unmasked)'};
             self.hFig = figure;
             self.configureInterface();
             self.attachCallbacks();
-            % input data:
-            self.editImage(image,name,selections,masks);
         end
         
         function editImage(self, image, name, selections, masks)
@@ -340,6 +339,8 @@ classdef Labler < handle
             self.stopSelecting();
             delete(self.hLabels);
             self.hLabels = [];
+            % reset the finished flag so UI can continue running
+            self.finished = false;
             % copy data
             self.image = image;
             self.name = name;
@@ -372,6 +373,11 @@ classdef Labler < handle
         end
         
         function delete(self)
+            % check if figure needs closing
+            self.close();
+        end
+        
+        function close(self)
             if ishandle(self.hFig)
                 close(self.hFig);
             end
