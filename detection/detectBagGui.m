@@ -22,7 +22,7 @@ function varargout = detectBagGui(varargin)
 
 % Edit the above text to modify the response to help detectBagGui
 
-% Last Modified by GUIDE v2.5 28-Feb-2015 15:30:16
+% Last Modified by GUIDE v2.5 02-Mar-2015 17:55:59
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -89,6 +89,7 @@ if bag_name
     set(handles.bag_path_text, 'String', bag_path);
 end
 
+if ~bag_name, return; end
 % Open the bag and enable play_pause_togglebutton
 % todo: list all topics that is of type sensor_msgs/Image
 bag = ros.Bag(bag_path);
@@ -153,3 +154,46 @@ b = reshape(b, ros_image_msg.width, ros_image_msg.height);
 g = reshape(g, ros_image_msg.width, ros_image_msg.height);
 r = reshape(r, ros_image_msg.width, ros_image_msg.height);
 matlab_image = cat(3, r, g, b);
+
+
+% --- Executes on slider movement.
+function slider1_Callback(hObject, eventdata, handles)
+% hObject    handle to slider1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+
+% --- Executes during object creation, after setting all properties.
+function slider1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+% --- Executes on button press in step_backward_pushbutton.
+function step_backward_pushbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to step_backward_pushbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in step_forward_pushbutton.
+function step_forward_pushbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to step_forward_pushbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in reset_pushbutton.
+function reset_pushbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to reset_pushbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
