@@ -20,6 +20,7 @@ addpath('./mex');
 addpath('./predict');
 addpath('./scripts');
 addpath('./tools');
+addpath('./tracking');
 addpath('./train');
 addpath('./tune');
 addpath('./vendor/fkmeans');

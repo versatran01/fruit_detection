@@ -57,7 +57,7 @@ handles.output = hObject;
 
 set(handles.play_pause_togglebutton, 'Enable', 'off');
 
-load('result.mat');
+load('models/liblinear_ensemble.mat');
 handles.model = model;
 
 % Update handles structure
@@ -113,27 +113,32 @@ if get(hObject, 'Value') == get(hObject, 'Max')
         [msg, meta] = handles.bag.read();
         if strcmp(meta.topic, '/color/image_raw')
             % todo: add time control
-            original_image = ros_image_msg_to_matlab_image(msg);
-            original_image = imresize(original_image, 0.25);
-            
-            % draw origina image
-            draw_image_on(handles.original_axes, original_image);
-            
-            detection_image = detectFruit(handles.model, original_image);
-            
-            % draw result
-            draw_image_on(handles.detection_axes, detection_image);
+            image = ros_image_msg_to_matlab_image(msg);
+            process_image(image,handles);
             drawnow;
-            pause(0.1);
+            pause(0.001);
             if get(hObject, 'Value') == get(hObject, 'Min')
-                break
+                break;
             end
         end
     end
 else
     set(hObject, 'String', 'Play');
 end
-% Hint: get(hObject,'Value') returns toggle state of play_pause_togglebutton
+
+function process_image(image, handles)
+image = imresize(image, 0.25);
+[mask,bboxes] = detectFruit(handles.model, image);
+
+% draw original image
+draw_image_on(handles.original_axes, image);
+hold on;
+pts = bboxToLinePoints(bboxes);
+handles.bboxPlots = plot(squeeze(pts(:,1,:)), squeeze(pts(:,2,:)));
+set(handles.bboxPlots,'LineWidth',3);
+
+% draw mask
+draw_image_on(handles.detection_axes, mask);
 
 function bag_path_text_CreateFcn(hObject, eventdata, handles)
 
