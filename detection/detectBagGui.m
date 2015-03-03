@@ -138,7 +138,8 @@ function play_pause_togglebutton_Callback(hObject, eventdata, handles)
 % Max is depressed, hence play
 if get(hObject, 'Value') == get(hObject, 'Max')
     set(hObject, 'String', 'Pause');
-    while handles.data.bag.hasNext()
+    while handles.data.bag.hasNext() && ...
+            get(hObject, 'Value') == get(hObject, 'Max')
         [msg, meta] = handles.data.bag.read();
         if strcmp(meta.topic, '/color/image_raw')
             % todo: add time control
@@ -150,9 +151,6 @@ if get(hObject, 'Value') == get(hObject, 'Max')
             time_current = meta.time.time - handles.data.bag.time_begin;
             set(handles.time_slider, 'Value', time_current)
             set(handles.time_current_text, 'String', time_current)
-            if get(hObject, 'Value') == get(hObject, 'Min')
-                break;
-            end
         end
     end
 else
@@ -185,6 +183,17 @@ function time_slider_Callback(hObject, eventdata, handles)
 
 time_slider_value = get(hObject, 'Value');
 set(handles.time_current_text, 'String', time_slider_value)
+
+handles.data.bag.resetView('/color/image_raw', ...
+                           handles.data.bag.time_begin + time_slider_value);
+
+set(handles.play_pause_togglebutton, 'Value', ...
+    get(handles.play_pause_togglebutton, 'Min'))
+set(handles.play_pause_togglebutton, 'String', 'Play')
+
+% Update handles structure
+guidata(hObject, handles);
+
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
@@ -196,7 +205,8 @@ function time_slider_CreateFcn(hObject, eventdata, handles)
 % handles    empty - handles not created until after all CreateFcns called
 
 % Hint: slider controls usually have a light gray background.
-if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+if isequal(get(hObject,'BackgroundColor'), ...
+           get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
 
@@ -240,7 +250,8 @@ function topic_popupmenu_CreateFcn(hObject, eventdata, handles)
 
 % Hint: popupmenu controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+if ispc && isequal(get(hObject,'BackgroundColor'), ...
+                   get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
@@ -266,7 +277,8 @@ function model_listbox_CreateFcn(hObject, eventdata, handles)
 
 % Hint: listbox controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+if ispc && isequal(get(hObject,'BackgroundColor'), ...
+                   get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
@@ -299,9 +311,10 @@ handles.data.model_name = getModelFromModelListbox(handles.model_listbox);
 model = load([handles.data.model_dir, '/', handles.data.model_name]);
 model = model.model;
 handles.data.model = model;
-errors_string = sprintf('rmse: %0.3f, acc: %0.3f\nprec: %0.3f, rec: %0.3f', ...
-                        model.errors(1), model.errors(2), model.errors(3), ...
-                        model.errors(4));
+errors_string = ...
+    sprintf('rmse: %0.3f, acc: %0.3f\nprec: %0.3f, rec: %0.3f', ...
+            model.errors(1), model.errors(2), model.errors(3), ...
+            model.errors(4));
 set(handles.model_errors_text, 'String', errors_string)
 set(handles.model_text, 'String', handles.data.model_name)
 
