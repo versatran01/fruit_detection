@@ -10,7 +10,6 @@ mask = detectPixels(pixel_model, image);
 
 % todo: connected components, etc...
 mask = mask > 0.5;
-%mask = imerode(mask,strel('disk',2));
 
 CC = bwconncomp(mask);
 
@@ -19,7 +18,7 @@ area = [properties.Area];
 bbox = vertcat(properties.BoundingBox);
 
 % throw away the pixels below the treshold
-idx = area > 30;
+idx = area > 40;
 strip = cell2mat( CC.PixelIdxList(~idx)' );
 mask(strip) = false;
 

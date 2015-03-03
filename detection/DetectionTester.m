@@ -8,6 +8,7 @@ classdef DetectionTester < handle
         viz = true;
         % current state
         curImage = 1;
+        errors = [];
         % gui stuff
         hFig
         hPlots
@@ -44,7 +45,7 @@ classdef DetectionTester < handle
             end
             for i=1:numel(selections)
                 sel = selections{i};
-                if sel(4) ~= 1
+                if ~any(sel(4) == [1 3])
                     % only plot fruit selections
                     continue;
                 end
@@ -55,7 +56,7 @@ classdef DetectionTester < handle
             end
         end
         
-        function plotDetections(self, detections)
+        function plotDetections(self, detections, valid)
             if ~isempty(self.hDetections)
                 delete(self.hDetections);
                 self.hDetections = [];
@@ -66,8 +67,47 @@ classdef DetectionTester < handle
                 pts_y = squeeze(pts(:,2,:));
                 self.hDetections(i) = plot(pts_x,pts_y);
                 set(self.hDetections(i),'LineWidth',2);
-                set(self.hDetections(i),'Color',[0 0 1]);
+                if valid(i)
+                    color = [0 1 0];
+                else
+                    color = [0 0 1];
+                end
+                set(self.hDetections(i),'Color',color);
             end
+        end
+        
+        function [valid] = updateStats(self, selections, detections)
+            % pull out the selections that are fruit
+            selections = cell2mat(selections);
+            idx_fruit = (selections(:,4) == 1) | (selections(:,4) == 3);
+            selections = selections(idx_fruit,:);
+            % get centers and radii
+            centers_sel = selections(:,1:2);
+            radii = selections(:,3);
+            
+            % find the detections which include the center of a selection
+            inside = pointsInBoxes(detections, centers_sel);
+            valid = sum(inside, 2);
+            % get centers of boxes
+            centers_box = bsxfun(@plus, detections(:,1:2),...
+                detections(:,3:4) * 0.5);
+            % find the boxes which are inside
+            
+            
+            % determine some important numbers...
+            total_positive = numel(valid);
+            tp = nnz(valid);
+            fp = total_positive - tp;
+            total_fruit = nnz(idx_fruit);
+            
+            fprintf('Counted %i of %i labelled fruit\n',...
+                nnz(valid), nnz(idx_fruit));
+            
+            fprintf('%i of %i detections are false positives\n',...
+                numel(valid) - nnz(valid), numel(valid));
+           
+            
+            
         end
     end
     
@@ -93,12 +133,19 @@ classdef DetectionTester < handle
             selections = self.dataset.selections{idx};
             % run detector on next image
             [mask, bbox] = self.detector(image);
-            
+            valid = self.updateStats(selections, bbox);
             if self.viz
                 self.plotImage(image, mask);
                 self.plotSelections(selections);
-                self.plotDetections(bbox);
+                self.plotDetections(bbox, valid);
             end
+        end
+        
+        function setCurrentImage(self, curImage)
+            if curImage > self.dataset.size() || curImage < 1
+                error('curImage index invalid');
+            end
+            self.curImage = curImage;
         end
     end
 end
