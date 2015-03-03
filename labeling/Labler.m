@@ -225,6 +225,15 @@ classdef Labler < handle
             end
         end
         
+        function stopSelecting(self)
+            self.selecting = false;
+            if ~isempty(self.hSelection)
+                delete(self.hSelection{1});
+                delete(self.hSelection{2});
+                self.hSelection = {};
+            end
+        end
+        
         function switchMode(self, mode)
             if self.mode ~= mode
                 if mode == 2
@@ -235,12 +244,7 @@ classdef Labler < handle
                 self.mode = mode;
                 if self.mode ~= 1
                     % not in selection mode, get rid of selection plot
-                    self.selecting = false;
-                    if ~isempty(self.hSelection)
-                        delete(self.hSelection{1});
-                        delete(self.hSelection{2});
-                        self.hSelection = {};
-                    end
+                    self.stopSelecting();
                 end
             end
             set(self.hToolMenu, 'Value', mode);
@@ -326,7 +330,17 @@ classdef Labler < handle
                 'orange (unmasked)'};
             self.hFig = figure;
             self.configureInterface();
+            self.attachCallbacks();
             % input data:
+            self.editImage(image,name,selections,masks);
+        end
+        
+        function editImage(self, image, name, selections, masks)
+            % clear selections from last image
+            self.stopSelecting();
+            delete(self.hLabels);
+            self.hLabels = [];
+            % copy data
             self.image = image;
             self.name = name;
             self.selections = reshape(selections, numel(selections), 1);
@@ -335,14 +349,10 @@ classdef Labler < handle
             else
                 % start with cell array of empty masks
                 self.masks = cell(numel(selections), 1);
-            end           
+            end 
+            % re-draw UI
             self.plotImage();
             self.plotSelections();
-            self.attachCallbacks();
-        end
-        
-        function editImage(self, image, name, selections, masks)
-            
         end
 
         function value = isFinished(self)
