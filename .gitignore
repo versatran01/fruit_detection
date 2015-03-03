@@ -15,6 +15,7 @@
 *.m~
 *.mex*
 slprj/
+*.mat
 
 # CMAKE TEMPORARY FILES
 CMakeCache.txt
