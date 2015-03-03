@@ -22,7 +22,7 @@ function varargout = detectBagGui(varargin)
 
 % Edit the above text to modify the response to help detectBagGui
 
-% Last Modified by GUIDE v2.5 02-Mar-2015 19:41:12
+% Last Modified by GUIDE v2.5 02-Mar-2015 20:43:52
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -55,7 +55,11 @@ function detectBagGui_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for detectBagGui
 handles.output = hObject;
 
-set(handles.play_pause_togglebutton, 'Enable', 'off');
+set(handles.play_pause_togglebutton, 'Enable', 'off')
+set(handles.time_slider, 'Enable', 'off')
+set(handles.reset_pushbutton, 'Enable', 'off')
+set(handles.step_forward_pushbutton, 'Enable', 'off')
+set(handles.step_backward_pushbutton, 'Enable', 'off')
 
 load('models/liblinear_ensemble.mat');
 handles.model = model;
@@ -91,14 +95,36 @@ end
 
 if ~bag_name, return; end
 % Open the bag and enable play_pause_togglebutton
-% todo: list all topics that is of type sensor_msgs/Image
 bag = ros.Bag(bag_path);
 bag.resetView(bag.topics);
 set(handles.play_pause_togglebutton, 'Enable', 'on');
 
+% List all topics that are sensor_msgs/Image
+image_topics = {};
+for i = 1:numel(bag.topics)
+    if strcmp(bag.topicType(bag.topics{i}), 'sensor_msgs/Image')
+        
+        image_topics{end+1} = bag.topics{i};
+    end
+end
+set(handles.topic_popupmenu, 'String', image_topics)
+
+% Display time or total amount of messages?
+% enable time slider
+total_time = bag.time_end - bag.time_begin;
+set(handles.time_slider, 'Min', 0)
+set(handles.time_begin_text, 'String', 0)
+set(handles.time_slider, 'Max', total_time)
+set(handles.time_end_text, 'String', total_time)
+set(handles.time_slider, 'Value', 0)
+set(handles.time_current_text, 'String', 0)
+set(handles.time_slider, 'Enable', 'on')
+
 % Save to handles
 handles.bag_path = bag_path;
 handles.bag = bag;
+handles.total_time = total_time;
+handles.image_topics = image_topics;
 guidata(hObject, handles);
 
 % --- Executes on button press in play_pause_togglebutton.
@@ -145,35 +171,21 @@ function bag_path_text_CreateFcn(hObject, eventdata, handles)
 
 function original_axes_CreateFcn(hObject, eventdata, handles)
 
-%% Helper functions
-function draw_image_on(axes, image)
-imagesc(image, 'Parent', axes);
-set(axes, 'YDir', 'normal');
-
-
-function matlab_image = ros_image_msg_to_matlab_image(ros_image_msg)
-b = ros_image_msg.data(1:3:end);
-g = ros_image_msg.data(2:3:end);
-r = ros_image_msg.data(3:3:end);
-b = reshape(b, ros_image_msg.width, ros_image_msg.height);
-g = reshape(g, ros_image_msg.width, ros_image_msg.height);
-r = reshape(r, ros_image_msg.width, ros_image_msg.height);
-matlab_image = cat(3, r, g, b);
-
-
 % --- Executes on slider movement.
-function progress_slider_Callback(hObject, eventdata, handles)
-% hObject    handle to progress_slider (see GCBO)
+function time_slider_Callback(hObject, eventdata, handles)
+% hObject    handle to time_slider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+time_slider_value = get(hObject, 'Value');
+set(handles.time_current_text, 'String', time_slider_value)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
 
 % --- Executes during object creation, after setting all properties.
-function progress_slider_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to progress_slider (see GCBO)
+function time_slider_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to time_slider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -202,3 +214,42 @@ function reset_pushbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to reset_pushbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on selection change in topic_popupmenu.
+function topic_popupmenu_Callback(hObject, eventdata, handles)
+% hObject    handle to topic_popupmenu (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns topic_popupmenu contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from topic_popupmenu
+
+
+% --- Executes during object creation, after setting all properties.
+function topic_popupmenu_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to topic_popupmenu (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+%% Helper functions
+function draw_image_on(axes, image)
+imagesc(image, 'Parent', axes);
+set(axes, 'YDir', 'normal');
+
+
+function matlab_image = ros_image_msg_to_matlab_image(ros_image_msg)
+b = ros_image_msg.data(1:3:end);
+g = ros_image_msg.data(2:3:end);
+r = ros_image_msg.data(3:3:end);
+b = reshape(b, ros_image_msg.width, ros_image_msg.height);
+g = reshape(g, ros_image_msg.width, ros_image_msg.height);
+r = reshape(r, ros_image_msg.width, ros_image_msg.height);
+matlab_image = cat(3, r, g, b);
