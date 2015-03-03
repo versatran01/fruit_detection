@@ -55,6 +55,9 @@ function detectBagGui_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for detectBagGui
 handles.output = hObject;
 handles.data.model_dir = 'models';
+handles.data.original_image = [];
+handles.data.detection_image = [];
+handles.data.bboxPlots = [];
 
 set(handles.play_pause_togglebutton, 'Enable', 'off')
 set(handles.time_slider, 'Enable', 'off')
@@ -64,6 +67,9 @@ set(handles.step_backward_pushbutton, 'Enable', 'off')
 
 % Load all model names from models dir
 handles = updateModelListbox(handles);
+
+% link axes of two axes
+linkaxes([handles.original_axes, handles.detection_axes])
 
 % Update handles structure
 guidata(hObject, handles);
@@ -144,7 +150,7 @@ if get(hObject, 'Value') == get(hObject, 'Max')
         if strcmp(meta.topic, '/color/image_raw')
             % todo: add time control
             image = ros_image_msg_to_matlab_image(msg);
-            process_image(image, handles);
+            handles = process_image(image, handles);
             drawnow;
             pause(0.001);
             % Update time_slider value
@@ -156,20 +162,28 @@ if get(hObject, 'Value') == get(hObject, 'Max')
 else
     set(hObject, 'String', 'Play');
 end
+guidata(hObject, handles)
 
-function process_image(image, handles)
+function handles = process_image(image, handles)
 image = imresize(image, 0.25);
 [mask,bboxes] = detectFruit(handles.data.model, image);
 
 % draw original image
-draw_image_on(handles.original_axes, image);
-hold on;
+handles.data.original_image = ...
+    draw_image_on(handles.original_axes, ...
+                  handles.data.original_image, image);
 pts = bboxToLinePoints(bboxes);
-handles.bboxPlots = plot(squeeze(pts(:,1,:)), squeeze(pts(:,2,:)));
-set(handles.bboxPlots,'LineWidth',3);
+% TODO: Change this to use patch!!
+% if ~isempty(handles.data.bboxPlots), delete(handles.data.bboxPlots); end
+% handles.data.bboxPlots = plot(handles.original_image,
+% squeeze(pts(:,1,:)), squeeze(pts(:,2,:)));
+% 
+% set(handles.data.bboxPlots,'LineWidth',3);
 
 % draw mask
-draw_image_on(handles.detection_axes, mask);
+handles.data.detection_image = ...
+    draw_image_on(handles.detection_axes, ...
+                  handles.data.detection_image, mask);
 
 function bag_path_text_CreateFcn(hObject, eventdata, handles)
 
@@ -283,10 +297,14 @@ if ispc && isequal(get(hObject,'BackgroundColor'), ...
 end
 
 %% Helper functions
-function draw_image_on(axes, image)
-imagesc(image, 'Parent', axes);
-set(axes, 'YDir', 'normal');
-
+function image_handle = draw_image_on(axes, image_handle, image)
+if isempty(image_handle)
+    image_handle = imagesc(image, 'Parent', axes);
+    set(axes, 'YDir', 'normal');
+    disp('here!!!')
+else
+    set(image_handle, 'CData', image);
+end
 
 function matlab_image = ros_image_msg_to_matlab_image(ros_image_msg)
 b = ros_image_msg.data(1:3:end);
