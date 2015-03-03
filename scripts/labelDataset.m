@@ -25,7 +25,7 @@ end
 for n=start:num_images
     sel = dataset.selections{n};
     msk = dataset.masks{n};
-    L = Labler(dataset.images{n}, sel, msk);
+    L = Labler(dataset.images{n}, dataset.names{n}, sel, msk);
     while ~L.isFinished()
         drawnow; % refresh the UI
     end

@@ -1,8 +1,9 @@
 classdef Labler < handle
     
     properties(Access=private)
-        % inputs
+        % input image
         image
+        name
         labelStrings
         % mode
         selecting = false;
@@ -169,8 +170,11 @@ classdef Labler < handle
                 % update existing
                 set(self.hImage,'CData',self.image);
             end
-            self.rebuildMaskLayer();
+            % update title (escape underscores first)
+            str = strrep(self.name,'_','\_');
+            set(self.hImage.Parent.Title, 'String', str);
             % update alpha of mask layer
+            self.rebuildMaskLayer();
             set(self.hMask, 'AlphaData', self.maskLayer * self.maskAlpha);
         end
         
@@ -198,7 +202,6 @@ classdef Labler < handle
                                          'String', 'Quit',...
                                          'Position', [500 20 80 25],...
                                          'Callback', cb);
-            %set(self.hFig, 'Units', 'normalized', 'Position', [0,0,1,1]);
         end
         
         function handleButton(self, object, callbackdata)
@@ -318,24 +321,30 @@ classdef Labler < handle
     end
     
     methods(Access=public)
-        function self = Labler(image, selections, masks)
-            self.image = image;
+        function self = Labler(image, name, selections, masks)
             self.labelStrings = {'orange', 'other stuff', ...
                 'orange (unmasked)'};
             self.hFig = figure;
+            self.configureInterface();
+            % input data:
+            self.image = image;
+            self.name = name;
             self.selections = reshape(selections, numel(selections), 1);
             if ~isempty(masks)
                 self.masks = reshape(masks, numel(masks), 1);
             else
                 % start with cell array of empty masks
                 self.masks = cell(numel(selections), 1);
-            end
-            self.configureInterface();           
+            end           
             self.plotImage();
             self.plotSelections();
             self.attachCallbacks();
         end
         
+        function editImage(self, image, name, selections, masks)
+            
+        end
+
         function value = isFinished(self)
             value = self.finished;
         end
