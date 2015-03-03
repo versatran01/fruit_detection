@@ -47,6 +47,8 @@ fprintf('=========================================\n');
 ensemble.weights = regression_weights;
 ensemble.param = sub_models;
 ensemble.predict = @predictEnsemble;
+ensemble.name = 'Ensemble';
+ensemble.acronym = 'en';
 
 end
 

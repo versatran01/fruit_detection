@@ -22,16 +22,16 @@ function varargout = detectBagGui(varargin)
 
 % Edit the above text to modify the response to help detectBagGui
 
-% Last Modified by GUIDE v2.5 02-Mar-2015 20:43:52
+% Last Modified by GUIDE v2.5 03-Mar-2015 09:37:15
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
-                   'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @detectBagGui_OpeningFcn, ...
-                   'gui_OutputFcn',  @detectBagGui_OutputFcn, ...
-                   'gui_LayoutFcn',  [] , ...
-                   'gui_Callback',   []);
+    'gui_Singleton',  gui_Singleton, ...
+    'gui_OpeningFcn', @detectBagGui_OpeningFcn, ...
+    'gui_OutputFcn',  @detectBagGui_OutputFcn, ...
+    'gui_LayoutFcn',  [] , ...
+    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
@@ -54,6 +54,7 @@ function detectBagGui_OpeningFcn(hObject, eventdata, handles, varargin)
 
 % Choose default command line output for detectBagGui
 handles.output = hObject;
+handles.data.model_dir = 'models';
 
 set(handles.play_pause_togglebutton, 'Enable', 'off')
 set(handles.time_slider, 'Enable', 'off')
@@ -61,18 +62,41 @@ set(handles.reset_pushbutton, 'Enable', 'off')
 set(handles.step_forward_pushbutton, 'Enable', 'off')
 set(handles.step_backward_pushbutton, 'Enable', 'off')
 
-load('models/liblinear_ensemble.mat');
-handles.model = model;
+% Load all model names from models dir
+model_names = getAllModelNames(handles.data.model_dir);
+set(handles.model_listbox, 'String', model_names)
+handles.data.model_name = getModelFromListbox(handles.model_listbox);
+load([handles.data.model_dir, '/', handles.data.model_name])
 
+handles.data.model = model;
 % Update handles structure
 guidata(hObject, handles);
+
+function model_name = getModelFromListbox(handle)
+model_ind = get(handle, 'Value');
+all_models = get(handle, 'String');
+model_name = all_models{model_ind};
+
+function model_names = getAllModelNames(model_directory)
+model_names = {};
+listings = dir(model_directory);
+k = 1;
+for i = 1:numel(listings)
+    listing = listings(i);
+    if ~listing.isdir
+        if ~isempty(strfind(listing.name, '.mat'))
+            model_names{k} = listing.name;
+            k = k + 1;
+        end
+    end
+end
 
 % UIWAIT makes detectBagGui wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = detectBagGui_OutputFcn(hObject, eventdata, handles) 
+function varargout = detectBagGui_OutputFcn(hObject, eventdata, handles)
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -103,7 +127,7 @@ set(handles.play_pause_togglebutton, 'Enable', 'on');
 image_topics = {};
 for i = 1:numel(bag.topics)
     if strcmp(bag.topicType(bag.topics{i}), 'sensor_msgs/Image')
-        
+
         image_topics{end+1} = bag.topics{i};
     end
 end
@@ -121,10 +145,10 @@ set(handles.time_current_text, 'String', 0)
 set(handles.time_slider, 'Enable', 'on')
 
 % Save to handles
-handles.bag_path = bag_path;
-handles.bag = bag;
-handles.total_time = total_time;
-handles.image_topics = image_topics;
+handles.data.bag_path = bag_path;
+handles.data.bag = bag;
+handles.data.total_time = total_time;
+handles.data.image_topics = image_topics;
 guidata(hObject, handles);
 
 % --- Executes on button press in play_pause_togglebutton.
@@ -136,14 +160,19 @@ function play_pause_togglebutton_Callback(hObject, eventdata, handles)
 % Max is depressed, hence play
 if get(hObject, 'Value') == get(hObject, 'Max')
     set(hObject, 'String', 'Pause');
-    while handles.bag.hasNext()
-        [msg, meta] = handles.bag.read();
+    while handles.data.bag.hasNext()
+        [msg, meta] = handles.data.bag.read();
         if strcmp(meta.topic, '/color/image_raw')
             % todo: add time control
             image = ros_image_msg_to_matlab_image(msg);
-            process_image(image,handles);
+            process_image(image, handles);
             drawnow;
             pause(0.001);
+
+            % Update time_slider value
+            time_current = meta.time.time - handles.data.bag.time_begin;
+            set(handles.time_slider, 'Value', time_current)
+            set(handles.time_current_text, 'String', time_current)
             if get(hObject, 'Value') == get(hObject, 'Min')
                 break;
             end
@@ -155,7 +184,7 @@ end
 
 function process_image(image, handles)
 image = imresize(image, 0.25);
-[mask,bboxes] = detectFruit(handles.model, image);
+[mask,bboxes] = detectFruit(handles.data.model, image);
 
 % draw original image
 draw_image_on(handles.original_axes, image);
@@ -253,3 +282,31 @@ b = reshape(b, ros_image_msg.width, ros_image_msg.height);
 g = reshape(g, ros_image_msg.width, ros_image_msg.height);
 r = reshape(r, ros_image_msg.width, ros_image_msg.height);
 matlab_image = cat(3, r, g, b);
+
+
+% --- Executes on selection change in model_listbox.
+function model_listbox_Callback(hObject, eventdata, handles)
+% hObject    handle to model_listbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+
+% Hints: contents = cellstr(get(hObject,'String')) returns model_listbox contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from model_listbox
+
+
+% --- Executes during object creation, after setting all properties.
+function model_listbox_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to model_listbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+
+
+end
+
