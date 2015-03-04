@@ -1,7 +1,8 @@
 function [ X, Y ] = bboxToPatchVertices( bbox )
 %BBOXTOPATCHVERTICES 
 if isempty(bbox)
-    points = [];
+    X = [];
+    Y = [];
     return;
 end
 N = size(bbox,1);
