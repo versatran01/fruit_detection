@@ -19,7 +19,7 @@ area = [properties.Area];
 bbox = vertcat(properties.BoundingBox);
 
 % throw away the pixels below the treshold
-idx = area > 30;
+idx = area > 10;
 strip = cell2mat( CC.PixelIdxList(~idx)' );
 mask(strip) = false;
 
