@@ -62,6 +62,7 @@ classdef DetectionTester < handle
                 delete(self.hDetections);
                 self.hDetections = [];
             end
+            axes(self.hPlots(2));
             for i=1:size(detections,1)
                 pts = bboxToLinePoints(detections(i,:));
                 pts_x = squeeze(pts(:,1,:));
