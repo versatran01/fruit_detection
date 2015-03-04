@@ -166,18 +166,24 @@ guidata(hObject, handles)
 
 function handles = process_image(image, handles)
 image = imresize(image, 0.25);
-[mask,bboxes] = detectFruit(handles.data.model, image);
+[mask, bboxes] = detectFruit(handles.data.model, image);
 
 % draw original image
 handles.data.original_image = ...
     draw_image_on(handles.original_axes, ...
                   handles.data.original_image, image);
-pts = bboxToLinePoints(bboxes);
+[X, Y] = bboxToPatchVertices(bboxes);
 % TODO: Change this to use patch!!
-% if ~isempty(handles.data.bboxPlots), delete(handles.data.bboxPlots); end
-% handles.data.bboxPlots = plot(handles.original_image,
-% squeeze(pts(:,1,:)), squeeze(pts(:,2,:)));
-% 
+if isempty(handles.data.bboxPlots)
+    hold on
+    handles.data.bboxPlots = patch(X, Y, 'red');
+    set(handles.data.bboxPlots, 'FaceAlpha', 0.2)
+    set(handles.data.bboxPlots, 'EdgeColor', [1 0 0])
+    disp('here')
+else
+    set(handles.data.bboxPlots, 'XData', X, 'Ydata', Y);
+end
+
 % set(handles.data.bboxPlots,'LineWidth',3);
 
 % draw mask
@@ -301,7 +307,6 @@ function image_handle = draw_image_on(axes, image_handle, image)
 if isempty(image_handle)
     image_handle = imagesc(image, 'Parent', axes);
     set(axes, 'YDir', 'normal');
-    disp('here!!!')
 else
     set(image_handle, 'CData', image);
 end
