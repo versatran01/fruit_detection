@@ -22,7 +22,7 @@ function varargout = detectBagGui(varargin)
 
 % Edit the above text to modify the response to help detectBagGui
 
-% Last Modified by GUIDE v2.5 03-Mar-2015 10:50:18
+% Last Modified by GUIDE v2.5 04-Mar-2015 10:34:38
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -355,3 +355,12 @@ for i = 1:numel(listings)
         end
     end
 end
+
+
+% --- Executes on button press in show_bbox_checkbox.
+function show_bbox_checkbox_Callback(hObject, eventdata, handles)
+% hObject    handle to show_bbox_checkbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of show_bbox_checkbox

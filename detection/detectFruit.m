@@ -9,7 +9,10 @@ image = rgb2fullcs(image);
 mask = detectPixels(pixel_model, image);
 
 % todo: connected components, etc...
-mask = mask > 0.5;
+mask = mask > 0.1;
+
+% fill image regions and holes
+mask = imfill(mask, 'holes');
 
 CC = bwconncomp(mask);
 
@@ -18,6 +21,7 @@ area = [properties.Area];
 bbox = vertcat(properties.BoundingBox);
 
 % throw away the pixels below the treshold
+
 idx = area > 10;
 strip = cell2mat( CC.PixelIdxList(~idx)' );
 mask(strip) = false;
