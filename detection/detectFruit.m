@@ -9,26 +9,26 @@ image = rgb2fullcs(image);
 mask = detectPixels(pixel_model, image);
 
 % todo: connected components, etc...
-mask = mask > 0.1;
+mask = mask > 0.5;
 
 % fill image regions and holes
 mask = imfill(mask, 'holes');
 
 CC = bwconncomp(mask);
 
-properties = regionprops(CC,'Area','BoundingBox','Centroid');
+properties = regionprops(CC, 'Area', 'BoundingBox', 'Centroid', ...
+                         'MajorAxisLength', 'MinorAxisLength');
 area = [properties.Area];
+major_axis_length = [properties.MajorAxisLength];
+minor_axis_length = [properties.MinorAxisLength];
+axis_ratio = major_axis_length ./ minor_axis_length;
 bbox = vertcat(properties.BoundingBox);
 
 % throw away the pixels below the treshold
-
-idx = area > 10;
+idx = (area > 20) & (area < 500) & (axis_ratio < 2);
 strip = cell2mat( CC.PixelIdxList(~idx)' );
 mask(strip) = false;
 
 % get bounding boxes
 bbox = bbox(idx,:);
-
-% todo: more stuff
-
 end

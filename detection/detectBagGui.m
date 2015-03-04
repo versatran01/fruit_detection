@@ -111,7 +111,6 @@ set(handles.play_pause_togglebutton, 'Enable', 'on');
 image_topics = {};
 for i = 1:numel(bag.topics)
     if strcmp(bag.topicType(bag.topics{i}), 'sensor_msgs/Image')
-        
         image_topics{end+1} = bag.topics{i};
     end
 end
@@ -165,19 +164,20 @@ end
 guidata(hObject, handles)
 
 function handles = process_image(image, handles)
-image = imresize(image, 0.25);
+image = imresize(image, 0.4);
 [mask, bboxes] = detectFruit(handles.data.model, image);
 
 % draw original image
 handles.data.original_image = ...
     draw_image_on(handles.original_axes, ...
                   handles.data.original_image, image);
+% points = bbox2points(bboxes);
 [X, Y] = bboxToPatchVertices(bboxes);
 % TODO: Change this to use patch!!
 if isempty(handles.data.bboxPlots)
     hold on
     handles.data.bboxPlots = patch(X, Y, 'red');
-    set(handles.data.bboxPlots, 'FaceAlpha', 0.2)
+    set(handles.data.bboxPlots, 'FaceAlpha', 0.1)
     set(handles.data.bboxPlots, 'EdgeColor', [1 0 0])
     disp('here')
 else
@@ -205,7 +205,8 @@ time_slider_value = get(hObject, 'Value');
 set(handles.time_current_text, 'String', time_slider_value)
 
 handles.data.bag.resetView('/color/image_raw', ...
-                           handles.data.bag.time_begin + time_slider_value);
+                           handles.data.bag.time_begin ...
+                           + time_slider_value);
 
 set(handles.play_pause_togglebutton, 'Value', ...
     get(handles.play_pause_togglebutton, 'Min'))
