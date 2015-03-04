@@ -165,15 +165,16 @@ guidata(hObject, handles)
 
 function handles = process_image(image, handles)
 image = imresize(image, 0.4);
-[mask, bboxes] = detectFruit(handles.data.model, image);
+[mask, CC] = detectFruit(handles.data.model, image);
 
 % draw original image
 handles.data.original_image = ...
     draw_image_on(handles.original_axes, ...
                   handles.data.original_image, image);
 % points = bbox2points(bboxes);
-[X, Y] = bboxToPatchVertices(bboxes);
-% TODO: Change this to use patch!!
+[X, Y] = bboxToPatchVertices(CC.BoundingBox());
+
+
 if isempty(handles.data.bboxPlots)
     hold on
     handles.data.bboxPlots = patch(X, Y, 'red');
@@ -183,8 +184,6 @@ if isempty(handles.data.bboxPlots)
 else
     set(handles.data.bboxPlots, 'XData', X, 'Ydata', Y);
 end
-
-% set(handles.data.bboxPlots,'LineWidth',3);
 
 % draw mask
 handles.data.detection_image = ...

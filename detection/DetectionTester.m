@@ -8,7 +8,7 @@ classdef DetectionTester < handle
         viz = true;
         % current state
         curImage = 1;
-        errors = [];
+        metrics = [];
         % gui stuff
         hFig
         hPlots
@@ -30,6 +30,7 @@ classdef DetectionTester < handle
                 self.hPlots(2) = subplot(1,2,2);
                 self.hMask = imshow(mask);
                 hold on;
+                linkaxes(self.hPlots);
             else
                 % update old plots
                 set(0,'CurrentFigure', self.hFig);
@@ -87,27 +88,29 @@ classdef DetectionTester < handle
             
             % find the detections which include the center of a selection
             inside = pointsInBoxes(detections, centers_sel);
-            valid = sum(inside, 2);
+            
             % get centers of boxes
             centers_box = bsxfun(@plus, detections(:,1:2),...
                 detections(:,3:4) * 0.5);
-            % find the boxes which are inside
+            % todo: find the boxes which are inside...
+            inside2 = pointsInCircles([centers_sel radii], centers_box);
             
+            inside = inside | inside2';
+            valid = sum(inside, 2);
             
             % determine some important numbers...
             total_positive = numel(valid);
             tp = nnz(valid);
             fp = total_positive - tp;
             total_fruit = nnz(idx_fruit);
+            fn = total_fruit - tp;
+            
+            self.metrics(self.curImage,:) = [tp fp fn];
             
             fprintf('Counted %i of %i labelled fruit\n',...
-                nnz(valid), nnz(idx_fruit));
-            
+                tp, total_fruit);
             fprintf('%i of %i detections are false positives\n',...
-                numel(valid) - nnz(valid), numel(valid));
-           
-            
-            
+                fp, total_positive);
         end
     end
     

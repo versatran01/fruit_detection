@@ -1,34 +1,51 @@
-function [ mask, bbox ] = detectFruit( pixel_model, image )
+function [ mask, CC ] = detectFruit( pixel_model, image )
 %DETECTFRUIT Detect fruit in an image.
 % `pixel_model` is the detection model trained at the pixel level.
 % `image` is the input image in the RGB color space.
+
+% NOTE: all these parameters tuned at scale of 1
 
 % convert to extended color space
 image = rgb2fullcs(image);
 % calculate the mask with the pixel-level model
 mask = detectPixels(pixel_model, image);
-
-% todo: connected components, etc...
 mask = mask > 0.5;
 
-% fill image regions and holes
-mask = imfill(mask, 'holes');
+% fill holes
+mask = imfill(mask,'holes');
 
-CC = bwconncomp(mask);
+% erode a bit
+se = strel('disk', 1);
+mask = imerode(mask, se);
 
-properties = regionprops(CC, 'Area', 'BoundingBox', 'Centroid', ...
-                         'MajorAxisLength', 'MinorAxisLength');
-area = [properties.Area];
-major_axis_length = [properties.MajorAxisLength];
-minor_axis_length = [properties.MinorAxisLength];
-axis_ratio = major_axis_length ./ minor_axis_length;
-bbox = vertcat(properties.BoundingBox);
+% find connected components
+CC = ConnectedComponents(mask);
 
-% throw away the pixels below the treshold
-idx = (area > 20) & (area < 500) & (axis_ratio < 2);
-strip = cell2mat( CC.PixelIdxList(~idx)' );
-mask(strip) = false;
+% find properties of connected components
+area = CC.Area();
+bbox = CC.BoundingBox();
+centroids = CC.Centroid();
 
-% get bounding boxes
-bbox = bbox(idx,:);
+% throw away components below a very low threshold of area
+large = area > 20;
+CC.discard(~large);
+
+%{
+% get bounding boxes and areas for remaining regions
+area = area(large,:);
+bbox = bbox(large,:);
+centroids = centroids(large,:);
+
+% calculate distance between centroids
+dist = pdist2(centroids, centroids, 'cityblock');
+
+nearby = dist < 30;
+nearby = triu(nearby,1);    % take everything above the diagonal only
+[row,col] = find(nearby);
+
+[unique_rows,ia,ic] = unique(row);
+
+% row,col are now groups we should form
+%}
+
 end
