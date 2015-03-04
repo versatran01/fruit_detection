@@ -1,13 +1,17 @@
-function [ mask, bbox ] = detectFruit( pixel_model, image )
+function [ mask, bbox ] = detectFruit( pixel_model, image, scale )
 %DETECTFRUIT Detect fruit in an image.
 % `pixel_model` is the detection model trained at the pixel level.
 % `image` is the input image in the RGB color space.
 
 % NOTE: all these parameters tuned at scale of 1
+if nargin < 3
+    scale = 1;
+end
+areaScale = scale*scale;
 
 % convert to extended color space
 image = rgb2fullcs(image);
-% calculate the mask with the pixel-level model
+% calculate the mask with the pixel-level model, then round it
 mask = detectPixels(pixel_model, image);
 mask = mask > 0.5;
 
@@ -15,7 +19,7 @@ mask = mask > 0.5;
 mask = imfill(mask,'holes');
 
 % erode a bit
-se = strel('disk', 2);
+se = strel('disk', 1);
 mask = imerode(mask, se);
 
 % find connected components
@@ -25,7 +29,7 @@ CC = ConnectedComponents(mask);
 area = CC.Area();
 
 % throw away components below a very low threshold of area
-large = area > 3;
+large = area > 3*areaScale;
 CC.discard(~large);
 
 % get bounding boxes and areas for remaining regions
@@ -34,7 +38,7 @@ centroids = CC.Centroid();
 % calculate distance between centroids
 dist = pdist2(centroids, centroids, 'euclidean');
 
-nearby = dist < 30;     % take the closest that also satisfy the threshold
+nearby = dist < 30*scale;     % take the closest that also satisfy the threshold
 nearby = triu(nearby,1);    
 smallest = smallestNonDiagonal(dist);
 nearby = nearby & smallest;
@@ -57,9 +61,9 @@ overlap = overlap | diag(~any(overlap,1));
 CC.merge(overlap);
 
 % threshold by area again
-area = CC.Area();
-large = area > 40;
-CC.discard(~large);
+%area = CC.Area();
+%large = area > 40;
+%CC.discard(~large);
 
 mask = CC.image;
 bbox = CC.BoundingBox();

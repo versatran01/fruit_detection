@@ -165,8 +165,9 @@ end
 guidata(hObject, handles)
 
 function handles = process_image(image, handles)
-image = imresize(image, 0.25);
-[mask, bboxes] = detectFruit(handles.data.model, image);
+scale = 0.25;
+image = imresize(image, scale);
+[mask, bboxes] = detectFruit(handles.data.model, image, scale);
 
 % draw original image
 handles.data.original_image = ...
