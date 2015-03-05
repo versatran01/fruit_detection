@@ -61,9 +61,9 @@ overlap = overlap | diag(~any(overlap,1));
 CC.merge(overlap);
 
 % threshold by area again
-%area = CC.Area();
-%large = area > 40;
-%CC.discard(~large);
+area = CC.Area();
+large = area > 40*areaScale;
+CC.discard(~large);
 
 mask = CC.image;
 bbox = CC.BoundingBox();

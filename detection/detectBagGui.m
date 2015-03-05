@@ -178,7 +178,7 @@ handles.data.original_image = ...
 if isempty(handles.data.bboxPlots)
     hold on
     handles.data.bboxPlots = patch(X, Y, 'red');
-    set(handles.data.bboxPlots, 'FaceAlpha', 0.2)
+    set(handles.data.bboxPlots, 'FaceAlpha', 0.0)
     set(handles.data.bboxPlots, 'EdgeColor', [1 0 0])
     disp('here')
 else
