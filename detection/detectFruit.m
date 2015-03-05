@@ -65,6 +65,22 @@ area = CC.Area();
 large = area > 40*areaScale;
 CC.discard(~large);
 
+% try to segment big regions
+area = CC.Area();
+filled = CC.FilledArea();
+bbox = CC.BoundingBox();
+ratio = filled ./ area;
+large = (area > 500*areaScale) & ratio > 0.5;
+
+large = find(large);
+for i=1:numel(large)
+    n = large(i);
+    % pull out the mask region and the original image area (for debugging)
+    original = imcrop(image(:,:,1:3), bbox(n,:));
+    submask = imcrop(CC.image, bbox(n,:));
+    segmentFruit(original,submask);
+end
+
 mask = CC.image;
 bbox = CC.BoundingBox();
 end

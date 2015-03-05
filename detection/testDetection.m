@@ -2,11 +2,11 @@
 close all;
 home;
 
-viz = true;
+viz = false;
 
 detector = @(image)detectFruit(model, image);
 tester = DetectionTester(dataset, detector,viz);
-tester.setCurrentImage(1);
+tester.setCurrentImage(4);
 
 count = 0;
 while tester.hasNext()

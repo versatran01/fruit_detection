@@ -1,0 +1,39 @@
+function [ X ] = segmentFruit( original, mask )
+%SEGMENTFRUIT Segment fruit in a small mask image.
+%   `original` is the RGB space, (used when debugging only).
+%   `mask` is the b&w mask extracted by the model.
+%
+%   Return value X is a Nx3 vector of circles: [x,y,radius]
+%   It may be empty, if no circles are found.
+
+% find masked pixel edges
+mask_pixels = find(edge(mask));
+[y,x] = ind2sub(size(mask), mask_pixels);
+
+% fit circles
+% TODO: these params are tuned at scale of 1
+X = fitCircles([x y], 10000, 5, 0.1, 50);
+if ~isempty(X)
+    % eliminate any circles with really big radii
+    keep = X(:,3) < max(size(mask))*1.5;
+    % eliminate any circles with really small radii
+    keep = keep & (X(:,3) > 8);
+    X = X(keep,:);
+    N = size(X,1);
+
+    if N ~= 0
+        % find intersecting circles (apply scale factor to radius)
+        rads1 = repmat( X(:,3)', N, 1);
+        rads2 = repmat( X(:,3), 1, N);
+        rads = max(rads1,rads2) * 1.2;
+        dist = pdist2(X(:,1:2), X(:,1:2), 'euclidean');
+        % symmetric logical matrix
+        inside = dist < rads;
+        inside = triu(inside,1);
+        % best circles (those which have NOT been intersected with one with a
+        % better score)
+        inside = ~any(inside, 1);
+        X = X(inside, 1:3); % drop fourth column on output
+    end
+end
+end
