@@ -67,6 +67,9 @@ if isempty(model_names)
         if ~listing.isdir
             if ~isempty(strfind(listing.name, '.mat'))
                 load([models_dir, '/', listing.name]);
+                if ~isfield(model,'name')
+                    model.name = listing.name;
+                end
                 models{k} = model;
                 k = k + 1;
             end
@@ -76,6 +79,9 @@ else
     k = 1;
     for i = 1:numel(model_names)
         load([models_dir, '/', model_names{i}])
+        if ~isfield(model,'name')
+            model.name = model_names{i};
+        end
         models{k} = model;
         k = k + 1;
     end
