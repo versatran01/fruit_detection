@@ -1,8 +1,9 @@
 classdef Labler < handle
     
     properties(Access=private)
-        % inputs
+        % input image
         image
+        name
         labelStrings
         % mode
         selecting = false;
@@ -102,7 +103,6 @@ classdef Labler < handle
         
         function closeRequest(self, object, eventdata)
             delete(self.hFig);
-            self.finished = true;
         end
         
         function plotCircleSelection(self, radius, mousePoint)
@@ -144,6 +144,9 @@ classdef Labler < handle
                 elseif sel(4) == 2
                     % 2 is not orange, color cyan?
                     color = [0 1 1];
+                elseif sel(4) == 3
+                    % 3 is orange, but not included for training
+                    color = [1 0.4 1];
                 end
                 set(self.hLabels(i),'Color',color);
             end
@@ -166,8 +169,11 @@ classdef Labler < handle
                 % update existing
                 set(self.hImage,'CData',self.image);
             end
-            self.rebuildMaskLayer();
+            % update title (escape underscores first)
+            str = strrep(self.name,'_','\_');
+            set(self.hImage.Parent.Title, 'String', str);
             % update alpha of mask layer
+            self.rebuildMaskLayer();
             set(self.hMask, 'AlphaData', self.maskLayer * self.maskAlpha);
         end
         
@@ -195,7 +201,6 @@ classdef Labler < handle
                                          'String', 'Quit',...
                                          'Position', [500 20 80 25],...
                                          'Callback', cb);
-            %set(self.hFig, 'Units', 'normalized', 'Position', [0,0,1,1]);
         end
         
         function handleButton(self, object, callbackdata)
@@ -205,17 +210,28 @@ classdef Labler < handle
                 sz = size(self.image);
                 axis([0 sz(2) 0 sz(1)]);
             elseif self.hButtons{2} == object
-                close(self.hFig); % close window
+                % done button
+                self.finished = true;
             elseif self.hButtons{3} == object
                 % quit
+                self.finished = true;
                 self.quit = true;
-                close(self.hFig);
+                self.close();
             elseif object == self.hToolMenu
                 % tool menu
                 self.switchMode(get(object, 'Value'));
             elseif object == self.hLabelMenu
                 % label menu
                 self.currentLabel = get(object, 'Value');
+            end
+        end
+        
+        function stopSelecting(self)
+            self.selecting = false;
+            if ~isempty(self.hSelection)
+                delete(self.hSelection{1});
+                delete(self.hSelection{2});
+                self.hSelection = {};
             end
         end
         
@@ -229,12 +245,7 @@ classdef Labler < handle
                 self.mode = mode;
                 if self.mode ~= 1
                     % not in selection mode, get rid of selection plot
-                    self.selecting = false;
-                    if ~isempty(self.hSelection)
-                        delete(self.hSelection{1});
-                        delete(self.hSelection{2});
-                        self.hSelection = {};
-                    end
+                    self.stopSelecting();
                 end
             end
             set(self.hToolMenu, 'Value', mode);
@@ -315,23 +326,36 @@ classdef Labler < handle
     end
     
     methods(Access=public)
-        function self = Labler(image, selections, masks)
-            self.image = image;
-            self.labelStrings = {'orange', 'other stuff'};
+        function self = Labler()
+            self.labelStrings = {'orange', 'non-orange', ...
+                'orange (unmasked)'};
             self.hFig = figure;
+            self.configureInterface();
+            self.attachCallbacks();
+        end
+        
+        function editImage(self, image, name, selections, masks)
+            % clear selections from last image
+            self.stopSelecting();
+            delete(self.hLabels);
+            self.hLabels = [];
+            % reset the finished flag so UI can continue running
+            self.finished = false;
+            % copy data
+            self.image = image;
+            self.name = name;
             self.selections = reshape(selections, numel(selections), 1);
             if ~isempty(masks)
                 self.masks = reshape(masks, numel(masks), 1);
             else
                 % start with cell array of empty masks
                 self.masks = cell(numel(selections), 1);
-            end
-            self.configureInterface();           
+            end 
+            % re-draw UI
             self.plotImage();
             self.plotSelections();
-            self.attachCallbacks();
         end
-        
+
         function value = isFinished(self)
             value = self.finished;
         end
@@ -349,6 +373,11 @@ classdef Labler < handle
         end
         
         function delete(self)
+            % check if figure needs closing
+            self.close();
+        end
+        
+        function close(self)
             if ishandle(self.hFig)
                 close(self.hFig);
             end

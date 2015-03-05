@@ -165,8 +165,9 @@ end
 guidata(hObject, handles)
 
 function handles = process_image(image, handles)
-image = imresize(image, 0.25);
-[mask, bboxes] = detectFruit(handles.data.model, image);
+scale = 0.25;
+image = imresize(image, scale);
+[mask, bboxes] = detectFruit(handles.data.model, image, scale);
 
 % draw original image
 handles.data.original_image = ...
@@ -177,7 +178,7 @@ handles.data.original_image = ...
 if isempty(handles.data.bboxPlots)
     hold on
     handles.data.bboxPlots = patch(X, Y, 'red');
-    set(handles.data.bboxPlots, 'FaceAlpha', 0.2)
+    set(handles.data.bboxPlots, 'FaceAlpha', 0.0)
     set(handles.data.bboxPlots, 'EdgeColor', [1 0 0])
     disp('here')
 else
