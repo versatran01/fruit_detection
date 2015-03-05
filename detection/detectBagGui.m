@@ -132,6 +132,7 @@ handles.data.bag_path = bag_path;
 handles.data.bag = bag;
 handles.data.total_time = total_time;
 handles.data.image_topics = image_topics;
+handles.data.tracker = FruitTracker();
 guidata(hObject, handles);
 
 % --- Executes on button press in play_pause_togglebutton.
@@ -171,19 +172,8 @@ image = imresize(image, 0.4);
 handles.data.original_image = ...
     draw_image_on(handles.original_axes, ...
                   handles.data.original_image, image);
-% points = bbox2points(bboxes);
-[X, Y] = bboxToPatchVertices(CC.BoundingBox());
 
-
-if isempty(handles.data.bboxPlots)
-    hold on
-    handles.data.bboxPlots = patch(X, Y, 'red');
-    set(handles.data.bboxPlots, 'FaceAlpha', 0.1)
-    set(handles.data.bboxPlots, 'EdgeColor', [1 0 0])
-    disp('here')
-else
-    set(handles.data.bboxPlots, 'XData', X, 'Ydata', Y);
-end
+handles.data.tracker.track(CC);
 
 % draw mask
 handles.data.detection_image = ...
@@ -310,6 +300,7 @@ if isempty(image_handle)
 else
     set(image_handle, 'CData', image);
 end
+drawnow;
 
 function matlab_image = ros_image_msg_to_matlab_image(ros_image_msg)
 b = ros_image_msg.data(1:3:end);
