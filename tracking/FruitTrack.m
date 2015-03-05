@@ -31,6 +31,7 @@ classdef FruitTrack < handle
         % hte past within a predefined time window
         confidence
         
+        predicted_centroid
         predicted_bbox  % The predicted bounding box in the next frame
     end
     
@@ -38,53 +39,61 @@ classdef FruitTrack < handle
         % Constructor
         function self = FruitTrack(id, centroid, bbox, score)
             self.id = id;
-            self.color = 255*rand(1, 3);
+            self.color = 255 * rand(1, 3);
             self.centroids = centroid;
             self.bboxes = bbox;
             self.age = 1;
             self.visible_count = 1;
             self.confidence = [score, score];
+            self.predicted_centroid = centroid;
             self.predicted_bbox = bbox;
         end
         
         % Kalman filter prediction step
-        function predicted_centroid = kfPredict(self)
-            predicted_centroid = predict(self.kalman_filter);
+        function kfPredict(self)
+            self.predicted_centroid = predict(self.kalman_filter);
+            % Get the last bonding box on this track
+            last_bbox = self.bboxes(end, :);
+            % Shift the bounding box so that its center is at the
+            % predicted centroid
+            self.predicted_bbox = ...
+                [self.predicted_centroid - last_bbox(3:4)/2, ...
+                 last_bbox(3:4)];
         end
         
         % Kalman filter correction step
-        function kfCorrect(self, centroid)
-            correct(self.kalman_filter, centroid);
+        function kfCorrect(self, measured_centroid)
+            correct(self.kalman_filter, measured_centroid);
         end
         
-        % Update assigned  track with new centroid and bounding box
+        % Update assigned track with new centroid and bounding box
         % If stabilize is bigger than 0, this will take the average of up
         % to that number of frames with the new one and append it to the
         % track
-        function updateTrack(self, assigned, centroid, bbox, stabilize)
-            if nargin < 5, stabilize = 0; end
-            if ~assigned, stabilize = 0; end
+        function updateAssigned(self, centroid, bbox, stabilize)
+            if nargin < 4, stabilize = 0; end
             
-            if assigned
-                if stabilize
-                    n = min(self.age, stabilize);
-                    w = mean([self.bboxes(end - n + 1:end, 3); bbox(3)]);
-                    h = mean([self.bboxes(end - n + 1:end, 4); bbox(4)]);
-                    self.bboxes(end + 1, :) = [centroid - [w, h]/2, w, h];
-                else
-                    self.bboxes(end + 1, :) = bbox;
-                end
-                
-                % Update visibility if this is an assigned track
-                self.incVisibleCount();
-                self.scores(end + 1, :) = 1; % detection score is 1
+            if stabilize
+                n = min(self.age, stabilize);
+                w = mean([self.bboxes(end - n + 1:end, 3); bbox(3)]);
+                h = mean([self.bboxes(end - n + 1:end, 4); bbox(4)]);
+                self.bboxes(end + 1, :) = [centroid - [w, h]/2, w, h];
             else
-                self.bboxes(end + 1, :) = self.predicted_bbox;
-                self.scores(end + 1, :) = 0;  % detection score is 0
+                self.bboxes(end + 1, :) = bbox;
             end
             
             self.incAge();
+            % Update visibility if this is an assigned track
+            self.incVisibleCount();
+            self.scores(end + 1, :) = 1; % detection score is 1
             self.centroids(end + 1, :) = centroid;
+        end
+        
+        function updateUnassigned(self)
+            self.incAge();
+            self.centroids(end + 1, :) = self.predicted_centroid;
+            self.bboxes(end + 1, :) = self.predicted_bbox;
+            self.scores(end + 1, :) = 0;
         end
         
         % Adjust the track confidence score

@@ -64,16 +64,9 @@ classdef FruitTracker < handle
         function predictNewLocationsOfTracks(self)
             for i = 1:self.num_tracks
                 track = self.tracks(i);
-                % Get the last bonding box on this track
-                last_bbox = track.bboxes(end, :);
                 % Predict the current location of the track
                 % predicted_centroid = predict(track.kalman_filter);
-                predicted_centroid = track.kfPredict();
-                % Shift the bounding obx so that its cneter is at the
-                % predicted location
-                track.predicted_bbox = ...
-                    [predicted_centroid - last_bbox(3:4)/2, ...
-                     last_bbox(3:4)];
+                track.kfPredict();
             end 
         end
         
@@ -125,11 +118,11 @@ classdef FruitTracker < handle
                 
                 % Correct the estimate of the object's location using  the
                 % new detection
-                track.kf_correct(centroid);
+                track.kfCorrect(centroid);
                 
                 % Stabilize the bounding box by taking the average of the
                 % size [?]
-                track.updateTrack(true, centroid, bbox, 4);
+                track.updateAssigned(centroid, bbox, 4);
                 
                 % Adjust track confidence score based on the maximum
                 % detection score in the past few frames
@@ -147,7 +140,7 @@ classdef FruitTracker < handle
             for i = 1:num_unassigned_tracks;
                 track_idx = self.unassigned_tracks(i);
                 track = self.tracks(track_idx);
-                track.updateTrack(false, centroid, bbox);
+                track.updateUnassigned();
                 track.adjustConfidence(self.param.time_win_size);
             end
         end
