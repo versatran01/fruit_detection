@@ -52,6 +52,11 @@ classdef FruitTrack < handle
             predicted_centroid = predict(self.kalman_filter);
         end
         
+        % Kalman filter correction step
+        function kfCorrect(self, centroid)
+            correct(self.kalman_filter, centroid);
+        end
+        
         % Update assigned  track with new centroid and bounding box
         % If stabilize is bigger than 0, this will take the average of up
         % to that number of frames with the new one and append it to the
@@ -98,6 +103,10 @@ classdef FruitTrack < handle
         % Increment visible count by 1
         function incVisibleCount(self)
             self.visible_count = self.visible_count + 1;
+        end
+        
+        % Visualize this track, not impelemented
+        function visualize(self)
         end
     end
     

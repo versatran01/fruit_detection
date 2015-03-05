@@ -25,7 +25,11 @@ classdef FruitTracker < handle
         assignments
         unassigned_tracks
         unassigned_detections
-        
+    end
+    
+    properties(Dependent)
+        num_tracks
+        initialized
     end
     
     methods
@@ -36,10 +40,11 @@ classdef FruitTracker < handle
             self.param.gating_cost = 100;
             self.param.cost_of_non_assignment = 10;
             self.param.time_win_size = 5;
-            self.param.age_thresh
-            self.param.visibility_thresh
-            self.param.confidence_thresh
+            self.param.age_thresh = 5;
+            self.param.visibility_thresh = 0.6;
+            self.param.confidence_thresh = 2;
             self.track_counter = 1;
+            self.tracks = FruitTrack.empty;
         end
         
         % Track detections
@@ -57,7 +62,7 @@ classdef FruitTracker < handle
         
         % Predict new locations of each track using kalman filter
         function predictNewLocationsOfTracks(self)
-            for i = 1:length(self.tracks)
+            for i = 1:self.num_tracks
                 track = self.tracks(i);
                 % Get the last bonding box on this track
                 last_bbox = track.bboxes(end, :);
@@ -81,7 +86,11 @@ classdef FruitTracker < handle
             % of assigning each detection to each track. The cost is
             % minimum when the predicted bbox is perfectly aligned with the
             % detected boox (overlap ratio is 1)
-            
+            if ~self.initialized, 
+                self.unassigned_detections = ...
+                    1:size(self.detections.Centroid, 1);
+                return;
+            end
             predicted_bboxes = reshape([self.tracks(:).predicted_bbox], ...
                                         4, [])';
             cost = 1 - bboxOverlapRatio(predicted_bboxes, ...
@@ -89,7 +98,8 @@ classdef FruitTracker < handle
             
             % Force the optimization step to ignore some matches by setting
             % the associated cost to be a large number.
-            cost(cost > self.param.gating_thresh) = 1 + option.gating_cost;
+            cost(cost > self.param.gating_thresh) = ...
+                1 + self.param.gating_cost;
             
             % Solve the assignment problem
             [self.assignments, ...
@@ -109,7 +119,7 @@ classdef FruitTracker < handle
                 track_idx = self.assignments(i, 1);
                 detection_idx = self.assignments(i ,2);
                 
-                track = selftracks(track_idx);
+                track = self.tracks(track_idx);
                 centroid = self.detections.Centroid(detection_idx, :);
                 bbox = self.detections.BoundingBox(detection_idx, :);
                 
@@ -150,7 +160,7 @@ classdef FruitTracker < handle
         % 3. It failed to receive a strong detection within the past few
         % frames
         function deleteLostTracks(self)
-            if isempty(self.tracks), return; end
+            if ~self.initialized, return; end
             
             % Compute the fraction of the track's age for which it was
             % visible
@@ -190,6 +200,7 @@ classdef FruitTracker < handle
                 % Create a new track    
                 new_track = FruitTrack(self.track_counter, centroid, ...
                                        bbox, score);
+                % TODO: change these parameters here
                 new_track.kalman_filter = ...
                     configureKalmanFilter('ConstantVelocity', centroid, ...
                                           [2, 1], [5, 5], 100);
@@ -201,7 +212,21 @@ classdef FruitTracker < handle
         
         % Draws a colored bounding box for each track on the frame
         function displayTrackingResults(self)
-            disp('display')
+            if isempty(self.tracks), return; end
+            for i = 1:self.num_tracks
+                track = self.tracks(i);
+                track.visualize();
+            end
+        end
+        
+        % Getter: num_tracks
+        function n = get.num_tracks(self)
+            n = numel(self.tracks);
+        end
+        
+        % Getter: initialized
+        function init = get.initialized(self)
+            init = ~isempty(self.tracks);
         end
     end
     
