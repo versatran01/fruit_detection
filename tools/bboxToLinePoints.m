@@ -1,4 +1,4 @@
-function [ X, Y ] = bboxToLinePoints( bbox )
+function [ points ] = bboxToLinePoints( bbox )
 %BBOXTOLINEPOINTS Convert Nx4 vector of lines points to a 5x2xN vector of
 % line coordinates (for plotting).
 if isempty(bbox)
@@ -20,5 +20,4 @@ for i=1:N
               box(1:2) + [0 0]];
     points(:,:,i) = pts;
 end
-
 end
