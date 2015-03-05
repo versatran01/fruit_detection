@@ -29,7 +29,7 @@ CC = ConnectedComponents(mask);
 area = CC.Area();
 
 % throw away components below a very low threshold of area
-large = area > 3*areaScale;
+large = area > ceil(3*areaScale);
 CC.discard(~large);
 
 % get bounding boxes and areas for remaining regions
