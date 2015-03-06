@@ -1,11 +1,13 @@
 function [ X ] = fitCircles( points, niters, inlierthresh,...
-    inlierfrac, earlyexit )
+    inlierfrac, earlyexit, mergedist )
 %FITCIRCLES 
 %   `points` is an Nx2 vector of points
 %   `niters` is the max number of iterations
 %   `inliersdist` is the threshold for determining an inlier of a circle.
 %   `inlierfrac` is the fraction of points required to form an new circle.
 %   `earlyexit` is the number of circles that triggers early exit.
+%   `mergedist` is the euclidian distance between circles in R3 (x,y,r),
+%   below which they will be merged.
 N = size(points,1);
 X = zeros(4,0);
 models = 0;
@@ -42,7 +44,7 @@ for i=1:niters
         % see if this should be merged with another model
         dist = bsxfun(@minus,X(1:3,:),x).^2;
         if ~isempty(dist)
-            dist = sum(dist, 1) < 9;
+            dist = sum(dist, 1) < mergedist*mergedist;
         end
         idx = find(dist,1,'first');
         if isempty(idx)

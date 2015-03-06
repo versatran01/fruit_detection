@@ -1,4 +1,4 @@
-function [ mask, bbox ] = detectFruit( pixel_model, image, scale )
+function [ CC ] = detectFruit( pixel_model, image, scale )
 %DETECTFRUIT Detect fruit in an image.
 % `pixel_model` is the detection model trained at the pixel level.
 % `image` is the input image in the RGB color space.
@@ -40,7 +40,7 @@ dist = pdist2(centroids, centroids, 'euclidean');
 
 nearby = dist < 30*scale;     % take the closest that also satisfy the threshold
 nearby = triu(nearby,1);    
-smallest = smallestNonDiagonal(dist);
+smallest = smallestDistance(dist);
 nearby = nearby & smallest;
 
 % find those which have not been merged
@@ -62,41 +62,28 @@ CC.merge(overlap);
 
 % threshold by area again
 area = CC.Area();
-large = area > 40*areaScale;
+large = area > 100*areaScale;
 CC.discard(~large);
 
-% try to segment big regions
 area = CC.Area();
-filled = CC.FilledArea();
 bbox = CC.BoundingBox();
-ratio = filled ./ area;
-large = (area > 500*areaScale) & ratio > 0.5;
 
-large = find(large);
-for i=1:numel(large)
-    n = large(i);
-    % pull out the mask region and the original image area (for debugging)
-    original = imcrop(image(:,:,1:3), bbox(n,:));
-    submask = imcrop(CC.image, bbox(n,:));
-    segmentFruit(original,submask);
+% iterate over the remaining regions
+circles = cell(CC.size(), 1);
+for i=1:CC.size()
+    if area(i) > 300*areaScale
+        % pull out the mask region and the original image area (for
+        % debugging)
+        original = imcrop(image(:,:,1:3), bbox(i,:));
+        submask = imcrop(CC.image, bbox(i,:));
+        X = segmentFruit(original,submask);
+        if ~isempty(X)
+            % adjust to position of the bbox
+            X(:,1:2) = bsxfun(@plus, X(:,1:2), bbox(i,1:2));
+            circles{i} = X;
+        end
+    end
 end
-
-mask = CC.image;
-bbox = CC.BoundingBox();
-end
-
-function [smallest] = smallestNonDiagonal(dist)
-%SMALLESTNONDIAGONAL Find the smallest non-diagonal value. For use with 
-% pdist2 and similar methods.
-% Note: We assume dist is symmetric.
-M = size(dist,1);
-N = size(dist,2);
-% make the (sub-) diagonal nan
-dist = triu(dist,1) + tril(NaN(M,N));
-[~,small] = min(dist, [], 1); % column-wise min for smallest (ignoring nan)
-% convert to logical 2D indices
-ind = sub2ind(size(dist),small,1:numel(small));
-smallest = false(size(dist));
-smallest(ind) = true;
-smallest(1,1) = false;
+% included in return value...
+CC.circles = circles;
 end

@@ -3,6 +3,7 @@ classdef ConnectedComponents < handle
     
     properties
         image
+        circles
     end
     
     properties(Access=private)

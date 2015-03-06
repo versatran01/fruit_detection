@@ -57,7 +57,8 @@ classdef DetectionTester < handle
             end
         end
         
-        function plotDetections(self, detections, valid)
+        function plotDetections(self, CC, valid)
+            detections = CC.BoundingBox();
             if ~isempty(self.hDetections)
                 delete(self.hDetections);
                 self.hDetections = [];
@@ -78,7 +79,9 @@ classdef DetectionTester < handle
             end
         end
         
-        function [valid] = updateStats(self, selections, detections)
+        function [valid] = updateStats(self, selections, CC)
+            detections = CC.BoundingBox();
+            
             % pull out the selections that are fruit
             selections = cell2mat(selections);
             idx_fruit = (selections(:,4) == 1) | (selections(:,4) == 3);
@@ -136,12 +139,12 @@ classdef DetectionTester < handle
             % user selections for this image
             selections = self.dataset.selections{idx};
             % run detector on next image
-            [mask, bbox] = self.detector(image);
-            valid = self.updateStats(selections, bbox);
+            CC = self.detector(image);
+            valid = self.updateStats(selections, CC);
             if self.viz
-                self.plotImage(image, mask);
+                self.plotImage(image, CC.image);
                 self.plotSelections(selections);
-                self.plotDetections(bbox, valid);
+                self.plotDetections(CC, valid);
             end
         end
         
