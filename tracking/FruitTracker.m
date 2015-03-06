@@ -25,6 +25,9 @@ classdef FruitTracker < handle
         assignments
         unassigned_tracks
         unassigned_detections
+        
+        debug_axes
+        debug_image
     end
     
     properties(Dependent)
@@ -45,13 +48,47 @@ classdef FruitTracker < handle
             self.param.confidence_thresh = 2;
             self.track_counter = 1;
             self.tracks = FruitTrack.empty;
+            
+            figure();
+            self.debug_axes = axes();
+        end
+        
+        function debugPlot(self, image)
+            imshow(image, 'Parent', self.debug_axes);
+            set(self.debug_axes, 'YDir', 'normal');
+            
+            % Draw last bounding boxes
+            last_bboxes = reshape([self.tracks(:).last_bbox], 4, [])';
+            [X, Y] = bboxToPatchVertices(last_bboxes);
+            last_bbox_handle = patch(X, Y, 'r', 'Parent', self.debug_axes);
+            set(last_bbox_handle, 'EdgeColor', 'r');
+            set(last_bbox_handle, 'FaceAlpha', 0.1);
+            
+            % Draw predicted bounding boxes
+            pred_bboxes = reshape([self.tracks(:).predicted_bbox], 4, [])';
+            [X, Y] = bboxToPatchVertices(pred_bboxes);
+            pred_bbox_handle = patch(X, Y, 'b', 'Parent', self.debug_axes);
+            set(pred_bbox_handle, 'EdgeColor', 'b');
+            set(pred_bbox_handle, 'FaceAlpha', 0.1);
+            
+            % Draw detection
+            dect_bboxes = self.detections.BoundingBox;
+            [X, Y] = bboxToPatchVertices(dect_bboxes);
+            dect_bbox_handle = patch(X, Y, 'g', 'Parent', self.debug_axes);
+            set(dect_bbox_handle, 'EdgeColor', 'g');
+            set(dect_bbox_handle, 'FaceAlpha', 0.1);
+            drawnow
         end
         
         % Track detections
         % detections - ConnectedComponents
-        function track(self, detections)
+        function track(self, detections, image)
             self.detections = detections;
+            
             self.predictNewLocationsOfTracks();
+            
+            self.debugPlot(image);
+            
             self.detectionsToTracksAssignment();
             self.updateAssignedTracks();
             self.updateUnassignedTracks();
@@ -67,7 +104,10 @@ classdef FruitTracker < handle
                 % Predict the current location of the track
                 % predicted_centroid = predict(track.kalman_filter);
                 track.kfPredict();
-            end 
+            end
+            
+            % Debug plot
+            
         end
         
         % Assign detections to tracks
@@ -122,7 +162,7 @@ classdef FruitTracker < handle
                 
                 % Stabilize the bounding box by taking the average of the
                 % size [?]
-                track.updateAssigned(centroid, bbox, 4);
+                track.updateAssigned(centroid, bbox);
                 
                 % Adjust track confidence score based on the maximum
                 % detection score in the past few frames
@@ -193,10 +233,6 @@ classdef FruitTracker < handle
                 % Create a new track    
                 new_track = FruitTrack(self.track_counter, centroid, ...
                                        bbox, score);
-                % TODO: change these parameters here
-                new_track.kalman_filter = ...
-                    configureKalmanFilter('ConstantVelocity', centroid, ...
-                                          [2, 1], [5, 5], 100);
                 % Add it to the array of tracks
                 self.tracks(end + 1) = new_track;
                 self.track_counter = self.track_counter + 1;

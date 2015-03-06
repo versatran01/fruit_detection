@@ -35,6 +35,10 @@ classdef FruitTrack < handle
         predicted_bbox  % The predicted bounding box in the next frame
     end
     
+    properties(Dependent)
+        last_bbox
+    end
+    
     methods
         % Constructor
         function self = FruitTrack(id, centroid, bbox, score)
@@ -47,13 +51,16 @@ classdef FruitTrack < handle
             self.confidence = [score, score];
             self.predicted_centroid = centroid;
             self.predicted_bbox = bbox;
+            self.kalman_filter = ...
+                    configureKalmanFilter('ConstantVelocity', centroid, ...
+                                          [10, 5], [5, 5], 1);
         end
         
         % Kalman filter prediction step
         function kfPredict(self)
             self.predicted_centroid = predict(self.kalman_filter);
             % Get the last bonding box on this track
-            last_bbox = self.bboxes(end, :);
+            last_bbox = self.last_bbox;
             % Shift the bounding box so that its center is at the
             % predicted centroid
             self.predicted_bbox = ...
@@ -112,6 +119,11 @@ classdef FruitTrack < handle
         % Increment visible count by 1
         function incVisibleCount(self)
             self.visible_count = self.visible_count + 1;
+        end
+        
+        % Getter: last_bbox
+        function bbox = get.last_bbox(self)
+            bbox = self.bboxes(end, :);
         end
         
         % Visualize this track, not impelemented
