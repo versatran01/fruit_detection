@@ -149,7 +149,7 @@ if get(hObject, 'Value') == get(hObject, 'Max')
         [msg, meta] = handles.data.bag.read();
         if strcmp(meta.topic, '/color/image_raw')
             % todo: add time control
-            image = ros_image_msg_to_matlab_image(msg);
+            image = rosImageToMatlabImage(msg);
             handles = process_image(image, handles);
             drawnow;
             pause(0.001);
@@ -301,16 +301,6 @@ else
     set(image_handle, 'CData', image);
 end
 drawnow;
-
-function matlab_image = ros_image_msg_to_matlab_image(ros_image_msg)
-b = ros_image_msg.data(1:3:end);
-g = ros_image_msg.data(2:3:end);
-r = ros_image_msg.data(3:3:end);
-b = reshape(b, ros_image_msg.width, ros_image_msg.height);
-g = reshape(g, ros_image_msg.width, ros_image_msg.height);
-r = reshape(r, ros_image_msg.width, ros_image_msg.height);
-matlab_image = cat(3, r, g, b);
-
 
 function model_name = getModelFromModelListbox(handle)
 model_ind = get(handle, 'Value');

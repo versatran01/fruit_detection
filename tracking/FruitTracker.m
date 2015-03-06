@@ -49,7 +49,7 @@ classdef FruitTracker < handle
             self.track_counter = 1;
             self.tracks = FruitTrack.empty;
             
-            figure();
+            figure(2);
             self.debug_axes = axes();
         end
         
