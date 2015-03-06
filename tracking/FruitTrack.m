@@ -15,11 +15,7 @@ classdef FruitTrack < handle
         
         % A N-by-1 vector to record the calssification score from the fuit
         % detector with the current detection score at the last row
-        scores 
-        
-        % A Kalman filterobject used for motion-based tracking which tracks
-        % the center point of the object in image
-        kalman_filter
+        scores
         
         age  % The number of frames since the track was initialized
         
@@ -51,14 +47,11 @@ classdef FruitTrack < handle
             self.confidence = [score, score];
             self.predicted_centroid = centroid;
             self.predicted_bbox = bbox;
-            self.kalman_filter = ...
-                    configureKalmanFilter('ConstantVelocity', centroid, ...
-                                          [10, 5], [5, 5], 1);
         end
         
-        % Kalman filter prediction step
-        function kfPredict(self)
-            self.predicted_centroid = predict(self.kalman_filter);
+        % Predict new location of centroid and bounding box
+        function predict(self, prev_corners, flow)
+            % Predict new centroid based on optical flow?
             % Get the last bonding box on this track
             last_bbox = self.last_bbox;
             % Shift the bounding box so that its center is at the
@@ -66,11 +59,6 @@ classdef FruitTrack < handle
             self.predicted_bbox = ...
                 [self.predicted_centroid - last_bbox(3:4)/2, ...
                  last_bbox(3:4)];
-        end
-        
-        % Kalman filter correction step
-        function kfCorrect(self, measured_centroid)
-            correct(self.kalman_filter, measured_centroid);
         end
         
         % Update assigned track with new centroid and bounding box
