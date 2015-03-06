@@ -7,7 +7,8 @@ function [ X ] = fitCircles( points, niters, inlierthresh,...
 %   `inlierfrac` is the fraction of points required to form an new circle.
 %   `earlyexit` is the number of circles that triggers early exit.
 N = size(points,1);
-X = [];
+X = zeros(4,0);
+models = 0;
 for i=1:niters
     % randomly sample
     idx = randsample(N,3);
@@ -35,19 +36,30 @@ for i=1:niters
         A = [2*pts ones(size(pts,1),1)];
         b = sum(pts.*pts, 2);
         x = A\b;
-        % convert x(3) to radius squared
-        x(3) = x(3) + x(1)*x(1) + x(2)*x(2);
+        % convert x(3) to radius (not squared)
+        x(3) = sqrt( x(3) + x(1)*x(1) + x(2)*x(2) );
         
-        % this is a possible solution
-        X(:,end+1) = [x; nnz(inliers)];
+        % see if this should be merged with another model
+        dist = bsxfun(@minus,X(1:3,:),x).^2;
+        if ~isempty(dist)
+            dist = sum(dist, 1) < 9;
+        end
+        idx = find(dist,1,'first');
+        if isempty(idx)
+            % this is a new solution
+            X(:,end+1) = [x; nnz(inliers)];
+        else
+            % increment other solution
+            X(4,idx) = X(4,idx) + nnz(inliers);
+        end
+        models = models+1;
     end
-    if size(X,2) >= earlyexit
+    if models >= earlyexit
         break;
     end
 end
-% convert to radius and arrange best to worst
+% convert columns, arrange best to worst
 if ~isempty(X)
-    X(3,:) = sqrt(X(3,:));
     X = X';
     X = sortrows(X,[4 3]);
     X = flipud(X);
