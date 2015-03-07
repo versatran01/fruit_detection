@@ -120,6 +120,7 @@ classdef FruitTracker < handle
             if c == 3, gray = rgb2gray(image); end
             
             % DEBUG_START %
+            % Plot original image
             imshow(image, 'Parent', self.debug_axes);
             set(self.debug_axes, 'YDir', 'normal');
             drawnow
@@ -145,44 +146,40 @@ classdef FruitTracker < handle
                 % flow
                 self.prev_corners = prev_points;
                 self.curr_corners = curr_points;
-                % Need to reinitialize klt_tracker
-                self.klt_tracker.release();
-                self.klt_tracker.initialize(self.curr_corners, gray);
                 
                 % DEBUG_START %
+                % Plot optical flow
+                %{
                 hold on
                 plot(self.debug_axes, self.prev_corners(:, 1), ...
                      self.prev_corners(:, 2), 'b.');
                 plot(self.debug_axes, self.curr_corners(:, 1), ...
                      self.curr_corners(:, 2), 'r.');
-%                 quiver(self.debug_axes, ...
-%                        prev_points(:, 1), prev_points(:, 2), ...
-%                        self.flow(:, 1), self.flow(:, 2), 0, ...
-%                        'm');
-                drawnow
+                quiver(self.debug_axes, ...
+                       prev_points(:, 1), prev_points(:, 2), ...
+                       self.flow(:, 1), self.flow(:, 2), 0, ...
+                       'm');
+                drawnow;
+                %}
                 % DEBUG_STOP %
             end
             
-            % Extract new features if there are not enough tracked corners
-            % left in the current frame
-            if size(self.curr_corners, 1) < ...
-                    (max_corners * self.param.extract_thresh)
-                new_corners = detectFASTFeatures(gray );
-                new_corners = new_corners.selectStrongest(max_corners);
-                % Assign new corners to tracked
-                self.curr_corners = ...
-                    new_corners.selectStrongest(max_corners).Location;
-                % Reinitialize klt_tracker
-                self.klt_tracker.release();
-                self.klt_tracker.initialize(self.curr_corners, gray);
-               
-                % DEBUG_START %
-                hold on
-                plot(self.debug_axes, self.curr_corners(:, 1), ...
-                     self.curr_corners(:, 2), 'c.');
-                drawnow
-                % DEBUG_STOP %
-            end
+            % Extract new features at every frame
+            new_corners = detectFASTFeatures(gray );
+            new_corners = new_corners.selectStrongest(max_corners);
+            % Assign new corners to tracked
+            self.curr_corners = ...
+                new_corners.selectStrongest(max_corners).Location;
+            % Reinitialize klt_tracker
+            self.klt_tracker.release();
+            self.klt_tracker.initialize(self.curr_corners, gray);
+            
+            % DEBUG_START %
+            hold on
+            plot(self.debug_axes, self.curr_corners(:, 1), ...
+                self.curr_corners(:, 2), 'c.');
+            drawnow
+            % DEBUG_STOP %
         end
         
         % Predict new locations of each track using kalman filter
