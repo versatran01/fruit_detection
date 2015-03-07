@@ -7,23 +7,25 @@ function [ X ] = segmentFruit( original, mask, scale )
 %   It may be empty, if no circles are found.
 
 % todo: store all parameters in a struct
-
 areaScale = scale*scale;
 
 % find masked pixel edges
 mask_pixels = find(edge(mask));
 [y,x] = ind2sub(size(mask), mask_pixels);
-if size(x,1) < 20*areaScale
-    % too few points...
+points = [x y];
+if size(points,1) < 20*areaScale
+    % too few points, we can't fit this very well
     X = [];
     return;
 end
 
-% fit circles
-% TODO: these params are tuned at scale of 1
-%X = fitCircles([x y], 50000, 10*scale, 0.02, 50, 3*scale);
-
-X = fitCirclesFast([x y], 50000, 10*scale, 0.02, 50, 3*scale);
+% fit circles by random sampling
+if exist('fitCirclesFast','file') == 3
+    X = fitCirclesFast(points, 100000, 10*scale, 0.02, 100, 3*scale);
+else
+    warning('fitCirclesFast not found. Did you compile your mex?');
+    X = fitCircles(points, 100000, 10*scale, 0.02, 100, 3*scale);
+end
 X = sortrows(X,[4 3]);
 X = flipud(X);
 
@@ -31,12 +33,15 @@ if ~isempty(X)
     % eliminate any circles with really big radii
     keep = X(:,3) < max(size(mask));
     X = X(keep,:);
+    
     % eliminate any circles with really small radii
     keep = X(:,3) > 8*scale;
     X = X(keep,:);
+    
     % eliminate circles far outside the bounding box
     center = size(mask) / 2;
     dist = sqrt( sum(bsxfun(@minus, X(:,1:2), center).^2, 2) );
+    % far here defined as 10% the radius
     keep = dist < (norm(center) + X(:,3)*0.1);
     X = X(keep,:);
     
@@ -55,6 +60,20 @@ if ~isempty(X)
         % better score)
         inside = ~any(inside, 1);
         X = X(inside, :);
+        
+        % calculate circle area
+        area = X(:,3).^2 * pi;
+        
+        % get all pixels that are full
+        mask_pixels = find(mask);
+        [y,x] = ind2sub(size(mask), mask_pixels);
+        points = [x y];
+        
+        % eliminate circles with few good pixels inside
+        inside = pointsInCircles(X(:,1:3), points);
+        inside = sum(inside, 2);        % total number of points in each circle
+        keep = (inside ./ area) > 0.4;  % must be 40% filled
+        X = X(keep,:);
     end
 end
 end

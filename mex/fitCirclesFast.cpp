@@ -86,7 +86,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     const double inlierFrac = mxGetScalar(prhs[3]);   //  min frac of inliers
     const int earlyExit = mxGetScalar(prhs[4]);       //  # of circles for early exit
     const double mergeDist = mxGetScalar(prhs[5]);    //  merge threshold for circle
-        
+    
     if (nIters <= 0) {
       throw std::invalid_argument("niters must be > 0");
     }

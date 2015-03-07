@@ -33,15 +33,6 @@ for i=1:niters
     
     % check if this is a possible solution
     if nnz(inliers) > inlierfrac * N
-        % fit it again
-%         pts = points(inliers,:);
-%         A = [2*pts ones(size(pts,1),1)];
-%         b = sum(pts.*pts, 2);
-%         x = A\b;
-%         % convert x(3) to radius (not squared)
-%         x(3) = sqrt( x(3) + x(1)*x(1) + x(2)*x(2) );
-      %  x(3) = sqrt(x(3));
-        
         % see if this should be merged with another model
         dist = bsxfun(@minus,X(1:3,:),x).^2;
         if ~isempty(dist)
@@ -64,7 +55,5 @@ end
 % convert columns, arrange best to worst
 if ~isempty(X)
     X = X';
-    %X = sortrows(X,[4 3]);
-    %X = flipud(X);
 end
 end
