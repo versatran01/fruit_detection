@@ -24,7 +24,7 @@ classdef FruitTrack < handle
         
         % A pair of two numbers to represent how confident we trust the
         % track. It stores the maximum and the average detection scores in
-        % hte past within a predefined time window
+        % the past within a predefined time window
         confidence
         
         predicted_centroid
@@ -72,20 +72,33 @@ classdef FruitTrack < handle
                 offset = mean(optical_flow, 1);
             end
             
-            self.predicted_centroid = last_centroid - offset;
+            self.predicted_centroid = last_centroid + offset;
                 
             % Shift the bounding box so that its center is at the
             % predicted centroid
             self.predicted_bbox = ...
                 [self.predicted_centroid - last_bbox(3:4)/2, ...
                  last_bbox(3:4)];
+            
+            % DEBUG_START %
+            hold on
+            [X, Y] = bboxToPatchVertices(last_bbox);
+            patch(X, Y, 'b', 'Parent', debug_axes, 'EdgeColor', 'b', ...
+                  'FaceAlpha', 0.1);
+            [X, Y] = bboxToPatchVertices(self.predicted_bbox);
+            patch(X, Y, 'r', 'Parent', debug_axes, 'EdgeColor', 'r', ...
+                  'FaceAlpha', 0.1);
+            plot([last_centroid(1), self.predicted_centroid(1)], ...
+                 [last_centroid(2), self.predicted_centroid(2)], 'r'); 
+            drawnow
+            % DEBUG_STOP %
         end
         
         % Update assigned track with new centroid and bounding box
         % If stabilize is bigger than 0, this will take the average of up
         % to that number of frames with the new one and append it to the
         % track
-        function updateAssigned(self, centroid, bbox, stabilize)
+        function updateAssigned(self, centroid, bbox, stabilize, debug_axes)
             if nargin < 4, stabilize = 0; end
             
             if stabilize
@@ -96,6 +109,17 @@ classdef FruitTrack < handle
             else
                 self.bboxes(end + 1, :) = bbox;
             end
+            
+            % DEBUG_START %
+            hold on
+            [X, Y] = bboxToPatchVertices(bbox);
+            patch(X, Y, 'm', 'Parent', debug_axes, 'EdgeColor', 'm', ...
+                  'FaceAlpha', 0.1);
+            plot(debug_axes, ...
+                 [self.last_centroid(1), centroid(1)], ...
+                 [self.last_centroid(2), centroid(2)], 'm');
+            drawnow
+            % DEBUG_STOP %
             
             self.incAge();
             % Update visibility if this is an assigned track

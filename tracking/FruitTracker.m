@@ -94,33 +94,6 @@ classdef FruitTracker < handle
             self.debug_axes = axes();
         end
         
-        function debugPlot(self, image)
-            imshow(image, 'Parent', self.debug_axes);
-            set(self.debug_axes, 'YDir', 'normal');
-            
-            % Draw last bounding boxes
-            last_bboxes = reshape([self.tracks(:).last_bbox], 4, [])';
-            [X, Y] = bboxToPatchVertices(last_bboxes);
-            last_bbox_handle = patch(X, Y, 'r', 'Parent', self.debug_axes);
-            set(last_bbox_handle, 'EdgeColor', 'r');
-            set(last_bbox_handle, 'FaceAlpha', 0.1);
-            
-            % Draw predicted bounding boxes
-            pred_bboxes = reshape([self.tracks(:).predicted_bbox], 4, [])';
-            [X, Y] = bboxToPatchVertices(pred_bboxes);
-            pred_bbox_handle = patch(X, Y, 'b', 'Parent', self.debug_axes);
-            set(pred_bbox_handle, 'EdgeColor', 'b');
-            set(pred_bbox_handle, 'FaceAlpha', 0.1);
-            
-            % Draw detection
-            dect_bboxes = self.detections.BoundingBox;
-            [X, Y] = bboxToPatchVertices(dect_bboxes);
-            dect_bbox_handle = patch(X, Y, 'g', 'Parent', self.debug_axes);
-            set(dect_bbox_handle, 'EdgeColor', 'g');
-            set(dect_bbox_handle, 'FaceAlpha', 0.1);
-            drawnow
-        end
-        
         % Track detections
         % detections - ConnectedComponents
         function track(self, detections, image)
@@ -179,13 +152,13 @@ classdef FruitTracker < handle
                 % DEBUG_START %
                 hold on
                 plot(self.debug_axes, self.prev_corners(:, 1), ...
-                     self.prev_corners(:, 2), 'b+');
+                     self.prev_corners(:, 2), 'b.');
                 plot(self.debug_axes, self.curr_corners(:, 1), ...
-                     self.curr_corners(:, 2), 'r+');
-                quiver(self.debug_axes, ...
-                       prev_points(:, 1), prev_points(:, 2), ...
-                       self.flow(:, 1), self.flow(:, 2), 0, ...
-                       'm');
+                     self.curr_corners(:, 2), 'r.');
+%                 quiver(self.debug_axes, ...
+%                        prev_points(:, 1), prev_points(:, 2), ...
+%                        self.flow(:, 1), self.flow(:, 2), 0, ...
+%                        'm');
                 drawnow
                 % DEBUG_STOP %
             end
@@ -206,7 +179,7 @@ classdef FruitTracker < handle
                 % DEBUG_START %
                 hold on
                 plot(self.debug_axes, self.curr_corners(:, 1), ...
-                     self.curr_corners(:, 2), 'c+');
+                     self.curr_corners(:, 2), 'c.');
                 drawnow
                 % DEBUG_STOP %
             end
@@ -270,7 +243,7 @@ classdef FruitTracker < handle
                 
                 % Stabilize the bounding box by taking the average of the
                 % size [?]
-                track.updateAssigned(centroid, bbox);
+                track.updateAssigned(centroid, bbox, 0, self.debug_axes);
                 
                 % Adjust track confidence score based on the maximum
                 % detection score in the past few frames
