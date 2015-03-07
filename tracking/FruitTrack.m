@@ -81,15 +81,21 @@ classdef FruitTrack < handle
                  last_bbox(3:4)];
             
             % DEBUG_START %
+            % Plot last bounding box
             hold on
             [X, Y] = bboxToPatchVertices(last_bbox);
             patch(X, Y, 'b', 'Parent', debug_axes, 'EdgeColor', 'b', ...
                   'FaceAlpha', 0.1);
+            % Plot predicted bounding box
             [X, Y] = bboxToPatchVertices(self.predicted_bbox);
             patch(X, Y, 'r', 'Parent', debug_axes, 'EdgeColor', 'r', ...
                   'FaceAlpha', 0.1);
             plot([last_centroid(1), self.predicted_centroid(1)], ...
-                 [last_centroid(2), self.predicted_centroid(2)], 'r'); 
+                 [last_centroid(2), self.predicted_centroid(2)], 'r');
+            % Plot all previous centroid
+            plot(debug_axes, ...
+                 self.centroids(:,1), self.centroids(:,2), '-b', ...
+                 'LineWidth', 1);
             drawnow
             % DEBUG_STOP %
         end

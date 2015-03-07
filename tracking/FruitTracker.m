@@ -15,7 +15,7 @@ classdef FruitTracker < handle
         % between a detection and a track
         % param.gating_cost - A large value for the assignment cost matrix
         % that enforces the rejection of a candidate match
-        % param.cost_of_non_assignment - A tuning parameter to control the
+        % param.cost_non_assignment - A tuning parameter to control the
         % likelihood of creation of a new track
         % param.time_win_size - A tunning parameter to specify the number
         % of frames required to stabilize the confidence score of a track
@@ -67,9 +67,9 @@ classdef FruitTracker < handle
             % disable gating for now
             
             % Fruit tracker parameters
-            self.param.gating_thresh = 1;
+            self.param.gating_thresh = 0.9;
             self.param.gating_cost = 100;
-            self.param.cost_of_non_assignment = 10;
+            self.param.cost_non_assignment = 10;
             self.param.time_win_size = 5;
             self.param.age_thresh = 5;
             self.param.visibility_thresh = 0.6;
@@ -78,9 +78,8 @@ classdef FruitTracker < handle
             % KLT tracker parameters
             self.param.pyramid_levels = 3;
             self.param.block_size = [1 1] * 21;
-            self.param.corners_per_block = 1.2;
+            self.param.corners_per_block = 2;
             self.param.extract_thresh = 0.4;
-            
             self.klt_tracker = ...
                 vision.PointTracker('BlockSize', self.param.block_size, ...
                 'NumPyramidLevels', ...
@@ -124,6 +123,10 @@ classdef FruitTracker < handle
             imshow(image, 'Parent', self.debug_axes);
             set(self.debug_axes, 'YDir', 'normal');
             drawnow
+            % Plot current detection
+            [X, Y] = bboxToPatchVertices(self.detections.BoundingBox);
+            patch(X, Y, 'g', 'Parent', self.debug_axes, ...
+                  'EdgeColor', 'g', 'FaceAlpha', 0.1);
             % DEBUG_STOP %
             
             % Calculate max corners
@@ -148,6 +151,7 @@ classdef FruitTracker < handle
                 self.curr_corners = curr_points;
                 
                 % DEBUG_START %
+                fprintf('Number of flow: %g\n', size(self.flow, 1));
                 % Plot optical flow
                 %{
                 hold on
@@ -175,6 +179,8 @@ classdef FruitTracker < handle
             self.klt_tracker.initialize(self.curr_corners, gray);
             
             % DEBUG_START %
+            fprintf('Number of new detection: %g.\n', ...
+                    size(self.curr_corners, 1));
             hold on
             plot(self.debug_axes, self.curr_corners(:, 1), ...
                 self.curr_corners(:, 2), 'c.');
@@ -184,6 +190,8 @@ classdef FruitTracker < handle
         
         % Predict new locations of each track using kalman filter
         function predictNewLocationsOfTracks(self)
+            fprintf('Predict new locations for %g tracks.\n', ...
+                    self.num_tracks);
             for i = 1:self.num_tracks
                 track = self.tracks(i);
                 % Predict the current location of the track
@@ -218,11 +226,19 @@ classdef FruitTracker < handle
                 1 + self.param.gating_cost;
             
             % Solve the assignment problem
+            fprintf('Assigning %g detections to %g tracks.\n', ...
+                    size(self.detections.BoundingBox, 1), ...
+                    self.num_tracks);
             [self.assignments, ...
              self.unassigned_tracks, ...
              self.unassigned_detections] = ...
                 assignDetectionsToTracks(cost, ...
-                self.param.cost_of_non_assignment);
+                                         self.param.cost_non_assignment);
+            fprintf('%g detections assgined to %g tracks.\n', ...
+                    size(self.assignments, 2), size(self.assignments, 1));
+            fprintf('%g unassigned tracks, %g unassigned detections.\n' , ...
+                    numel(self.unassigned_tracks), ...
+                    numel(self.unassigned_detections));
         end
         
         % Updates each assigned track with the corresponding detection
@@ -287,7 +303,7 @@ classdef FruitTracker < handle
             lost_idx = (ages <= self.param.age_thresh) & ...
                        (visibility <= self.param.visibility_thresh) & ...
                        (max_confidence <= self.param.confidence_thresh);
-            
+            fprintf('Number of  tracks to delete: %g.\n', nnz(lost_idx));
             % Delete lost tracks
             self.tracks = self.tracks(~lost_idx);
         end
