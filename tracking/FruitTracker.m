@@ -3,6 +3,8 @@ classdef FruitTracker < handle
     properties
         tracks  % Collection of tracks
         
+        image  % Current image
+        
         % An integer that will be incremented and assigned to each newly
         % created track
         track_counter
@@ -70,10 +72,11 @@ classdef FruitTracker < handle
             self.param.gating_thresh = 0.9;
             self.param.gating_cost = 100;
             self.param.cost_non_assignment = 10;
-            self.param.time_win_size = 5;
+            self.param.time_win_size = 4;
+            self.param.confidence_thresh = 0.5;
             self.param.age_thresh = 5;
             self.param.visibility_thresh = 0.6;
-            self.param.confidence_thresh = 2;
+            
             
             % KLT tracker parameters
             self.param.pyramid_levels = 3;
@@ -111,6 +114,7 @@ classdef FruitTracker < handle
         
         % Optical flow
         function calculateOpticalFlow(self, image)
+            self.image = image;
             % Make current corners previous before start
             self.prev_corners = self.curr_corners;
             
@@ -124,7 +128,7 @@ classdef FruitTracker < handle
             imshow(image, 'Parent', self.debug_axes);
             set(self.debug_axes, 'YDir', 'normal');
             drawnow
-            % Plot current detections
+            % Plot current detections in yellow
             [X, Y] = bboxToPatchVertices(self.detections.BoundingBox);
             patch(X, Y, 'y', 'Parent', self.debug_axes, ...
                   'EdgeColor', 'y', 'FaceAlpha', 0.1);
@@ -295,18 +299,46 @@ classdef FruitTracker < handle
             ages = [self.tracks(:).age]';
             visible_counts = [self.tracks(:).visible_count]';
             visibility = visible_counts ./ ages;
+                
+            % Check whether the last centroid is out of image boundary
+            last_centroids = reshape([self.tracks(:).last_centroid], ...
+                                     2, [])';
+            out_of_image = last_centroids(:, 1) < 0 | ...
+                           last_centroids(:, 2) < 0 | ...
+                           last_centroids(:, 1) > size(self.image, 2) | ...
+                           last_centroids(:, 2) > size(self.image, 1);
             
             % Check the maxium detection confidence score
             confidences = reshape([self.tracks(:).confidence], 2, [])';
-            max_confidence = confidences(:, 1);
+            ave_confidences = confidences(:, 2);
             
             % Find the indices of 'lost' tracks
-            lost_idx = (ages <= self.param.age_thresh) & ...
-                       (visibility <= self.param.visibility_thresh) & ...
-                       (max_confidence <= self.param.confidence_thresh);
-            fprintf('Number of  tracks to delete: %g.\n', nnz(lost_idx));
+            % The criteria for 'lost' is 
+            lost_idx_1 = (ages <= self.param.age_thresh & ...
+                          visibility < self.param.visibility_thresh) | ...
+                         (ave_confidences < self.param.confidence_thresh);
+            lost_idx_2 = ages > self.param.age_thresh & out_of_image;
+            lost_idx = lost_idx_1 | lost_idx_2;
+                          
+            fprintf('Number of tracks to delete: %g.\n', nnz(lost_idx));
+            
+            tracks_to_delete = self.tracks(lost_idx);
             % Delete lost tracks
             self.tracks = self.tracks(~lost_idx);
+            
+            % DEBUG_START %
+            % Plot tracks to delte
+            
+            delete_centroids = reshape([tracks_to_delete.last_centroid], ...
+                                       2, [])';
+            if ~isempty(delete_centroids)
+                
+                plot(self.debug_axes, ...
+                    delete_centroids(:, 1), delete_centroids(:, 2), 'm+', ...
+                    'MarkerSize', 10);
+                drawnow
+            end
+            % DEBUG_STOP %
         end
         
         % Create new tracks for unassigned detections
@@ -318,7 +350,6 @@ classdef FruitTracker < handle
                 self.detections.Centroid(self.unassigned_detections, :);
             unassigned_bboxes = ...
                 self.detections.BoundingBox(self.unassigned_detections, :);
-            
             
             for i = 1:num_unassigned_detections
                 centroid = unassigned_centroids(i, :);

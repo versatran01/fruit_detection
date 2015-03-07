@@ -43,6 +43,7 @@ classdef FruitTrack < handle
             self.color = 255 * rand(1, 3);
             self.centroids = centroid;
             self.bboxes = bbox;
+            self.scores = score;
             self.age = 1;
             self.visible_count = 1;
             self.confidence = [score, score];
@@ -75,16 +76,18 @@ classdef FruitTrack < handle
             hold on
             plot(debug_axes, ...
                  last_centroid(1), last_centroid(2), 'co');
-            % Plot predicted bounding box
+           text(last_centroid(1), last_centroid(2), num2str(self.id), ...
+                'Color', 'c');
+            % Plot predicted bounding box in red
             [X, Y] = bboxToPatchVertices(self.predicted_bbox);
             patch(X, Y, 'r', 'Parent', debug_axes, 'EdgeColor', 'r', ...
                   'FaceAlpha', 0.1);
             plot(debug_axes, ...
                  [last_centroid(1), self.predicted_centroid(1)], ...
                  [last_centroid(2), self.predicted_centroid(2)], 'r');
-            % Plot all previous centroid
+            % Plot all previous centroid in cyan
             plot(debug_axes, ...
-                 self.centroids(:,1), self.centroids(:,2), '-c', ...
+                 self.centroids(:,1), self.centroids(:,2), '-.c', ...
                  'LineWidth', 1);
             drawnow
             % DEBUG_STOP %
@@ -107,6 +110,7 @@ classdef FruitTrack < handle
             end
             
             % DEBUG_START %
+            % Plot assigned detections in green
             hold on
             [X, Y] = bboxToPatchVertices(bbox);
             patch(X, Y, 'g', 'Parent', debug_axes, 'EdgeColor', 'g', ...
@@ -177,6 +181,12 @@ end
 
 corners = corners(inlier_ind, :);
 flow = flow(inlier_ind, :);
+
+% Just take the average if block_size is small enough
+if i == 1
+    offset = mean(flow, 1);
+    return;
+end
 
 % Find the closest corner to the centroid
 distances_squared = sum(bsxfun(@minus, corners, centroid).^2, 2);
