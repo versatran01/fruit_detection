@@ -27,6 +27,7 @@ addpath('./tune');
 addpath('./vendor/fkmeans');
 addpath('./vendor/liblinear/matlab')
 addpath('./vendor/libsvm/matlab');
+addpath('./vendor/vlfeat')
 if ~ismac()
     addpath('./vendor/matlab_rosbag-linux64');
 else

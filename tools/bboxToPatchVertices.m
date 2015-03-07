@@ -1,23 +1,17 @@
-function [ X, Y ] = bboxToPatchVertices( bbox )
+function [ X, Y ] = bboxToPatchVertices(bboxes)
 %BBOXTOPATCHVERTICES 
-if isempty(bbox)
+if isempty(bboxes)
     X = [];
     Y = [];
     return;
 end
-N = size(bbox,1);
-if size(bbox,2) ~= 4
-    error('bbox must be Nx4');
+
+if size(bboxes, 2) ~= 4
+    error('bboxes must be Nx4');
 end
 
-X = zeros(4, N);
-Y = zeros(4, N);
-
-for i = 1:N
-    box = bbox(i, :);
-    X(:, i) = [box(1); box(1) + box(3); box(1) + box(3); box(1)];
-    Y(:, i) = [box(2); box(2); box(2) + box(4); box(2) + box(4)];
-end
+X = [bboxes(:, 1), bboxes(:, 1) + bboxes(:, 3), bboxes(:, 1) + bboxes(:, 3), bboxes(:, 1)]';
+Y = [bboxes(:, 2), bboxes(:, 2), bboxes(:, 2) + bboxes(:, 4), bboxes(:, 2) + bboxes(:, 4)]';
 
 end
 

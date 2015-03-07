@@ -1,4 +1,4 @@
-function [ mask, bbox ] = detectFruit( pixel_model, image, scale )
+function [ CC ] = detectFruit( pixel_model, image, scale )
 %DETECTFRUIT Detect fruit in an image.
 % `pixel_model` is the detection model trained at the pixel level.
 % `image` is the input image in the RGB color space.
@@ -40,7 +40,7 @@ dist = pdist2(centroids, centroids, 'euclidean');
 
 nearby = dist < 30*scale;     % take the closest that also satisfy the threshold
 nearby = triu(nearby,1);    
-smallest = smallestNonDiagonal(dist);
+smallest = smallestDistance(dist);
 nearby = nearby & smallest;
 
 % find those which have not been merged
@@ -54,33 +54,36 @@ bbox = CC.BoundingBox();
 overlap = bboxOverlapRatio(bbox,bbox,'Min');
 overlap = triu(overlap,1);  % take everything above diagonal
 
-% find boxes which overlap more than 30%
-overlap = overlap > 0.30;
+% find boxes which overlap more than 5%
+overlap = overlap > 0.05;
 overlap = overlap | diag(~any(overlap,1));
 % merge them...
 CC.merge(overlap);
 
 % threshold by area again
 area = CC.Area();
-large = area > 40*areaScale;
+large = area > 100*areaScale;
 CC.discard(~large);
 
-mask = CC.image;
+area = CC.Area();
 bbox = CC.BoundingBox();
-end
 
-function [smallest] = smallestNonDiagonal(dist)
-%SMALLESTNONDIAGONAL Find the smallest non-diagonal value. For use with 
-% pdist2 and similar methods.
-% Note: We assume dist is symmetric.
-M = size(dist,1);
-N = size(dist,2);
-% make the (sub-) diagonal nan
-dist = triu(dist,1) + tril(NaN(M,N));
-[~,small] = min(dist, [], 1); % column-wise min for smallest (ignoring nan)
-% convert to logical 2D indices
-ind = sub2ind(size(dist),small,1:numel(small));
-smallest = false(size(dist));
-smallest(ind) = true;
-smallest(1,1) = false;
+% iterate over the remaining regions
+circles = cell(CC.size(), 1);
+for i=1:CC.size()
+    if area(i) > 300*areaScale
+        % pull out the mask region and the original image area (for
+        % debugging)
+        original = imcrop(image(:,:,1:3), bbox(i,:));
+        submask = imcrop(CC.image, bbox(i,:));
+        X = segmentFruit(original,submask,scale);
+        if ~isempty(X)
+            % adjust to position of the bbox
+            X(:,1:2) = bsxfun(@plus, X(:,1:2), bbox(i,1:2));
+            circles{i} = X;
+        end
+    end
+end
+% included in return value...
+CC.circles = circles;
 end

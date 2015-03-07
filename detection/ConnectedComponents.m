@@ -3,6 +3,7 @@ classdef ConnectedComponents < handle
     
     properties
         image
+        circles
     end
     
     properties(Access=private)
@@ -13,6 +14,7 @@ classdef ConnectedComponents < handle
         Area
         Centroid
         BoundingBox
+        FilledArea
         size
     end
     
@@ -22,7 +24,7 @@ classdef ConnectedComponents < handle
                 error('image should be logical');
             end
             self.image = image;
-            self.CC = bwconncomp(image);
+            self.CC = bwconncomp(image,8);
         end
         
         function discard(self, index)
@@ -72,6 +74,11 @@ classdef ConnectedComponents < handle
         function value = get.Centroid(self)
             props = regionprops(self.CC, 'Centroid');
             value = vertcat(props.Centroid);
+        end
+        
+        function value = get.FilledArea(self)
+            props = regionprops(self.CC, 'FilledArea');
+            value = [props.FilledArea]';
         end
         
         function value = get.size(self)
