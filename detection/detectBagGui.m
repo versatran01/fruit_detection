@@ -22,7 +22,7 @@ function varargout = detectBagGui(varargin)
 
 % Edit the above text to modify the response to help detectBagGui
 
-% Last Modified by GUIDE v2.5 03-Mar-2015 10:50:18
+% Last Modified by GUIDE v2.5 04-Mar-2015 10:34:38
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -111,7 +111,6 @@ set(handles.play_pause_togglebutton, 'Enable', 'on');
 image_topics = {};
 for i = 1:numel(bag.topics)
     if strcmp(bag.topicType(bag.topics{i}), 'sensor_msgs/Image')
-        
         image_topics{end+1} = bag.topics{i};
     end
 end
@@ -133,6 +132,7 @@ handles.data.bag_path = bag_path;
 handles.data.bag = bag;
 handles.data.total_time = total_time;
 handles.data.image_topics = image_topics;
+handles.data.tracker = FruitTracker();
 guidata(hObject, handles);
 
 % --- Executes on button press in play_pause_togglebutton.
@@ -149,7 +149,7 @@ if get(hObject, 'Value') == get(hObject, 'Max')
         [msg, meta] = handles.data.bag.read();
         if strcmp(meta.topic, '/color/image_raw')
             % todo: add time control
-            image = ros_image_msg_to_matlab_image(msg);
+            image = rosImageToMatlabImage(msg);
             handles = process_image(image, handles);
             drawnow;
             pause(0.001);
@@ -165,27 +165,17 @@ end
 guidata(hObject, handles)
 
 function handles = process_image(image, handles)
-scale = 0.25;
+scale = 0.4;
 image = imresize(image, scale);
-[mask, bboxes] = detectFruit(handles.data.model, image, scale);
+CC = detectFruit(handles.data.model, image, scale);
+mask = CC.image;
 
 % draw original image
 handles.data.original_image = ...
     draw_image_on(handles.original_axes, ...
                   handles.data.original_image, image);
-[X, Y] = bboxToPatchVertices(bboxes);
-% TODO: Change this to use patch!!
-if isempty(handles.data.bboxPlots)
-    hold on
-    handles.data.bboxPlots = patch(X, Y, 'red');
-    set(handles.data.bboxPlots, 'FaceAlpha', 0.0)
-    set(handles.data.bboxPlots, 'EdgeColor', [1 0 0])
-    disp('here')
-else
-    set(handles.data.bboxPlots, 'XData', X, 'Ydata', Y);
-end
 
-% set(handles.data.bboxPlots,'LineWidth',3);
+%handles.data.tracker.track(CC, image);
 
 % draw mask
 handles.data.detection_image = ...
@@ -206,7 +196,8 @@ time_slider_value = get(hObject, 'Value');
 set(handles.time_current_text, 'String', time_slider_value)
 
 handles.data.bag.resetView('/color/image_raw', ...
-                           handles.data.bag.time_begin + time_slider_value);
+                           handles.data.bag.time_begin ...
+                           + time_slider_value);
 
 set(handles.play_pause_togglebutton, 'Value', ...
     get(handles.play_pause_togglebutton, 'Min'))
@@ -311,16 +302,7 @@ if isempty(image_handle)
 else
     set(image_handle, 'CData', image);
 end
-
-function matlab_image = ros_image_msg_to_matlab_image(ros_image_msg)
-b = ros_image_msg.data(1:3:end);
-g = ros_image_msg.data(2:3:end);
-r = ros_image_msg.data(3:3:end);
-b = reshape(b, ros_image_msg.width, ros_image_msg.height);
-g = reshape(g, ros_image_msg.width, ros_image_msg.height);
-r = reshape(r, ros_image_msg.width, ros_image_msg.height);
-matlab_image = cat(3, r, g, b);
-
+drawnow;
 
 function model_name = getModelFromModelListbox(handle)
 model_ind = get(handle, 'Value');
@@ -356,3 +338,12 @@ for i = 1:numel(listings)
         end
     end
 end
+
+
+% --- Executes on button press in show_bbox_checkbox.
+function show_bbox_checkbox_Callback(hObject, eventdata, handles)
+% hObject    handle to show_bbox_checkbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of show_bbox_checkbox
