@@ -96,6 +96,7 @@ classdef FruitTracker < handle
         % Track detections
         % detections - ConnectedComponents
         function track(self, detections, image)
+            fprintf('========== Starting a new frame. ==========\n');
             self.detections = detections;
             
             self.calculateOpticalFlow(image);
@@ -105,7 +106,7 @@ classdef FruitTracker < handle
             self.updateUnassignedTracks();
             self.deleteLostTracks();
             self.createNewTracks();
-            self.displayTrackingResults();
+                self.displayTrackingResults();
         end
         
         % Optical flow
@@ -123,10 +124,10 @@ classdef FruitTracker < handle
             imshow(image, 'Parent', self.debug_axes);
             set(self.debug_axes, 'YDir', 'normal');
             drawnow
-            % Plot current detection
+            % Plot current detections
             [X, Y] = bboxToPatchVertices(self.detections.BoundingBox);
-            patch(X, Y, 'g', 'Parent', self.debug_axes, ...
-                  'EdgeColor', 'g', 'FaceAlpha', 0.1);
+            patch(X, Y, 'y', 'Parent', self.debug_axes, ...
+                  'EdgeColor', 'y', 'FaceAlpha', 0.1);
             % DEBUG_STOP %
             
             % Calculate max corners
@@ -179,18 +180,18 @@ classdef FruitTracker < handle
             self.klt_tracker.initialize(self.curr_corners, gray);
             
             % DEBUG_START %
-            fprintf('Number of new detection: %g.\n', ...
+            fprintf('Number of new corners: %g.\n', ...
                     size(self.curr_corners, 1));
             hold on
             plot(self.debug_axes, self.curr_corners(:, 1), ...
-                self.curr_corners(:, 2), 'c.');
+                self.curr_corners(:, 2), 'b.');
             drawnow
             % DEBUG_STOP %
         end
         
         % Predict new locations of each track using kalman filter
         function predictNewLocationsOfTracks(self)
-            fprintf('Predict new locations for %g tracks.\n', ...
+            fprintf('Predicting new locations for %g tracks.\n', ...
                     self.num_tracks);
             for i = 1:self.num_tracks
                 track = self.tracks(i);
@@ -235,7 +236,7 @@ classdef FruitTracker < handle
                 assignDetectionsToTracks(cost, ...
                                          self.param.cost_non_assignment);
             fprintf('%g detections assgined to %g tracks.\n', ...
-                    size(self.assignments, 2), size(self.assignments, 1));
+                    size(self.assignments, 1), size(self.assignments, 1));
             fprintf('%g unassigned tracks, %g unassigned detections.\n' , ...
                     numel(self.unassigned_tracks), ...
                     numel(self.unassigned_detections));

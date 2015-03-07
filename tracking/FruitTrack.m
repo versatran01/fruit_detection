@@ -58,20 +58,10 @@ classdef FruitTrack < handle
             last_centroid = self.last_centroid;
             % Search for all the corners around the last centroid within
             % the block size
-            in_block_ind = ...
-                (last_centroid(1) < prev_corners(:, 1) + block_size) & ...
-                (last_centroid(1) > prev_corners(:, 1) - block_size) & ...
-                (last_centroid(2) < prev_corners(:, 2) + block_size) & ...
-                (last_centroid(2) > prev_corners(:, 2) - block_size);
-            
-            if nnz(in_block_ind)
-                % there are flows found in the window
-                offset = mean(optical_flow(in_block_ind, :), 1);
-            else
-                % no flow found in the window, just take average of all
-                offset = mean(optical_flow, 1);
-            end
-            
+            offset = calculateOffset(last_centroid, prev_corners, ...
+                                     optical_flow, block_size);
+                                 
+            % Predict the centroid
             self.predicted_centroid = last_centroid + offset;
                 
             % Shift the bounding box so that its center is at the
@@ -81,20 +71,20 @@ classdef FruitTrack < handle
                  last_bbox(3:4)];
             
             % DEBUG_START %
-            % Plot last bounding box
+            % Plot last centroid
             hold on
-            [X, Y] = bboxToPatchVertices(last_bbox);
-            patch(X, Y, 'b', 'Parent', debug_axes, 'EdgeColor', 'b', ...
-                  'FaceAlpha', 0.1);
+            plot(debug_axes, ...
+                 last_centroid(1), last_centroid(2), 'co');
             % Plot predicted bounding box
             [X, Y] = bboxToPatchVertices(self.predicted_bbox);
             patch(X, Y, 'r', 'Parent', debug_axes, 'EdgeColor', 'r', ...
                   'FaceAlpha', 0.1);
-            plot([last_centroid(1), self.predicted_centroid(1)], ...
+            plot(debug_axes, ...
+                 [last_centroid(1), self.predicted_centroid(1)], ...
                  [last_centroid(2), self.predicted_centroid(2)], 'r');
             % Plot all previous centroid
             plot(debug_axes, ...
-                 self.centroids(:,1), self.centroids(:,2), '-b', ...
+                 self.centroids(:,1), self.centroids(:,2), '-c', ...
                  'LineWidth', 1);
             drawnow
             % DEBUG_STOP %
@@ -119,11 +109,11 @@ classdef FruitTrack < handle
             % DEBUG_START %
             hold on
             [X, Y] = bboxToPatchVertices(bbox);
-            patch(X, Y, 'm', 'Parent', debug_axes, 'EdgeColor', 'm', ...
-                  'FaceAlpha', 0.1);
+            patch(X, Y, 'g', 'Parent', debug_axes, 'EdgeColor', 'g', ...
+                  'FaceAlpha', 0.2);
             plot(debug_axes, ...
                  [self.last_centroid(1), centroid(1)], ...
-                 [self.last_centroid(2), centroid(2)], 'm');
+                 [self.last_centroid(2), centroid(2)], 'g');
             drawnow
             % DEBUG_STOP %
             
@@ -173,5 +163,32 @@ classdef FruitTrack < handle
         function visualize(self)
         end
     end
-    
+
+end
+
+function offset = calculateOffset(centroid, corners, flow, block_size)
+% Increase block size until we find some flow within
+i = 0;
+while true
+    i = i + 1;
+    inlier_ind = findCornersWithinBlock(centroid, corners, block_size * i);
+    if nnz(inlier_ind), break; end
+end
+
+corners = corners(inlier_ind, :);
+flow = flow(inlier_ind, :);
+
+% Find the closest corner to the centroid
+distances_squared = sum(bsxfun(@minus, corners, centroid).^2, 2);
+[~, min_distance_ind] = min(distances_squared, [], 1);
+offset = flow(min_distance_ind, :);
+
+end
+
+function inlier_ind = findCornersWithinBlock(centroid, corners, block_size)
+inlier_ind = ...
+    (centroid(1) < corners(:, 1) + block_size) & ...
+    (centroid(1) > corners(:, 1) - block_size) & ...
+    (centroid(2) < corners(:, 2) + block_size) & ...
+    (centroid(2) > corners(:, 2) - block_size);
 end

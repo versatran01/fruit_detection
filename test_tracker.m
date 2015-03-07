@@ -1,7 +1,8 @@
 function test_tracker()
 close all
 load('models/cs_svc.mat');
-bag = ros.Bag('/home/chao/Workspace/bag/booth/r1s_steadicam_v5_2015-02-18-11-56-32.bag');
+% bag = ros.Bag('/home/chao/Workspace/bag/booth/r1s_steadicam_v5_2015-02-18-11-56-32.bag');
+bag = ros.Bag('/home/chao/Workspace/bag/booth/r13n_steadicam_v5_2015-02-18-19-53-00.bag');
 bag.resetView(bag.topics);
 tracker = FruitTracker();
 
