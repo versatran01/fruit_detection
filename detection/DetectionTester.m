@@ -92,21 +92,20 @@ classdef DetectionTester < handle
             
             % find the detections which include the center of a selection
             inside = pointsInBoxes(detections, centers_sel);
+            inside_total = sum(inside, 2);
             
-            % get centers of boxes
-            centers_box = bsxfun(@plus, detections(:,1:2),...
-                detections(:,3:4) * 0.5);
-            % todo: find the boxes which are inside...
-            inside2 = pointsInCircles([centers_sel radii], centers_box);
+            tp = 0;
+            fp = 0;
+            for i=1:numel(inside_total)
+                expected = inside_total(i);
+                predicted = size(CC.circles{i}, 1);
+                predicted = max(predicted, 1);  % empty should be counted as 1
+                
+                tp = tp + min(expected,predicted);
+                fp = fp + max(predicted - expected, 0);
+            end
             
-            inside = inside | inside2';
-            valid = sum(inside, 2);
-            
-            % determine some important numbers...
-            total_positive = numel(valid);
-            tp = nnz(valid);
-            fp = total_positive - tp;
-            total_fruit = nnz(idx_fruit);
+            total_fruit = size(centers_sel,1);  % total labeled fruit
             fn = total_fruit - tp;
             
             self.metrics(self.curImage,:) = [tp fp fn];
@@ -114,7 +113,8 @@ classdef DetectionTester < handle
             fprintf('Counted %i of %i labelled fruit\n',...
                 tp, total_fruit);
             fprintf('%i of %i detections are false positives\n',...
-                fp, total_positive);
+                fp, fp+tp);
+            valid = inside_total;
         end
     end
     
