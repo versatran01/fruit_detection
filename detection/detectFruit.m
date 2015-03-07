@@ -54,8 +54,8 @@ bbox = CC.BoundingBox();
 overlap = bboxOverlapRatio(bbox,bbox,'Min');
 overlap = triu(overlap,1);  % take everything above diagonal
 
-% find boxes which overlap more than 30%
-overlap = overlap > 0.30;
+% find boxes which overlap more than 5%
+overlap = overlap > 0.05;
 overlap = overlap | diag(~any(overlap,1));
 % merge them...
 CC.merge(overlap);
@@ -76,7 +76,7 @@ for i=1:CC.size()
         % debugging)
         original = imcrop(image(:,:,1:3), bbox(i,:));
         submask = imcrop(CC.image, bbox(i,:));
-        X = segmentFruit(original,submask);
+        X = segmentFruit(original,submask,scale);
         if ~isempty(X)
             % adjust to position of the bbox
             X(:,1:2) = bsxfun(@plus, X(:,1:2), bbox(i,1:2));

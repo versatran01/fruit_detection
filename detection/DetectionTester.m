@@ -64,18 +64,33 @@ classdef DetectionTester < handle
                 self.hDetections = [];
             end
             axes(self.hPlots(2));
-            for i=1:size(detections,1)
+            for i=1:CC.size()
+                % draw the bounding box
                 pts = bboxToLinePoints(detections(i,:));
                 pts_x = squeeze(pts(:,1,:));
                 pts_y = squeeze(pts(:,2,:));
-                self.hDetections(i) = plot(pts_x,pts_y);
-                set(self.hDetections(i),'LineWidth',2);
+                h = plot(pts_x,pts_y);
+                set(h,'LineWidth',2);
                 if valid(i)
                     color = [0 1 0];
                 else
                     color = [0 0 1];
                 end
-                set(self.hDetections(i),'Color',color);
+                set(h,'Color',color);
+                self.hDetections(end+1) = h;
+                
+                % now draw circles for individual fruit
+                circ = CC.circles{i};
+                if ~isempty(circ)
+                    for j=1:size(circ,1)
+                        pts = createCirclePoints(circ(j,1:2),...
+                            circ(j,3), 20);
+                        h = plot(pts(:,1), pts(:,2));
+                        set(h,'LineWidth',2);
+                        set(h,'Color',[1 0.1 0.75]);
+                        self.hDetections(end+1) = h;
+                    end
+                end
             end
         end
         
@@ -88,7 +103,7 @@ classdef DetectionTester < handle
             selections = selections(idx_fruit,:);
             % get centers and radii
             centers_sel = selections(:,1:2);
-            radii = selections(:,3);
+            %radii = selections(:,3);
             
             % find the detections which include the center of a selection
             inside = pointsInBoxes(detections, centers_sel);

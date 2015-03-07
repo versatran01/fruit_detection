@@ -6,11 +6,14 @@ viz = true;
 
 detector = @(image)detectFruit(model, image);
 tester = DetectionTester(dataset, detector,viz);
-tester.setCurrentImage(1);
+tester.setCurrentImage(64);
 
 count = 0;
+times = [];
 while tester.hasNext()
+    tic;
     tester.processNext();
+    times(end+1) = toc;
     count=count+1;
     if viz
         pause;
@@ -18,6 +21,8 @@ while tester.hasNext()
         fprintf('Processed image %i of %i\n', count, dataset.size());
     end
 end
+
+fprintf('Processing time per image: %f\n', mean(times));
 
 %% output results
 metrics = sum(tester.metrics);

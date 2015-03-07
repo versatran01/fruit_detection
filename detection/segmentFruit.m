@@ -1,4 +1,4 @@
-function [ X ] = segmentFruit( original, mask )
+function [ X ] = segmentFruit( original, mask, scale )
 %SEGMENTFRUIT Segment fruit in a small mask image.
 %   `original` is the RGB space, (used when debugging only).
 %   `mask` is the b&w mask extracted by the model.
@@ -6,19 +6,28 @@ function [ X ] = segmentFruit( original, mask )
 %   Return value X is a Nx3 vector of circles: [x,y,radius]
 %   It may be empty, if no circles are found.
 
+% todo: store all parameters in a struct
+
+areaScale = scale*scale;
+
 % find masked pixel edges
 mask_pixels = find(edge(mask));
 [y,x] = ind2sub(size(mask), mask_pixels);
+if size(x,1) < 20*areaScale
+    % too few points...
+    X = [];
+    return;
+end
 
 % fit circles
 % TODO: these params are tuned at scale of 1
-X = fitCircles([x y], 10000, 10, 0.02, 50, 3);
+X = fitCircles([x y], 20000, 10*scale, 0.02, 50, 3*scale);
 if ~isempty(X)
     % eliminate any circles with really big radii
     keep = X(:,3) < max(size(mask));
     X = X(keep,:);
     % eliminate any circles with really small radii
-    keep = X(:,3) > 8;
+    keep = X(:,3) > 8*scale;
     X = X(keep,:);
     % eliminate circles far outside the bounding box
     center = size(mask) / 2;
