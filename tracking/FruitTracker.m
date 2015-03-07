@@ -19,6 +19,14 @@ classdef FruitTracker < handle
         % likelihood of creation of a new track
         % param.time_win_size - A tunning parameter to specify the number
         % of frames required to stabilize the confidence score of a track
+        % param.age_thresh
+        % param.visibility_thresh
+        % param.confidence_thresh
+        
+        % param.pyramid_levels - Number of pyramid levels in klt tracker
+        % param.block_size - TODO
+        % param.corners_per_block - TODO
+        % param.extract_thresh - TODO
         param
         
         % Point tracker using Kanade-Lucas-Tomasi algorithm
@@ -38,7 +46,7 @@ classdef FruitTracker < handle
         % An object of ConnectedComponents class
         detections
         
-        % Stuff?
+        % Assignment stuff
         assignments
         unassigned_tracks
         unassigned_detections
@@ -186,7 +194,7 @@ classdef FruitTracker < handle
             % left in the current frame
             if size(self.curr_corners, 1) < ...
                     (max_corners * self.param.extract_thresh)
-                new_corners = detectFASTFeatures(gray);
+                new_corners = detectFASTFeatures(gray );
                 new_corners = new_corners.selectStrongest(max_corners);
                 % Assign new corners to tracked
                 self.curr_corners = ...
@@ -209,7 +217,9 @@ classdef FruitTracker < handle
             for i = 1:self.num_tracks
                 track = self.tracks(i);
                 % Predict the current location of the track
-                track.predict(self.prev_corners, self.flow);
+                % Pass in the debug_axes for debugging
+                track.predict(self.prev_corners, self.flow, ...
+                              self.param.block_size(1), self.debug_axes);
             end
         end
         

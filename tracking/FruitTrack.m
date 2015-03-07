@@ -33,6 +33,7 @@ classdef FruitTrack < handle
     
     properties(Dependent)
         last_bbox
+        last_centroid
     end
     
     methods
@@ -50,10 +51,29 @@ classdef FruitTrack < handle
         end
         
         % Predict new location of centroid and bounding box
-        function predict(self, prev_corners, flow)
+        function predict(self, prev_corners, optical_flow, block_size, debug_axes)
             % Predict new centroid based on optical flow?
-            % Get the last bonding box on this track
+            % Get the last bonding box and centroid on this track
             last_bbox = self.last_bbox;
+            last_centroid = self.last_centroid;
+            % Search for all the corners around the last centroid within
+            % the block size
+            in_block_ind = ...
+                (last_centroid(1) < prev_corners(:, 1) + block_size) & ...
+                (last_centroid(1) > prev_corners(:, 1) - block_size) & ...
+                (last_centroid(2) < prev_corners(:, 2) + block_size) & ...
+                (last_centroid(2) > prev_corners(:, 2) - block_size);
+            
+            if nnz(in_block_ind)
+                % there are flows found in the window
+                offset = mean(optical_flow(in_block_ind, :), 1);
+            else
+                % no flow found in the window, just take average of all
+                offset = mean(optical_flow, 1);
+            end
+            
+            self.predicted_centroid = last_centroid - offset;
+                
             % Shift the bounding box so that its center is at the
             % predicted centroid
             self.predicted_bbox = ...
@@ -112,6 +132,11 @@ classdef FruitTrack < handle
         % Getter: last_bbox
         function bbox = get.last_bbox(self)
             bbox = self.bboxes(end, :);
+        end
+        
+        % Getter: last_centroid
+        function centroid = get.last_centroid(self)
+            centroid = self.centroids(end, :);
         end
         
         % Visualize this track, not impelemented
