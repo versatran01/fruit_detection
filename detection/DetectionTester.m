@@ -6,6 +6,7 @@ classdef DetectionTester < handle
         dataset
         detector
         viz = true;
+        rotate = false;
         % current state
         curImage = 1;
         metrics = [];
@@ -95,6 +96,11 @@ classdef DetectionTester < handle
         end
         
         function [valid] = updateStats(self, selections, CC)
+            if isempty(selections)
+                % simple hack so we can run unlabeled dataset
+                valid = false(CC.size(),1);
+                return;
+            end
             detections = CC.BoundingBox();
             
             % pull out the selections that are fruit
@@ -151,6 +157,9 @@ classdef DetectionTester < handle
             self.curImage = self.curImage+1;
             idx = self.curImage;
             image = self.dataset.images{idx};
+            if self.rotate
+                image = rot90(image,1);
+            end
             % user selections for this image
             selections = self.dataset.selections{idx};
             % run detector on next image

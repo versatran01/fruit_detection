@@ -6,7 +6,8 @@ viz = true;
 
 detector = @(image)detectFruit(model, image);
 tester = DetectionTester(dataset, detector,viz);
-tester.setCurrentImage(64);
+tester.setCurrentImage(3);
+tester.rotate = true;
 
 count = 0;
 times = [];

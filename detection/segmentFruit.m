@@ -21,7 +21,12 @@ end
 
 % fit circles
 % TODO: these params are tuned at scale of 1
-X = fitCircles([x y], 20000, 10*scale, 0.02, 50, 3*scale);
+%X = fitCircles([x y], 50000, 10*scale, 0.02, 50, 3*scale);
+
+X = fitCirclesFast([x y], 50000, 10*scale, 0.02, 50, 3*scale);
+X = sortrows(X,[4 3]);
+X = flipud(X);
+
 if ~isempty(X)
     % eliminate any circles with really big radii
     keep = X(:,3) < max(size(mask));
