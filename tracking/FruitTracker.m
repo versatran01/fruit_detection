@@ -410,26 +410,28 @@ classdef FruitTracker < handle
             if isempty(self.tracks), return; end
             
             
-            % Plot tracks in red
-            last_bboxes = reshape([self.tracks(:).last_bbox], 4, [])';
-            [X, Y] = bboxToPatchVertices(last_bboxes);
-            patch(X, Y, 'r', 'Parent', self.debug_axes, ...
-                  'EdgeColor', 'r', 'FaceAlpha', 0.1);
-              
             % Plot current detections in yellow
             [X, Y] = bboxToPatchVertices(self.detections.BoundingBox);
             patch(X, Y, 'y', 'Parent', self.debug_axes, ...
                   'EdgeColor', 'y', 'FaceAlpha', 0.1);
             
+            % Plot tracks in red
+            last_bboxes = reshape([self.tracks(:).last_bbox], 4, [])';
+            [X, Y] = bboxToPatchVertices(last_bboxes);
+            patch(X, Y, 'r', 'Parent', self.debug_axes, ...
+                  'EdgeColor', 'r', 'FaceAlpha', 0.1);          
+            
             % Display total count
             title(self.debug_axes, num2str(self.num_valid_tracks));
             
+            %{
             for i = 1:self.num_tracks
                 track = self.tracks(i);
                 text(track.last_centroid(1), track.last_centroid(2), ...
                      num2str(track.id), 'Color', 'r', ...
                      'Parent', self.debug_axes);
             end
+            %}
         end
         
         % Getter: num_tracks
