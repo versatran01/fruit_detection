@@ -9,14 +9,14 @@ tracker = FruitTracker();
 figure(1);
 handles(1) = subplot(1,2,1);
 handles(2) = subplot(1,2,2);
-
+scale = 0.25;
 while bag.hasNext()
     [msg, meta] = bag.read();
     if strcmp(meta.topic, '/color/image_raw')
         image = rosImageToMatlabImage(msg);
-        image = imresize(image, 0.4);
+        image = imresize(image, scale);
         
-        CC = detectFruit(model, image);
+        CC = detectFruit(model, image, scale);
         [X, Y] = bboxToPatchVertices(CC.BoundingBox);
         
         tracker.track(CC, image);

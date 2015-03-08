@@ -83,7 +83,7 @@ classdef FruitTracker < handle
             
             % KLT tracker parameters
             self.param.pyramid_levels = 3;
-            self.param.block_size = [1 1] * 23;
+            self.param.block_size = [1 1] * 17;
             self.param.corners_per_block = 1;
             self.param.extract_thresh = 0.4;
             self.klt_tracker = ...
@@ -121,6 +121,7 @@ classdef FruitTracker < handle
             self.image = image;
             % Make current corners previous before start
             self.prev_corners = self.curr_corners;
+            fprintf('Number of old corners: %g.\n', size(self.prev_corners, 1));
             
             [m, n, c] = size(image);
             
@@ -133,10 +134,6 @@ classdef FruitTracker < handle
             imshow(image, 'Parent', self.debug_axes);
             set(self.debug_axes, 'YDir', 'normal');
             drawnow
-            % Plot current detections in yellow
-            [X, Y] = bboxToPatchVertices(self.detections.BoundingBox);
-            patch(X, Y, 'y', 'Parent', self.debug_axes, ...
-                  'EdgeColor', 'y', 'FaceAlpha', 0.1);
             %}
             % DEBUG_STOP %
             
@@ -179,11 +176,11 @@ classdef FruitTracker < handle
                 %{
                 hold on
                 plot(self.debug_axes, self.prev_corners(:, 1), ...
-                     self.prev_corners(:, 2), 'b.');
+                     self.prev_corners(:, 2), 'b.', 'MarkerSize', 10);
                 plot(self.debug_axes, self.curr_corners(:, 1), ...
-                     self.curr_corners(:, 2), 'r.');
+                     self.curr_corners(:, 2), 'r.', 'MarkerSize', 10);
                 quiver(self.debug_axes, ...
-                       prev_points(:, 1), prev_points(:, 2), ...
+                       self.prev_corners(:, 1), self.prev_corners(:, 2), ...
                        self.flow(:, 1), self.flow(:, 2), 0, ...
                        'm');
                 drawnow;
@@ -195,19 +192,23 @@ classdef FruitTracker < handle
             new_corners = detectFASTFeatures(gray );
             new_corners = new_corners.selectStrongest(max_corners);
             % Assign new corners to tracked
-            self.curr_corners = ...
-                new_corners.selectStrongest(max_corners).Location;
+            self.curr_corners = new_corners.Location;
             % Reinitialize klt_tracker
             self.klt_tracker.release();
+            self.klt_tracker = ...
+                vision.PointTracker('BlockSize', self.param.block_size, ...
+                'NumPyramidLevels', ...
+                self.param.pyramid_levels);
             self.klt_tracker.initialize(self.curr_corners, gray);
             
             fprintf('Number of new corners: %g.\n', ...
                     size(self.curr_corners, 1));
+            
             % DEBUG_START %
             %{
             hold on
             plot(self.debug_axes, self.curr_corners(:, 1), ...
-                self.curr_corners(:, 2), 'b.');
+                self.curr_corners(:, 2), 'c+');
             drawnow
             %}
             % DEBUG_STOP %
