@@ -3,19 +3,26 @@ classdef ConnectedComponents < handle
     
     properties
         image       % mask of pixels used to find components
-        circles     % DO NOT USE THIS FIELD
     end
     
     properties(Access=private)
         CC
+        props
     end
     
     properties(Dependent)
         Area
         Centroid
         BoundingBox
-        FilledArea
+        BoundingArea
         size
+    end
+    
+    methods(Access=private)
+        function recompute(self)
+            self.props = regionprops(self.CC, 'Area', ...
+                'Centroid', 'BoundingBox');
+        end
     end
     
     methods
@@ -25,6 +32,7 @@ classdef ConnectedComponents < handle
             end
             self.image = image;
             self.CC = bwconncomp(image,8);
+            self.recompute();
         end
         
         function discard(self, index)
@@ -34,6 +42,7 @@ classdef ConnectedComponents < handle
             % update CC
             self.CC.PixelIdxList(index) = [];
             self.CC.NumObjects = numel(self.CC.PixelIdxList);
+            self.recompute();
         end
         
         function merge(self, map)
@@ -59,6 +68,21 @@ classdef ConnectedComponents < handle
             end
             nCC.NumObjects = numel(nCC.PixelIdxList);
             self.CC = nCC;
+            self.recompute();
+        end
+        
+        function sort(self, key, order)
+            if nargin < 3
+                order = 'descend';
+            end
+            if ~ischar(key)
+                error('key must be string');
+            end
+            value = self.(key);
+            % sort by values
+            [~,idx] = sort(value, order);
+            self.CC.PixelIdxList = self.CC.PixelIdxList(idx);
+            self.recompute();
         end
         
         function [fig] = plot(self)
@@ -77,23 +101,20 @@ classdef ConnectedComponents < handle
         end
         
         function value = get.Area(self)
-            props = regionprops(self.CC, 'Area');
-            value = [props.Area]';
+            value = [self.props.Area]';
         end
         
         function value = get.BoundingBox(self)
-            props = regionprops(self.CC, 'BoundingBox');
-            value = vertcat(props.BoundingBox);
+            value = vertcat(self.props.BoundingBox);
+        end
+        
+        function value = get.BoundingArea(self)
+            bbox = self.BoundingBox();
+            value = bbox(:,3) .* bbox(:,4);
         end
         
         function value = get.Centroid(self)
-            props = regionprops(self.CC, 'Centroid');
-            value = vertcat(props.Centroid);
-        end
-        
-        function value = get.FilledArea(self)
-            props = regionprops(self.CC, 'FilledArea');
-            value = [props.FilledArea]';
+            value = vertcat(self.props.Centroid);
         end
         
         function value = get.size(self)

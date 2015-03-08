@@ -46,8 +46,11 @@ CC.merge(nearby);
 
 % now compute overlap ratio of remaining bounding boxes
 while true
+    % sort big to small
+    CC.sort('BoundingArea', 'descend');
+    
     bbox = CC.BoundingBox();
-    overlap = bboxOverlapRatio(bbox,bbox,'Min');
+    overlap = bboxOverlapRatio(bbox, bbox, 'Min');
     overlap = triu(overlap,1);  % take everything above diagonal
 
     % find boxes which overlap more than 5%
@@ -56,6 +59,15 @@ while true
         % no more overlap, stop
         break;
     end
+    
+    % take the first in each column (ie: only merge into largest)
+    [row,col] = find(overlap);
+    [col,ia,~] = unique(col);
+    row = row(ia);
+    ind = sub2ind(size(overlap),row,col);
+    overlap = false(size(overlap));
+    overlap(ind) = true;
+    
     overlap = overlap | diag(~any(overlap,1));
     % merge them...
     CC.merge(overlap);
