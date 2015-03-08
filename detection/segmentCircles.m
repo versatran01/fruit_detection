@@ -10,6 +10,11 @@ function [ X ] = segmentCircles( original, mask, scale )
 
 % todo: store all parameters in a struct
 
+if any(size(mask) <= 3*scale)
+    X = []; % mask too small to work with
+    return;
+end
+
 % pad the image a bit
 mask_padded = padarray(mask,[2 2]);    % adds 2 pixels on left,right,top,bottom
 
@@ -27,17 +32,17 @@ points = bsxfun(@minus,points,[2 2]);
 
 % fit circles by random sampling
 if exist('fitCirclesFast','file') == 3
-    X = fitCirclesFast(points, 200000, 10*scale, 0.02, 100, 3*scale);
+    X = fitCirclesFast(points, 300000, 10*scale, 0.02, 300, 3*scale);
 else
     warning('fitCirclesFast not found. Did you compile your mex?');
-    X = fitCircles(points, 200000, 10*scale, 0.02, 100, 3*scale);
+    X = fitCircles(points, 300000, 10*scale, 0.02, 300, 3*scale);
 end
 X = sortrows(X,[4 3]);
 X = flipud(X);
 
 if ~isempty(X)
     % eliminate any circles with really big radii
-    keep = X(:,3) < max(size(mask)) * 1.5;
+    keep = X(:,3) < geomean(size(mask)) * 1.5;
     X = X(keep,:);
     
     % eliminate any circles with really small radii

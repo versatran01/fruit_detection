@@ -16,6 +16,7 @@ classdef ConnectedComponents < handle
         BoundingBox
         BoundingArea
         size
+        isempty
     end
     
     methods(Access=private)
@@ -119,6 +120,10 @@ classdef ConnectedComponents < handle
         
         function value = get.size(self)
             value = self.CC.NumObjects;
+        end
+        
+        function value = get.isempty(self)
+            value = self.size() == 0;
         end
     end
     

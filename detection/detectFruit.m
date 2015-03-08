@@ -45,7 +45,7 @@ nearby = nearby | diag(~any(nearby,1));
 CC.merge(nearby);
 
 % now compute overlap ratio of remaining bounding boxes
-while true
+while true && ~CC.isempty()
     % sort big to small
     CC.sort('BoundingArea', 'descend');
     
@@ -53,8 +53,8 @@ while true
     overlap = bboxOverlapRatio(bbox, bbox, 'Min');
     overlap = triu(overlap,1);  % take everything above diagonal
 
-    % find boxes which overlap more than 5%
-    overlap = overlap > 0.05;
+    % find boxes which overlap more than some percentage
+    overlap = overlap > 0.10;
     if ~any(overlap)
         % no more overlap, stop
         break;
