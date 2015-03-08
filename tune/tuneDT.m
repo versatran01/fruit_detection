@@ -46,4 +46,6 @@ result.datetime = datetime;
 result.maxDepth = best_idx;
 result.errors = errors;
 result.predict = @predictDT;
+result.name = 'Decision Tree';
+result.acronym = 'dt';
 end

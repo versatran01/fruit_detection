@@ -57,52 +57,70 @@ classdef DetectionTester < handle
             end
         end
         
-        function plotDetections(self, detections, valid)
+        function plotDetections(self, CC, valid)
+            detections = CC.BoundingBox();
             if ~isempty(self.hDetections)
                 delete(self.hDetections);
                 self.hDetections = [];
             end
-            for i=1:size(detections,1)
+            axes(self.hPlots(2));
+            for i=1:CC.size()
+                % draw the bounding box
                 pts = bboxToLinePoints(detections(i,:));
                 pts_x = squeeze(pts(:,1,:));
                 pts_y = squeeze(pts(:,2,:));
-                self.hDetections(i) = plot(pts_x,pts_y);
-                set(self.hDetections(i),'LineWidth',2);
+                h = plot(pts_x,pts_y);
+                set(h,'LineWidth',2);
                 if valid(i)
                     color = [0 1 0];
                 else
                     color = [0 0 1];
                 end
-                set(self.hDetections(i),'Color',color);
+                set(h,'Color',color);
+                self.hDetections(end+1) = h;
+                
+                % now draw circles for individual fruit
+                circ = CC.circles{i};
+                if ~isempty(circ)
+                    for j=1:size(circ,1)
+                        pts = createCirclePoints(circ(j,1:2),...
+                            circ(j,3), 20);
+                        h = plot(pts(:,1), pts(:,2));
+                        set(h,'LineWidth',2);
+                        set(h,'Color',[1 0.1 0.75]);
+                        self.hDetections(end+1) = h;
+                    end
+                end
             end
         end
         
-        function [valid] = updateStats(self, selections, detections)
+        function [valid] = updateStats(self, selections, CC)
+            detections = CC.BoundingBox();
+            
             % pull out the selections that are fruit
             selections = cell2mat(selections);
             idx_fruit = (selections(:,4) == 1) | (selections(:,4) == 3);
             selections = selections(idx_fruit,:);
             % get centers and radii
             centers_sel = selections(:,1:2);
-            radii = selections(:,3);
+            %radii = selections(:,3);
             
             % find the detections which include the center of a selection
             inside = pointsInBoxes(detections, centers_sel);
+            inside_total = sum(inside, 2);
             
-            % get centers of boxes
-            centers_box = bsxfun(@plus, detections(:,1:2),...
-                detections(:,3:4) * 0.5);
-            % todo: find the boxes which are inside...
-            inside2 = pointsInCircles([centers_sel radii], centers_box);
+            tp = 0;
+            fp = 0;
+            for i=1:numel(inside_total)
+                expected = inside_total(i);
+                predicted = size(CC.circles{i}, 1);
+                predicted = max(predicted, 1);  % empty should be counted as 1
+                
+                tp = tp + min(expected,predicted);
+                fp = fp + max(predicted - expected, 0);
+            end
             
-            inside = inside | inside2';
-            valid = sum(inside, 2);
-            
-            % determine some important numbers...
-            total_positive = numel(valid);
-            tp = nnz(valid);
-            fp = total_positive - tp;
-            total_fruit = nnz(idx_fruit);
+            total_fruit = size(centers_sel,1);  % total labeled fruit
             fn = total_fruit - tp;
             
             self.metrics(self.curImage,:) = [tp fp fn];
@@ -110,7 +128,8 @@ classdef DetectionTester < handle
             fprintf('Counted %i of %i labelled fruit\n',...
                 tp, total_fruit);
             fprintf('%i of %i detections are false positives\n',...
-                fp, total_positive);
+                fp, fp+tp);
+            valid = inside_total;
         end
     end
     
@@ -135,12 +154,12 @@ classdef DetectionTester < handle
             % user selections for this image
             selections = self.dataset.selections{idx};
             % run detector on next image
-            [mask, bbox] = self.detector(image);
-            valid = self.updateStats(selections, bbox);
+            CC = self.detector(image);
+            valid = self.updateStats(selections, CC);
             if self.viz
-                self.plotImage(image, mask);
+                self.plotImage(image, CC.image);
                 self.plotSelections(selections);
-                self.plotDetections(bbox, valid);
+                self.plotDetections(CC, valid);
             end
         end
         

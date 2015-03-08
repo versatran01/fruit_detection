@@ -165,15 +165,17 @@ end
 guidata(hObject, handles)
 
 function handles = process_image(image, handles)
-image = imresize(image, 0.4);
-[mask, CC] = detectFruit(handles.data.model, image);
+scale = 0.4;
+image = imresize(image, scale);
+CC = detectFruit(handles.data.model, image, scale);
+mask = CC.image;
 
 % draw original image
 handles.data.original_image = ...
     draw_image_on(handles.original_axes, ...
                   handles.data.original_image, image);
 
-handles.data.tracker.track(CC, image);
+%handles.data.tracker.track(CC, image);
 
 % draw mask
 handles.data.detection_image = ...
