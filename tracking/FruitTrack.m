@@ -59,9 +59,12 @@ classdef FruitTrack < handle
             last_centroid = self.last_centroid;
             % Search for all the corners around the last centroid within
             % the block size
-            offset = calculateOffset(last_centroid, prev_corners, ...
-                                     optical_flow, block_size);
-                                 
+            if size(optical_flow, 1) == 1
+                offset = optical_flow;
+            else
+                offset = calculateOffset(last_centroid, prev_corners, ...
+                                         optical_flow, block_size);
+            end
             % Predict the centroid
             self.predicted_centroid = last_centroid + offset;
                 
@@ -73,10 +76,11 @@ classdef FruitTrack < handle
             
             % DEBUG_START %
             % Plot last centroid
+            %{
             hold on
             plot(debug_axes, ...
                  last_centroid(1), last_centroid(2), 'co');
-           text(last_centroid(1), last_centroid(2), num2str(self.id), ...
+            text(last_centroid(1), last_centroid(2), num2str(self.id), ...
                 'Color', 'c');
             % Plot predicted bounding box in red
             [X, Y] = bboxToPatchVertices(self.predicted_bbox);
@@ -90,6 +94,7 @@ classdef FruitTrack < handle
                  self.centroids(:,1), self.centroids(:,2), '-.c', ...
                  'LineWidth', 1);
             drawnow
+            %}
             % DEBUG_STOP %
         end
         
@@ -111,6 +116,7 @@ classdef FruitTrack < handle
             
             % DEBUG_START %
             % Plot assigned detections in green
+            %{
             hold on
             [X, Y] = bboxToPatchVertices(bbox);
             patch(X, Y, 'g', 'Parent', debug_axes, 'EdgeColor', 'g', ...
@@ -119,6 +125,7 @@ classdef FruitTrack < handle
                  [self.last_centroid(1), centroid(1)], ...
                  [self.last_centroid(2), centroid(2)], 'g');
             drawnow
+            %}
             % DEBUG_STOP %
             
             self.incAge();
