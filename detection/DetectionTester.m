@@ -7,18 +7,21 @@ classdef DetectionTester < handle
         detector
         viz
         % current state
-        curImage = 1;
+        curImage = 0;
         mode = 1;
         finished = false;
         validity = [];
         axesSize
+        CC
+        circles
         % plot stuff
         hFig
         hPlots
         hMask
         hImage
         hSelections
-        hDetections
+        hDetectionBoxes
+        hDetectionCircles
         % buttons, etc..
         hToolMenu
         hButtons
@@ -27,6 +30,8 @@ classdef DetectionTester < handle
     properties
         rotate = false;
         metrics = [];
+        components = {};
+        labels = {};
     end
     
     methods(Access=private)
@@ -79,6 +84,21 @@ classdef DetectionTester < handle
             set(self.hToolMenu, 'Value', mode);
         end
         
+        function selectBox(self, pos, accept)
+            % find bounding box we are clicking
+            bbox = self.CC.BoundingBox();
+            inside = bsxfun(@le, bbox(:,1:2), pos) & ...
+                     bsxfun(@le, pos, bbox(:,1:2)+bbox(:,3:4));
+            inside = inside(:,1) & inside(:,2);
+            if any(inside)
+                % only take the first for now
+                % todo: determine the 'best' selection
+                idx = find(inside,1,'first');
+                self.validity(idx) = accept;
+                self.plotDetections();  % re-plot...
+            end
+        end
+        
         function mouseUp(self, object, eventdata)
             selType = get(self.hFig,'SelectionType');
             if self.mode ~= 1
@@ -87,10 +107,10 @@ classdef DetectionTester < handle
             pos = getMousePosition();
             if strcmp(selType, 'normal')
                 % normal click
-                fprintf('normal click!\n');
+                self.selectBox(pos,true);
             elseif strcmp(selType, 'alt')
                 % right click
-                fprintf('right click!\n');
+                self.selectBox(pos,false);
             end
         end
         
@@ -112,7 +132,6 @@ classdef DetectionTester < handle
                 self.hFig = figure;
                 clf(self.hFig,'reset');
                 set(self.hFig, 'MenuBar', 'None');
-                set(self.hFig, 'Name', 'Detection Tester');
                 % attach callbacks to mouse, etc
                 self.configureInterface();
                 self.attachCallbacks();
@@ -131,6 +150,8 @@ classdef DetectionTester < handle
                 set(self.hImage, 'CData', image);
                 set(self.hMask, 'CData', mask);
             end
+            set(self.hFig, 'Name', ...
+                sprintf('Current image: %i', self.curImage));
         end
         
         function plotSelections(self, selections)
@@ -151,11 +172,17 @@ classdef DetectionTester < handle
             end
         end
         
-        function plotDetections(self, CC, valid)
+        function plotDetections(self)
+            CC = self.CC;
+            valid = self.validity;
             detections = CC.BoundingBox();
-            if ~isempty(self.hDetections)
-                delete(self.hDetections);
-                self.hDetections = [];
+            if ~isempty(self.hDetectionBoxes)
+                delete(self.hDetectionBoxes);
+                self.hDetectionBoxes = [];
+            end
+            if ~isempty(self.hDetectionCircles)
+                delete(cell2mat(self.hDetectionCircles));
+                self.hDetectionCircles = {};
             end
             axes(self.hPlots(2));
             for i=1:CC.size()
@@ -171,24 +198,29 @@ classdef DetectionTester < handle
                     color = [0 0 1];
                 end
                 set(h,'Color',color);
-                self.hDetections(end+1) = h;
+                self.hDetectionBoxes(i) = h;
                 
                 % now draw circles for individual fruit
-                circ = CC.circles{i};
+                circ = self.circles{i};
                 if ~isempty(circ)
+                    plots = [];
                     for j=1:size(circ,1)
                         pts = createCirclePoints(circ(j,1:2),...
                             circ(j,3), 20);
                         h = plot(pts(:,1), pts(:,2));
                         set(h,'LineWidth',2);
                         set(h,'Color',[1 0.1 0.75]);
-                        self.hDetections(end+1) = h;
+                        plots(end+1,:) = h;
                     end
+                    self.hDetectionCircles{i} = plots;
                 end
             end
+            % must be in a column format...
+            self.hDetectionCircles = reshape(self.hDetectionCircles,...
+                numel(self.hDetectionCircles), 1);
         end
         
-        function [valid] = updateStats(self, selections, CC)
+        function [valid] = updateStats(self, selections, CC, circles)
             if isempty(selections)
                 % simple hack so we can run unlabeled dataset
                 valid = false(CC.size(), 1);
@@ -212,7 +244,7 @@ classdef DetectionTester < handle
             fp = 0;
             for i=1:numel(inside_total)
                 expected = inside_total(i);
-                predicted = size(CC.circles{i}, 1);
+                predicted = size(circles{i}, 1);
                 predicted = max(predicted, 1);  % empty should be counted as 1
                 
                 tp = tp + min(expected,predicted);
@@ -248,6 +280,11 @@ classdef DetectionTester < handle
         
         function processNext(self)
             self.curImage = self.curImage + 1;
+            if self.curImage > 1
+                % save results from last image...
+                self.components{end+1} = self.CC;
+                self.labels{end+1} = self.validity;
+            end
             idx = self.curImage;
             image = self.dataset.images{idx};
             if self.rotate
@@ -256,13 +293,14 @@ classdef DetectionTester < handle
             % user selections for this image
             selections = self.dataset.selections{idx};
             % run detector on next image
-            CC = self.detector(image);
-            self.validity = self.updateStats(selections, CC);
+            [self.CC,~,self.circles] = self.detector(image);
+            self.validity = self.updateStats(selections, self.CC,...
+                self.circles);
             self.finished = false;
             if self.viz
-                self.plotImage(image, CC.image);
+                self.plotImage(image, self.CC.image);
                 self.plotSelections(selections);
-                self.plotDetections(CC, self.validity);
+                self.plotDetections();
             else
                 self.finished = true;
             end

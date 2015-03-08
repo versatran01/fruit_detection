@@ -19,7 +19,6 @@ addpath('./labeling');
 addpath('./mex');
 addpath('./observations');
 addpath('./predict');
-addpath('./scripts');
 addpath('./tools');
 addpath('./tracking');
 addpath('./train');
