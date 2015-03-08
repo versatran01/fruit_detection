@@ -1,34 +1,128 @@
 classdef DetectionTester < handle
     %DETECTIONTESTER Class for testing detection against labeled dataset.
+    % todo: sooooo much code duplication in these gui classes. fix this...
     
-    properties
-        % inputs
+    properties(Access=private)
         dataset
         detector
-        viz = true;
+        viz
         % current state
         curImage = 1;
-        metrics = [];
-        % gui stuff
+        mode = 1;
+        finished = false;
+        validity = [];
+        axesSize
+        % plot stuff
         hFig
         hPlots
         hMask
         hImage
         hSelections
         hDetections
+        % buttons, etc..
+        hToolMenu
+        hButtons
+    end
+    
+    properties
+        rotate = false;
+        metrics = [];
     end
     
     methods(Access=private)
+        function attachCallbacks(self)
+           fig = self.hFig;
+           %set(fig, 'WindowButtonMotionFcn',...
+           %    @(object,eventdata)self.mouseMove(object,eventdata));
+           %set(fig, 'WindowButtonDownFcn',...
+           %    @(object,eventdata)self.mouseDown(object,eventdata));
+           set(fig, 'WindowButtonUpFcn',...
+               @(object,eventdata)self.mouseUp(object,eventdata));
+           set(fig, 'KeyReleaseFcn',...
+               @(object,eventdata)self.keyUp(object,eventdata));
+           set(fig, 'CloseRequestFcn',...
+               @(object,eventdata)self.closeRequest(object,eventdata));
+        end
+        
+        function configureInterface(self)
+            cb = @(obj,callbackdata)handleButton(self,obj,callbackdata); 
+            self.hToolMenu = uicontrol('Style','popupmenu',...
+                'String',{'Select','Zoom'},...
+                'Position',[20,16,120,25],'Callback',cb);
+            self.hButtons{1} = uicontrol('Style', 'pushbutton',...
+                                         'String', 'Zoom Reset',...
+                                         'Position', [300 20 80 25],...
+                                         'Callback', cb);
+        end
+        
+        function handleButton(self, object, callbackdata)
+            set(0,'CurrentFigure',self.hFig);
+            if self.hButtons{1} == object
+                % zoom reset button
+                sz = self.axesSize;
+                axis([0 sz(2) 0 sz(1)]);
+            elseif object == self.hToolMenu
+                % tool menu
+                self.switchMode(get(object, 'Value'));
+            end
+        end
+        
+        function switchMode(self, mode)
+            if self.mode ~= mode
+                if mode == 2
+                    zoom on;
+                else
+                    zoom off;
+                end
+                self.mode = mode;
+            end
+            set(self.hToolMenu, 'Value', mode);
+        end
+        
+        function mouseUp(self, object, eventdata)
+            selType = get(self.hFig,'SelectionType');
+            if self.mode ~= 1
+                return; % ignore all clicks in zoom mode...
+            end
+            pos = getMousePosition();
+            if strcmp(selType, 'normal')
+                % normal click
+                fprintf('normal click!\n');
+            elseif strcmp(selType, 'alt')
+                % right click
+                fprintf('right click!\n');
+            end
+        end
+        
+        function keyUp(self, object, eventdata)
+            char = int32(eventdata.Character);
+            if char == 13
+                % enter: exit this image
+                self.finished = true;
+            end
+        end
+        
+        function closeRequest(self, object, eventdata)
+            delete(self.hFig);
+        end
+        
         function plotImage(self, image, mask)
             if isempty(self.hFig)
                 % create new UI
                 self.hFig = figure;
+                clf(self.hFig,'reset');
+                set(self.hFig, 'MenuBar', 'None');
                 set(self.hFig, 'Name', 'Detection Tester');
+                % attach callbacks to mouse, etc
+                self.configureInterface();
+                self.attachCallbacks();
+                % create plots
                 self.hPlots(1) = subplot(1,2,1);
                 self.hImage = imshow(image);
                 hold on;
                 self.hPlots(2) = subplot(1,2,2);
                 self.hMask = imshow(mask);
+                self.axesSize = size(image);
                 hold on;
                 linkaxes(self.hPlots);
             else
@@ -95,6 +189,11 @@ classdef DetectionTester < handle
         end
         
         function [valid] = updateStats(self, selections, CC)
+            if isempty(selections)
+                % simple hack so we can run unlabeled dataset
+                valid = false(CC.size(), 1);
+                return;
+            end
             detections = CC.BoundingBox();
             
             % pull out the selections that are fruit
@@ -148,22 +247,36 @@ classdef DetectionTester < handle
         end
         
         function processNext(self)
-            self.curImage = self.curImage+1;
+            self.curImage = self.curImage + 1;
             idx = self.curImage;
             image = self.dataset.images{idx};
+            if self.rotate
+                image = rot90(image,1);
+            end
             % user selections for this image
             selections = self.dataset.selections{idx};
             % run detector on next image
             CC = self.detector(image);
-            valid = self.updateStats(selections, CC);
+            self.validity = self.updateStats(selections, CC);
+            self.finished = false;
             if self.viz
                 self.plotImage(image, CC.image);
                 self.plotSelections(selections);
-                self.plotDetections(CC, valid);
+                self.plotDetections(CC, self.validity);
+            else
+                self.finished = true;
+            end
+            while ~self.isFinished()
+                drawnow;    % update UI
             end
         end
         
+        function value = isFinished(self)
+            value = self.finished;
+        end
+        
         function setCurrentImage(self, curImage)
+            % todo: change this method so it can be called anytime
             if curImage > self.dataset.size() || curImage < 1
                 error('curImage index invalid');
             end
