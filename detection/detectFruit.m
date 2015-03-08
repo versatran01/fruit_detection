@@ -62,5 +62,5 @@ while true
 end
 
 % perform segmentation of blobs...
-[CC,counts,circles] = segmentComponents(CC);
+[CC,counts,circles] = segmentComponents(CC, scale);
 end

@@ -13,6 +13,7 @@ classdef DetectionTester < handle
         validity = [];
         axesSize
         CC
+        circles
         % plot stuff
         hFig
         hPlots
@@ -200,7 +201,7 @@ classdef DetectionTester < handle
                 self.hDetectionBoxes(i) = h;
                 
                 % now draw circles for individual fruit
-                circ = CC.circles{i};
+                circ = self.circles{i};
                 if ~isempty(circ)
                     plots = [];
                     for j=1:size(circ,1)
@@ -219,7 +220,7 @@ classdef DetectionTester < handle
                 numel(self.hDetectionCircles), 1);
         end
         
-        function [valid] = updateStats(self, selections, CC)
+        function [valid] = updateStats(self, selections, CC, circles)
             if isempty(selections)
                 % simple hack so we can run unlabeled dataset
                 valid = false(CC.size(), 1);
@@ -243,7 +244,7 @@ classdef DetectionTester < handle
             fp = 0;
             for i=1:numel(inside_total)
                 expected = inside_total(i);
-                predicted = size(CC.circles{i}, 1);
+                predicted = size(circles{i}, 1);
                 predicted = max(predicted, 1);  % empty should be counted as 1
                 
                 tp = tp + min(expected,predicted);
@@ -292,8 +293,9 @@ classdef DetectionTester < handle
             % user selections for this image
             selections = self.dataset.selections{idx};
             % run detector on next image
-            self.CC = self.detector(image);
-            self.validity = self.updateStats(selections, self.CC);
+            [self.CC,~,self.circles] = self.detector(image);
+            self.validity = self.updateStats(selections, self.CC,...
+                self.circles);
             self.finished = false;
             if self.viz
                 self.plotImage(image, self.CC.image);

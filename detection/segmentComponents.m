@@ -1,4 +1,4 @@
-function [ CC, counts, circles ] = segmentComponents( CC )
+function [ CC, counts, circles ] = segmentComponents( CC, scale )
 %SEGMENTCOMPONENTS Segment fruit inside the connected components.
 % Input `CC` is a ConnectedComponents object.
 %
