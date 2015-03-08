@@ -65,8 +65,7 @@ bbox = CC.BoundingBox();
 circles = cell(CC.size(), 1);
 reject = false(CC.size(), 1);
 for i=1:CC.size()
-    % pull out the mask region and the original image area (for
-    % debugging)
+    % pull out the mask region and the original image area
     original = imcrop(image(:,:,1:3), bbox(i,:));
     submask = imcrop(CC.image, bbox(i,:));
     X = segmentFruit(original,submask,scale);
@@ -78,6 +77,8 @@ for i=1:CC.size()
         reject(i) = true;
     end
 end
+% throw away anything we could not fit a circle to
+% todo: better method of handling this?
 CC.discard(reject);
 CC.circles = circles(~reject);
 end

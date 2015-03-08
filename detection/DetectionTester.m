@@ -18,7 +18,8 @@ classdef DetectionTester < handle
         hMask
         hImage
         hSelections
-        hDetections
+        hDetectionBoxes
+        hDetectionCircles
         % buttons, etc..
         hToolMenu
         hButtons
@@ -153,9 +154,13 @@ classdef DetectionTester < handle
         
         function plotDetections(self, CC, valid)
             detections = CC.BoundingBox();
-            if ~isempty(self.hDetections)
-                delete(self.hDetections);
-                self.hDetections = [];
+            if ~isempty(self.hDetectionBoxes)
+                delete(self.hDetectionBoxes);
+                self.hDetectionBoxes = [];
+            end
+            if ~isempty(self.hDetectionCircles)
+                delete(cell2mat(self.hDetectionCircles));
+                self.hDetectionCircles = {};
             end
             axes(self.hPlots(2));
             for i=1:CC.size()
@@ -171,21 +176,26 @@ classdef DetectionTester < handle
                     color = [0 0 1];
                 end
                 set(h,'Color',color);
-                self.hDetections(end+1) = h;
+                self.hDetectionBoxes(i) = h;
                 
                 % now draw circles for individual fruit
                 circ = CC.circles{i};
                 if ~isempty(circ)
+                    plots = [];
                     for j=1:size(circ,1)
                         pts = createCirclePoints(circ(j,1:2),...
                             circ(j,3), 20);
                         h = plot(pts(:,1), pts(:,2));
                         set(h,'LineWidth',2);
                         set(h,'Color',[1 0.1 0.75]);
-                        self.hDetections(end+1) = h;
+                        plots(end+1,:) = h;
                     end
+                    self.hDetectionCircles{i} = plots;
                 end
             end
+            % must be in a column format...
+            self.hDetectionCircles = reshape(self.hDetectionCircles,...
+                numel(self.hDetectionCircles), 1);
         end
         
         function [valid] = updateStats(self, selections, CC)
