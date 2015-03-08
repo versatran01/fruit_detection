@@ -2,25 +2,18 @@
 close all;
 home;
 
-viz = false;
+viz = true;
 
 detector = @(image)detectFruit(model, image);
-tester = DetectionTester(dataset, detector,viz);
-tester.setCurrentImage(1);
+tester = DetectionTester(dataset, detector, viz);
+tester.setCurrentImage(25);
 tester.rotate = true;
 
-count = 0;
 times = [];
 while tester.hasNext()
     tic;
     tester.processNext();
     times(end+1) = toc;
-    count=count+1;
-    if viz
-        pause;
-    else
-        fprintf('Processed image %i of %i\n', count, dataset.size());
-    end
 end
 
 fprintf('Processing time per image: %f\n', mean(times));
