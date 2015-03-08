@@ -1,4 +1,4 @@
-function [ CC, counts, circles, indices ] = segmentComponents( CC, scale )
+function [ CC, counts, circles, indices ] = segmentComponents( CC, original, scale )
 %SEGMENTCOMPONENTS Segment fruit inside the connected components.
 % Input `CC` is a ConnectedComponents object.
 %
@@ -15,9 +15,13 @@ reject = false(CC.size(), 1);
 counts = [];
 for i=1:CC.size()
     % pull out the mask region and the original image area
-    %original = imcrop(image(:,:,1:3), bbox(i,:));
+    if ~isempty(original)
+        pic = imcrop(original, bbox(i,:));
+    else
+        pic = [];
+    end
     submask = imcrop(CC.image, bbox(i,:));
-    X = segmentCircles([],submask,scale);
+    X = segmentCircles(pic,submask,scale);
     
     if ~isempty(X)
         % adjust to position of the bbox
