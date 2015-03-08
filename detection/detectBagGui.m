@@ -132,6 +132,7 @@ handles.data.bag_path = bag_path;
 handles.data.bag = bag;
 handles.data.total_time = total_time;
 handles.data.image_topics = image_topics;
+handles.data.tracker = FruitTracker();
 guidata(hObject, handles);
 
 % --- Executes on button press in play_pause_togglebutton.
@@ -148,7 +149,7 @@ if get(hObject, 'Value') == get(hObject, 'Max')
         [msg, meta] = handles.data.bag.read();
         if strcmp(meta.topic, '/color/image_raw')
             % todo: add time control
-            image = ros_image_msg_to_matlab_image(msg);
+            image = rosImageToMatlabImage(msg);
             handles = process_image(image, handles);
             drawnow;
             pause(0.001);
@@ -171,19 +172,8 @@ image = imresize(image, 0.4);
 handles.data.original_image = ...
     draw_image_on(handles.original_axes, ...
                   handles.data.original_image, image);
-% points = bbox2points(bboxes);
-[X, Y] = bboxToPatchVertices(CC.BoundingBox());
 
-
-if isempty(handles.data.bboxPlots)
-    hold on
-    handles.data.bboxPlots = patch(X, Y, 'red');
-    set(handles.data.bboxPlots, 'FaceAlpha', 0.1)
-    set(handles.data.bboxPlots, 'EdgeColor', [1 0 0])
-    disp('here')
-else
-    set(handles.data.bboxPlots, 'XData', X, 'Ydata', Y);
-end
+handles.data.tracker.track(CC, image);
 
 % draw mask
 handles.data.detection_image = ...
@@ -295,7 +285,8 @@ function model_listbox_CreateFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-% Hint: listbox controls usually have a white background on Windows.
+% Hint: listbox controls usually have a white background on
+% Windows.--------------
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), ...
                    get(0,'defaultUicontrolBackgroundColor'))
@@ -310,16 +301,7 @@ if isempty(image_handle)
 else
     set(image_handle, 'CData', image);
 end
-
-function matlab_image = ros_image_msg_to_matlab_image(ros_image_msg)
-b = ros_image_msg.data(1:3:end);
-g = ros_image_msg.data(2:3:end);
-r = ros_image_msg.data(3:3:end);
-b = reshape(b, ros_image_msg.width, ros_image_msg.height);
-g = reshape(g, ros_image_msg.width, ros_image_msg.height);
-r = reshape(r, ros_image_msg.width, ros_image_msg.height);
-matlab_image = cat(3, r, g, b);
-
+drawnow;
 
 function model_name = getModelFromModelListbox(handle)
 model_ind = get(handle, 'Value');

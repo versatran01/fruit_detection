@@ -27,7 +27,7 @@ bbox = CC.BoundingBox();
 centroids = CC.Centroid();
 
 % throw away components below a very low threshold of area
-large = area > 20;
+large = area > 10;
 CC.discard(~large);
 
 %{
