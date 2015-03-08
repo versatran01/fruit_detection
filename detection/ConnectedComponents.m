@@ -3,6 +3,7 @@ classdef ConnectedComponents < handle
     
     properties
         image       % mask of pixels used to find components
+        circles     % DO NOT USE THIS FIELD
     end
     
     properties(Access=private)

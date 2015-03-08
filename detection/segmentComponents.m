@@ -1,4 +1,4 @@
-function [ CC, counts, circles ] = segmentComponents( CC, scale )
+function [ CC, counts, circles, indices ] = segmentComponents( CC, scale )
 %SEGMENTCOMPONENTS Segment fruit inside the connected components.
 % Input `CC` is a ConnectedComponents object.
 %
@@ -6,6 +6,7 @@ function [ CC, counts, circles ] = segmentComponents( CC, scale )
 %   `CC` is the same object, with some removed blobs.
 %   `counts` is the count of fruit in each blob.
 %   `circles` are circles fit to the fruit.
+%   `indices` are logical indices to the blobs we chose to keep.
 
 % iterate over the remaining regions
 bbox = CC.BoundingBox();
@@ -30,4 +31,5 @@ end
 % throw away anything we could not fit a circle to
 CC.discard(reject);
 circles = circles(~reject);
+indices = ~reject;
 end

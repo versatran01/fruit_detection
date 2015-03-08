@@ -3,8 +3,10 @@ function [ X ] = segmentCircles( ~, mask, scale )
 %   `original` is the RGB space, (used when debugging only).
 %   `mask` is the b&w mask extracted by the model.
 %
-%   Return value X is a Nx3 vector of circles: [x,y,radius]
+%   Return value X is a NxK vector of circles: [x,y,radius,...other shit]
 %   It may be empty, if no circles are found.
+%
+%   Format of X: [x,y,radius,num_inliers,circle_fill_frac,box_fill_frac]
 
 % todo: store all parameters in a struct
 
