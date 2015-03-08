@@ -63,6 +63,7 @@ CC.discard(~large);
 % iterate over the remaining regions
 bbox = CC.BoundingBox();
 circles = cell(CC.size(), 1);
+reject = false(CC.size(), 1);
 for i=1:CC.size()
     % pull out the mask region and the original image area (for
     % debugging)
@@ -73,8 +74,10 @@ for i=1:CC.size()
         % adjust to position of the bbox
         X(:,1:2) = bsxfun(@plus, X(:,1:2), bbox(i,1:2));
         circles{i} = X;
+    else
+        reject(i) = true;
     end
 end
-% included in return value...
-CC.circles = circles;
+CC.discard(reject);
+CC.circles = circles(~reject);
 end
