@@ -43,6 +43,7 @@ classdef FruitTrack < handle
             self.color = 255 * rand(1, 3);
             self.centroids = centroid;
             self.bboxes = bbox;
+            self.scores = score;
             self.age = 1;
             self.visible_count = 1;
             self.confidence = [score, score];
@@ -58,20 +59,13 @@ classdef FruitTrack < handle
             last_centroid = self.last_centroid;
             % Search for all the corners around the last centroid within
             % the block size
-            in_block_ind = ...
-                (last_centroid(1) < prev_corners(:, 1) + block_size) & ...
-                (last_centroid(1) > prev_corners(:, 1) - block_size) & ...
-                (last_centroid(2) < prev_corners(:, 2) + block_size) & ...
-                (last_centroid(2) > prev_corners(:, 2) - block_size);
-            
-            if nnz(in_block_ind)
-                % there are flows found in the window
-                offset = mean(optical_flow(in_block_ind, :), 1);
+            if size(optical_flow, 1) == 1
+                offset = optical_flow;
             else
-                % no flow found in the window, just take average of all
-                offset = mean(optical_flow, 1);
+                offset = calculateOffset(last_centroid, prev_corners, ...
+                                         optical_flow, block_size);
             end
-            
+            % Predict the centroid
             self.predicted_centroid = last_centroid + offset;
                 
             % Shift the bounding box so that its center is at the
@@ -81,16 +75,26 @@ classdef FruitTrack < handle
                  last_bbox(3:4)];
             
             % DEBUG_START %
+            % Plot last centroid
+            %{
             hold on
-            [X, Y] = bboxToPatchVertices(last_bbox);
-            patch(X, Y, 'b', 'Parent', debug_axes, 'EdgeColor', 'b', ...
-                  'FaceAlpha', 0.1);
+            plot(debug_axes, ...
+                 last_centroid(1), last_centroid(2), 'co');
+            text(last_centroid(1), last_centroid(2), num2str(self.id), ...
+                'Color', 'c');
+            % Plot predicted bounding box in red
             [X, Y] = bboxToPatchVertices(self.predicted_bbox);
             patch(X, Y, 'r', 'Parent', debug_axes, 'EdgeColor', 'r', ...
                   'FaceAlpha', 0.1);
-            plot([last_centroid(1), self.predicted_centroid(1)], ...
-                 [last_centroid(2), self.predicted_centroid(2)], 'r'); 
+            plot(debug_axes, ...
+                 [last_centroid(1), self.predicted_centroid(1)], ...
+                 [last_centroid(2), self.predicted_centroid(2)], 'r');
+            % Plot all previous centroid in cyan
+            plot(debug_axes, ...
+                 self.centroids(:,1), self.centroids(:,2), '-.c', ...
+                 'LineWidth', 1);
             drawnow
+            %}
             % DEBUG_STOP %
         end
         
@@ -111,14 +115,17 @@ classdef FruitTrack < handle
             end
             
             % DEBUG_START %
+            % Plot assigned detections in green
+            %{
             hold on
             [X, Y] = bboxToPatchVertices(bbox);
-            patch(X, Y, 'm', 'Parent', debug_axes, 'EdgeColor', 'm', ...
-                  'FaceAlpha', 0.1);
+            patch(X, Y, 'g', 'Parent', debug_axes, 'EdgeColor', 'g', ...
+                  'FaceAlpha', 0.2);
             plot(debug_axes, ...
                  [self.last_centroid(1), centroid(1)], ...
-                 [self.last_centroid(2), centroid(2)], 'm');
+                 [self.last_centroid(2), centroid(2)], 'g');
             drawnow
+            %}
             % DEBUG_STOP %
             
             self.incAge();
@@ -167,5 +174,38 @@ classdef FruitTrack < handle
         function visualize(self)
         end
     end
-    
+
+end
+
+function offset = calculateOffset(centroid, corners, flow, block_size)
+% Increase block size until we find some flow within
+i = 0;
+while true
+    i = i + 1;
+    inlier_ind = findCornersWithinBlock(centroid, corners, block_size * i);
+    if nnz(inlier_ind), break; end
+end
+
+corners = corners(inlier_ind, :);
+flow = flow(inlier_ind, :);
+
+% Just take the average if block_size is small enough
+if i == 1
+    offset = mean(flow, 1);
+    return;
+end
+
+% Find the closest corner to the centroid
+distances_squared = sum(bsxfun(@minus, corners, centroid).^2, 2);
+[~, min_distance_ind] = min(distances_squared, [], 1);
+offset = flow(min_distance_ind, :);
+
+end
+
+function inlier_ind = findCornersWithinBlock(centroid, corners, block_size)
+inlier_ind = ...
+    (centroid(1) < corners(:, 1) + block_size) & ...
+    (centroid(1) > corners(:, 1) - block_size) & ...
+    (centroid(2) < corners(:, 2) + block_size) & ...
+    (centroid(2) > corners(:, 2) - block_size);
 end
