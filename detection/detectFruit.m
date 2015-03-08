@@ -10,9 +10,9 @@ end
 areaScale = scale*scale;
 
 % convert to extended color space
-image = rgb2fullcs(image);
+image_full = rgb2fullcs(image);
 % calculate the mask with the pixel-level model, then round it
-mask = detectPixels(pixel_model, image);
+mask = detectPixels(pixel_model, image_full);
 mask = mask > 0.5;
 
 % fill holes
@@ -74,5 +74,5 @@ while true
 end
 
 % perform segmentation of blobs...
-[CC,counts,circles] = segmentComponents(CC, scale);
+[CC,counts,circles] = segmentComponents(CC, image, scale);
 end

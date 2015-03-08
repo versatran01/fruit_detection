@@ -1,4 +1,4 @@
-function [ X ] = segmentCircles( ~, mask, scale )
+function [ X ] = segmentCircles( original, mask, scale )
 %SEGMENTCIRCLES Segment circles (fruit) in a small mask image.
 %   `original` is the RGB space, (used when debugging only).
 %   `mask` is the b&w mask extracted by the model.
@@ -10,15 +10,20 @@ function [ X ] = segmentCircles( ~, mask, scale )
 
 % todo: store all parameters in a struct
 
+% pad the image a bit
+mask_padded = padarray(mask,[2 2]);    % adds 2 pixels on left,right,top,bottom
+
 % find masked pixel edges
-mask_pixels = find(edge(mask));
-[y,x] = ind2sub(size(mask), mask_pixels);
+mask_pixels = find(edge(mask_padded));
+[y,x] = ind2sub(size(mask_padded), mask_pixels);
 points = [x y];
 if size(points,1) < 20*scale
     % too few points, we can't fit this very well
     X = [];
     return;
 end
+% subtract padding
+points = bsxfun(@minus,points,[2 2]);
 
 % fit circles by random sampling
 if exist('fitCirclesFast','file') == 3

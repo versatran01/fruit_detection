@@ -32,6 +32,7 @@ classdef DetectionTester < handle
         metrics = [];
         components = {};
         labels = {};
+        scale = 1;
     end
     
     methods(Access=private)
@@ -290,10 +291,11 @@ classdef DetectionTester < handle
             if self.rotate
                 image = rot90(image,1);
             end
+            image = imresize(image, self.scale);
             % user selections for this image
             selections = self.dataset.selections{idx};
             % run detector on next image
-            [self.CC,~,self.circles] = self.detector(image);
+            [self.CC,~,self.circles] = self.detector(image,self.scale);
             self.validity = self.updateStats(selections, self.CC,...
                 self.circles);
             self.finished = false;
