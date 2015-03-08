@@ -16,7 +16,7 @@ while bag.hasNext()
         image = rosImageToMatlabImage(msg);
         image = imresize(image, 0.4);
         
-        [mask, CC] = detectFruit(model, image);
+        CC = detectFruit(model, image);
         [X, Y] = bboxToPatchVertices(CC.BoundingBox);
         
         tracker.track(CC, image);
@@ -28,7 +28,7 @@ while bag.hasNext()
         hold on;
         
         % mask
-        imshow(mask, 'Parent', handles(2));
+        imshow(CC.image, 'Parent', handles(2));
         set(handles(2), 'YDir', 'normal');
         drawnow;
     end

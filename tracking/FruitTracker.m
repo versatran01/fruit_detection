@@ -153,7 +153,8 @@ classdef FruitTracker < handle
                 if nnz(match_ind) > 20
                     % Fundamental matrix outlier rejection
                     [~, inlier_ind, status] = ...
-                        estimateFundamentalMatrix(prev_points, curr_points);
+                        estimateFundamentalMatrix(prev_points, curr_points, ...
+                                                  'Method', 'RANSAC');
                     prev_points = prev_points(inlier_ind, :);
                     curr_points = curr_points(inlier_ind, :);
                     self.flow = curr_points - prev_points;
