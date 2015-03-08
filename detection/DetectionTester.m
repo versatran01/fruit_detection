@@ -12,6 +12,7 @@ classdef DetectionTester < handle
         finished = false;
         validity = [];
         axesSize
+        CC
         % plot stuff
         hFig
         hPlots
@@ -80,6 +81,21 @@ classdef DetectionTester < handle
             set(self.hToolMenu, 'Value', mode);
         end
         
+        function selectBox(self, pos, accept)
+            % find bounding box we are clicking
+            bbox = self.CC.BoundingBox();
+            inside = bsxfun(@le, bbox(:,1:2), pos) & ...
+                     bsxfun(@le, pos, bbox(:,1:2)+bbox(:,3:4));
+            inside = inside(:,1) & inside(:,2);
+            if any(inside)
+                % only take the first for now
+                % todo: determine the 'best' selection
+                idx = find(inside,1,'first');
+                self.validity(idx) = accept;
+                self.plotDetections();  % re-plot...
+            end
+        end
+        
         function mouseUp(self, object, eventdata)
             selType = get(self.hFig,'SelectionType');
             if self.mode ~= 1
@@ -88,10 +104,10 @@ classdef DetectionTester < handle
             pos = getMousePosition();
             if strcmp(selType, 'normal')
                 % normal click
-                fprintf('normal click!\n');
+                self.selectBox(pos,true);
             elseif strcmp(selType, 'alt')
                 % right click
-                fprintf('right click!\n');
+                self.selectBox(pos,false);
             end
         end
         
@@ -152,7 +168,9 @@ classdef DetectionTester < handle
             end
         end
         
-        function plotDetections(self, CC, valid)
+        function plotDetections(self)
+            CC = self.CC;
+            valid = self.validity;
             detections = CC.BoundingBox();
             if ~isempty(self.hDetectionBoxes)
                 delete(self.hDetectionBoxes);
@@ -266,13 +284,13 @@ classdef DetectionTester < handle
             % user selections for this image
             selections = self.dataset.selections{idx};
             % run detector on next image
-            CC = self.detector(image);
-            self.validity = self.updateStats(selections, CC);
+            self.CC = self.detector(image);
+            self.validity = self.updateStats(selections, self.CC);
             self.finished = false;
             if self.viz
-                self.plotImage(image, CC.image);
+                self.plotImage(image, self.CC.image);
                 self.plotSelections(selections);
-                self.plotDetections(CC, self.validity);
+                self.plotDetections();
             else
                 self.finished = true;
             end

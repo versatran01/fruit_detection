@@ -57,7 +57,7 @@ CC.merge(overlap);
 
 % threshold by area again
 area = CC.Area();
-large = area > 100*areaScale;
+large = area > 50*areaScale;
 CC.discard(~large);
 
 % iterate over the remaining regions
