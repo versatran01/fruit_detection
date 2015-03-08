@@ -1,5 +1,5 @@
-function [ X ] = segmentFruit( original, mask, scale )
-%SEGMENTFRUIT Segment fruit in a small mask image.
+function [ X ] = segmentCircles( ~, mask, scale )
+%SEGMENTCIRCLES Segment circles (fruit) in a small mask image.
 %   `original` is the RGB space, (used when debugging only).
 %   `mask` is the b&w mask extracted by the model.
 %
@@ -62,6 +62,7 @@ if ~isempty(X)
         
         % calculate circle area
         area = X(:,3).^2 * pi;
+        boxArea = numel(mask);
         
         % get all pixels that are full
         mask_pixels = find(mask);
@@ -71,7 +72,14 @@ if ~isempty(X)
         % calculate the fill rate of all circles
         inside = pointsInCircles(X(:,1:3), points);
         inside = sum(inside, 2);        % total number of points inside circle
-        X = horzcat(X, inside ./ area);
+        X = horzcat(X, inside ./ area); % col 5
+        
+        % calculate area of circles over area of box
+        X = horzcat(X, area ./ boxArea); % col 6
+        
+        % throw away if circle fill ratio below threshold
+        keep = X(:,5) > 0.15;
+        X = X(keep,:);
     end
 end
 end

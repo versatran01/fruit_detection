@@ -7,7 +7,7 @@ classdef DetectionTester < handle
         detector
         viz
         % current state
-        curImage = 1;
+        curImage = 0;
         mode = 1;
         finished = false;
         validity = [];
@@ -29,6 +29,8 @@ classdef DetectionTester < handle
     properties
         rotate = false;
         metrics = [];
+        components = {};
+        labels = {};
     end
     
     methods(Access=private)
@@ -129,7 +131,6 @@ classdef DetectionTester < handle
                 self.hFig = figure;
                 clf(self.hFig,'reset');
                 set(self.hFig, 'MenuBar', 'None');
-                set(self.hFig, 'Name', 'Detection Tester');
                 % attach callbacks to mouse, etc
                 self.configureInterface();
                 self.attachCallbacks();
@@ -148,6 +149,8 @@ classdef DetectionTester < handle
                 set(self.hImage, 'CData', image);
                 set(self.hMask, 'CData', mask);
             end
+            set(self.hFig, 'Name', ...
+                sprintf('Current image: %i', self.curImage));
         end
         
         function plotSelections(self, selections)
@@ -276,6 +279,11 @@ classdef DetectionTester < handle
         
         function processNext(self)
             self.curImage = self.curImage + 1;
+            if self.curImage > 1
+                % save results from last image...
+                self.components{end+1} = self.CC;
+                self.labels{end+1} = self.validity;
+            end
             idx = self.curImage;
             image = self.dataset.images{idx};
             if self.rotate

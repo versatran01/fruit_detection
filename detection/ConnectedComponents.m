@@ -2,8 +2,7 @@ classdef ConnectedComponents < handle
     %CONNECTEDCOMPONENTS Store connected components.
     
     properties
-        image
-        circles
+        image       % mask of pixels used to find components
     end
     
     properties(Access=private)
@@ -59,6 +58,21 @@ classdef ConnectedComponents < handle
             end
             nCC.NumObjects = numel(nCC.PixelIdxList);
             self.CC = nCC;
+        end
+        
+        function [fig] = plot(self)
+            fig = figure;
+            imshow(self.image);
+            hold on;
+            bbox = self.BoundingBox();
+            for i=1:self.size()
+                % draw the bounding box
+                pts = bboxToLinePoints(bbox(i,:));
+                pts_x = squeeze(pts(:,1,:));
+                pts_y = squeeze(pts(:,2,:));
+                h = plot(pts_x,pts_y,'b');
+                set(h,'LineWidth',2);
+            end
         end
         
         function value = get.Area(self)
