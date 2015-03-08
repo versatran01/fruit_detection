@@ -69,7 +69,7 @@ classdef FruitTracker < handle
             % disable gating for now
             
             % Fruit tracker parameters
-            self.param.gating_thresh = 0.9;
+            self.param.gating_thresh = 0.95;
             self.param.gating_cost = 100;
             self.param.cost_non_assignment = 10;
             self.param.time_win_size = 4;
@@ -202,7 +202,7 @@ classdef FruitTracker < handle
                 % Predict the current location of the track
                 % Pass in the debug_axes for debugging
                 track.predict(self.prev_corners, self.flow, ...
-                              self.param.block_size(1), self.debug_axes);
+                              10, self.debug_axes);
             end
         end
         
@@ -314,10 +314,15 @@ classdef FruitTracker < handle
             
             % Find the indices of 'lost' tracks
             % The criteria for 'lost' is 
-            lost_idx_1 = (ages <= self.param.age_thresh & ...
-                          visibility < self.param.visibility_thresh) | ...
-                         (ave_confidences < self.param.confidence_thresh);
-            lost_idx_2 = ages > self.param.age_thresh & out_of_image;
+            % 1. for tracks that are young, we check its visibility and
+            % delete those that are not detected sufficiently enough.
+            % 2. for tracks that are old, whe check its average confidence
+            % or whether it's outside the image
+            lost_idx_1 = ages <= self.param.age_thresh & ...
+                         visibility < self.param.visibility_thresh;
+            lost_idx_2 = ages > self.param.age_thresh & ...
+                         (out_of_image | ...
+                         ave_confidences < self.param.confidence_thresh);
             lost_idx = lost_idx_1 | lost_idx_2;
                           
             fprintf('Number of tracks to delete: %g.\n', nnz(lost_idx));
