@@ -5,10 +5,10 @@ clear ros.Bag;
 clear;
 close all;
 
-BAGFILE_FOLDER = '/Users/gareth/Desktop/source';
-OUTPUT_FOLDER = '/Volumes/External/Extracted';
-TOPIC = '/color/image_raw';
-SKIP_IMAGES = 5;
+BAGFILE_FOLDER = '/Volumes/D512/ground/rectified';
+OUTPUT_FOLDER = '/Volumes/External/Extracted/rectified';
+TOPIC = '/color/image_rect_color';
+SKIP_IMAGES = 1;
 
 bagfile_names = {};
 bagfile_paths = {};
