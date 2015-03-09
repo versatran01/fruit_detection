@@ -27,11 +27,19 @@ classdef FruitTrack < handle
         % the past within a predefined time window
         confidence
         
+        % Predicted centroid and bounding box in the current frame
         predicted_centroid
-        predicted_bbox  % The predicted bounding box in the next frame
+        predicted_bbox
+        
+        % Previous centroid and bounding box
+        prev_centroid
+        prev_bbox
     end
     
     properties(Dependent)
+        % The difference between last_xxx and prev_xxx is that after
+        % assignment last_xxx will be updated to curr_xxx while prev_xxx
+        % will always be the in the previous frame
         last_bbox
         last_centroid
     end
@@ -49,60 +57,40 @@ classdef FruitTrack < handle
             self.confidence = [score, score];
             self.predicted_centroid = centroid;
             self.predicted_bbox = bbox;
+            self.prev_centroid = centroid;
+            self.prev_bbox = bbox;
         end
         
         % Predict new location of centroid and bounding box
         function predict(self, prev_corners, optical_flow, block_size)
             % Predict new centroid based on optical flow?
-            % Get the last bonding box and centroid on this track
-            last_bbox = self.last_bbox;
-            last_centroid = self.last_centroid;
+            % Get the previous bonding box and centroid on this track
+            self.prev_centroid = self.last_centroid;
+            self.prev_bbox = self.last_bbox;
             % Search for all the corners around the last centroid within
             % the block size
             if size(optical_flow, 1) == 1
                 offset = optical_flow;
             else
-                offset = calculateOffset(last_centroid, prev_corners, ...
+                offset = calculateOffset(self.prev_centroid, ...
+                                         prev_corners, ...
                                          optical_flow, block_size);
             end
             % Predict the centroid
-            self.predicted_centroid = last_centroid + offset;
+            self.predicted_centroid = self.prev_centroid + offset;
                 
             % Shift the bounding box so that its center is at the
             % predicted centroid
             self.predicted_bbox = ...
-                [self.predicted_centroid - last_bbox(3:4)/2, ...
-                 last_bbox(3:4)];
-            
-            % DEBUG_START %
-            % Plot last centroid
-            %{
-            hold on
-            plot(debug_axes, ...
-                 last_centroid(1), last_centroid(2), 'co');
-            text(last_centroid(1), last_centroid(2), num2str(self.id), ...
-                'Color', 'c');
-            % Plot predicted bounding box in red
-            [X, Y] = bboxToPatchVertices(self.predicted_bbox);
-            patch(X, Y, 'r', 'Parent', debug_axes, 'EdgeColor', 'r', ...
-                  'FaceAlpha', 0.1);
-            plot(debug_axes, ...
-                 [last_centroid(1), self.predicted_centroid(1)], ...
-                 [last_centroid(2), self.predicted_centroid(2)], 'r');
-            % Plot all previous centroid in cyan
-            plot(debug_axes, ...
-                 self.centroids(:,1), self.centroids(:,2), '-.c', ...
-                 'LineWidth', 1);
-            drawnow
-            %}
-            % DEBUG_STOP %
+                [self.predicted_centroid - self.prev_bbox(3:4) / 2, ...
+                 self.prev_bbox(3:4)];
         end
         
         % Update assigned track with new centroid and bounding box
         % If stabilize is bigger than 0, this will take the average of up
         % to that number of frames with the new one and append it to the
         % track
-        function updateAssigned(self, centroid, bbox, stabilize, debug_axes)
+        function updateAssigned(self, centroid, bbox, stabilize)
             if nargin < 4, stabilize = 0; end
             
             if stabilize
@@ -114,25 +102,14 @@ classdef FruitTrack < handle
                 self.bboxes(end + 1, :) = bbox;
             end
             
-            % DEBUG_START %
-            % Plot assigned detections in green
-            %{
-            hold on
-            [X, Y] = bboxToPatchVertices(bbox);
-            patch(X, Y, 'g', 'Parent', debug_axes, 'EdgeColor', 'g', ...
-                  'FaceAlpha', 0.2);
-            plot(debug_axes, ...
-                 [self.last_centroid(1), centroid(1)], ...
-                 [self.last_centroid(2), centroid(2)], 'g');
-            drawnow
-            %}
-            % DEBUG_STOP %
-            
+            % Update age
             self.incAge();
             % Update visibility if this is an assigned track
             self.incVisibleCount();
             self.scores(end + 1, :) = 1; % detection score is 1
             self.centroids(end + 1, :) = centroid;
+            % After all the previous assignment, calling last_bbox and
+            % last_centroid will give you the current bbox and centroid
         end
         
         function updateUnassigned(self)
@@ -140,6 +117,8 @@ classdef FruitTrack < handle
             self.centroids(end + 1, :) = self.predicted_centroid;
             self.bboxes(end + 1, :) = self.predicted_bbox;
             self.scores(end + 1, :) = 0;
+            % After all the previous assignment, calling last_bbox and
+            % last_centroid will give you the current bbox and centroid
         end
         
         % Adjust the track confidence score

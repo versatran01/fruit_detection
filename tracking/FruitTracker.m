@@ -59,13 +59,20 @@ classdef FruitTracker < handle
         % Debug
         debug
         debug_axes
+        
         image_handle
-        new_tracks_handle
         detections_handle
+        new_tracks_handle
+        young_tracks_handle
         valid_tracks_handle
+        predicted_tracks_handle
+        predictions_handle
     end
     
     properties(Dependent)
+        new_tracks
+        young_tracks
+        valid_tracks
         num_tracks
         initialized
     end
@@ -121,7 +128,7 @@ classdef FruitTracker < handle
             self.deleteLostTracks();
             self.createNewTracks();
             self.updateValidTracks();
-            self.displayTrackingResults();
+            self.displayTrackingResults(true);
         end
         
         % Optical flow
@@ -204,14 +211,6 @@ classdef FruitTracker < handle
             
             fprintf('Number of new corners: %g.\n', ...
                     size(self.curr_corners, 1));
-            % DEBUG_START %
-            %{
-            hold on
-            plot(self.debug_axes, self.curr_corners(:, 1), ...
-                self.curr_corners(:, 2), 'c+');
-            drawnow
-            %}
-            % DEBUG_STOP %
         end
         
         % Predict new locations of each track using kalman filter
@@ -221,7 +220,6 @@ classdef FruitTracker < handle
             for i = 1:self.num_tracks
                 track = self.tracks(i);
                 % Predict the current location of the track
-                % Pass in the debug_axes for debugging
                 track.predict(self.prev_corners, self.flow, 10);
             end
         end
@@ -240,7 +238,7 @@ classdef FruitTracker < handle
                     1:size(self.detections.Centroid, 1);
                 return;
             end
-            predicted_bboxes = reshape([self.tracks(:).predicted_bbox], ...
+            predicted_bboxes = reshape([self.tracks.predicted_bbox], ...
                                        4, [])';
             cost = 1 - bboxOverlapRatio(predicted_bboxes, ...
                                         self.detections.BoundingBox);
@@ -254,11 +252,13 @@ classdef FruitTracker < handle
             fprintf('Assigning %g detections to %g tracks.\n', ...
                     size(self.detections.BoundingBox, 1), ...
                     self.num_tracks);
+                
             [self.assignments, ...
              self.unassigned_tracks, ...
              self.unassigned_detections] = ...
                 assignDetectionsToTracks(cost, ...
                                          self.param.cost_non_assignment);
+                                     
             fprintf('%g detections assgined to %g tracks.\n', ...
                     size(self.assignments, 1), size(self.assignments, 1));
             fprintf('%g unassigned tracks, %g unassigned detections.\n' , ...
@@ -280,14 +280,12 @@ classdef FruitTracker < handle
                 bbox = self.detections.BoundingBox(detection_idx, :);
                 
                 % Stabilize the bounding box by taking the average of the
-                % size [?]
-                track.updateAssigned(centroid, bbox, 0, self.debug_axes);
+                % size [?], don't stablize for now
+                track.updateAssigned(centroid, bbox);
                 
                 % Adjust track confidence score based on the maximum
                 % detection score in the past few frames
                 track.adjustConfidence(self.param.time_win_size);
-                
-                % TODO: maybe merge the above two methods?
             end
         end
         
@@ -316,20 +314,19 @@ classdef FruitTracker < handle
             
             % Compute the fraction of the track's age for which it was
             % visible
-            ages = [self.tracks(:).age]';
-            visible_counts = [self.tracks(:).visible_count]';
+            ages = [self.tracks.age]';
+            visible_counts = [self.tracks.visible_count]';
             visibility = visible_counts ./ ages;
                 
             % Check whether the last centroid is out of image boundary
-            last_centroids = reshape([self.tracks(:).last_centroid], ...
-                                     2, [])';
+            last_centroids = reshape([self.tracks.last_centroid], 2, [])';
             out_of_image = last_centroids(:, 1) < 0 | ...
                            last_centroids(:, 2) < 0 | ...
                            last_centroids(:, 1) > size(self.image, 2) | ...
                            last_centroids(:, 2) > size(self.image, 1);
             
             % Check the maxium detection confidence score
-            confidences = reshape([self.tracks(:).confidence], 2, [])';
+            confidences = reshape([self.tracks.confidence], 2, [])';
             ave_confidences = confidences(:, 2);
             
             % Find the indices of 'lost' tracks
@@ -350,21 +347,6 @@ classdef FruitTracker < handle
             % tracks_to_delete = self.tracks(lost_idx);
             % Delete lost tracks
             self.tracks = self.tracks(~lost_idx);
-            
-            % DEBUG_START %
-            % Plot tracks to delte
-            %{
-            delete_centroids = reshape([tracks_to_delete.last_centroid], ...
-                                       2, [])';
-            if ~isempty(delete_centroids)
-                
-                plot(self.debug_axes, ...
-                    delete_centroids(:, 1), delete_centroids(:, 2), 'm+', ...
-                    'MarkerSize', 10);
-                drawnow
-            end
-            %}
-            % DEBUG_STOP %
         end
         
         % Create new tracks for unassigned detections
@@ -393,7 +375,7 @@ classdef FruitTracker < handle
         
         % Update total valid tracks id
         function updateValidTracks(self)
-            ages = [self.tracks(:).age]';
+            ages = [self.tracks.age]';
             new_tracks_id = [self.tracks(ages > self.param.age_thresh).id];
             self.valid_tracks_id = ...
                 union(self.valid_tracks_id, new_tracks_id);
@@ -401,43 +383,66 @@ classdef FruitTracker < handle
         end
         
         % Draws a colored bounding box for each track on the frame
-        function displayTrackingResults(self)
+        function displayTrackingResults(self, show_predict)
+            if nargin < 2, show_predict = false; end
             
             if self.debug
                 % Plot current image
-                if isempty(self.image_handle)
-                    imshow(self.image, 'Parent', self.debug_axes);
-                    set(self.debug_axes, 'YDir', 'normal');
-                else
-                    set(self.image_handle, 'CData', self.image);
-                end
-                % Plot current detections in yellow
-                plotBboxOnAxes(self.debug_axes, self.detections_handle, ...
-                               self.detections.BoundingBox, [1 0 1]);
+                self.image_handle = ...
+                    plotImageOnAxes(self.debug_axes, self.image_handle, ...
+                                    self.image);
+                set(self.debug_axes, 'YDir', 'Normal');
+                % Plot current detections in purple
+                self.detections_handle = ...
+                    plotCentroidsOnAxes(self.debug_axes, ...
+                                        self.detections_handle, ...
+                                        self.detections.Centroid, 'm+', 3);
             end
             
             if isempty(self.tracks), return; end   
             
             if self.debug
-                % Plot new tracks in red
-                new_tracks_idx = [self.tracks(:).age] == 1;
-                new_bboxes = ...
-                    reshape([self.tracks(new_tracks_idx).last_bbox], ...
-                            4, [])';
-                plotBboxOnAxes(self.debug_axes, self.new_tracks_handle, ...
-                               new_bboxes, 'r');
                 
-                % Plot fruits in cyan
-                valid_tracks_idx = [self.tracks(:).age] >= ...
-                                   self.param.age_thresh;
-                valid_bboxes = ...
-                    reshape([self.tracks(valid_tracks_idx).last_bbox], ...
-                            4, [])';
-                plotBboxOnAxes(self.debug_axes, self.valid_tracks_handle, ...
-                               valid_bboxes, 'c');
+                if show_predict
+                    % Plot predicted bounding box in yellow
+                   predicted_bboxes = ...
+                       reshape([self.tracks.predicted_bbox], 4, [])';
+                   self.predicted_tracks_handle = ...
+                       plotBboxesOnAxes(self.debug_axes, ...
+                                        self.predicted_tracks_handle, ...
+                                        predicted_bboxes, 'b', 0, 1);
+                   prev_centroids = ...
+                       reshape([self.tracks.prev_centroid], 2, [])';
+                   last_centroids = ...
+                       reshape([self.tracks.last_centroid], 2, [])';
+                   self.predictions_handle = ...
+                       plotQuiverOnAxes(self.debug_axes, ...
+                                        self.predictions_handle, ...
+                                        prev_centroids, last_centroids, ...
+                                        'b');
+                end
+                
+                % Plot new tracks bounding box in red
+                young_bboxes = reshape([self.young_tracks.last_bbox], ...
+                                       4, [])';
+                self.young_tracks_handle = ...
+                    plotBboxesOnAxes(self.debug_axes, ...
+                                     self.young_tracks_handle, ...
+                                     young_bboxes, 'r', 0, 1);
+                
+                % Plot valid tracks in cyan
+                valid_bboxes = reshape([self.valid_tracks.last_bbox], ...
+                                       4, [])';
+                self.valid_tracks_handle = ...
+                    plotBboxesOnAxes(self.debug_axes, ...
+                                     self.valid_tracks_handle, ...
+                                     valid_bboxes, 'c', 0, 1);
                 
                 % Display total count
-                title(self.debug_axes, num2str(self.num_valid_tracks));
+                title_str = sprintf('frame: %g, count: %g', ...
+                                    self.frame_counter, ...
+                                    self.num_valid_tracks);
+                title(self.debug_axes, title_str);
                 drawnow
             end
         end
@@ -451,17 +456,39 @@ classdef FruitTracker < handle
         function init = get.initialized(self)
             init = ~isempty(self.tracks);
         end
+        
+        % Getter: new_tracks
+        function new_tracks = get.new_tracks(self)
+            new_tracks_idx = [self.tracks.age] == 1;
+            new_tracks = self.tracks(new_tracks_idx);
+        end
+        
+        % Getter: valid_tracks
+        function valid_tracks = get.valid_tracks(self)
+            valid_tracks_idx = ...
+                [self.tracks.age] >= self.param.age_thresh;
+            valid_tracks = self.tracks(valid_tracks_idx);
+        end
+        
+        % Getter: young_tracks
+        function young_tracks = get.young_tracks(self)
+            young_tracks_idx = ...
+                [self.tracks.age] < self.param.age_thresh;
+            young_tracks = self.tracks(young_tracks_idx);
+        end
     end
     
 end
 
-function plotBboxOnAxes(ax, handle, bboxes, color)
-[X, Y] = bboxToPatchVertices(bboxes);
-if isempty(handle)
-    h = patch(X, Y, 'y', 'Parent', ax, ...
-        'EdgeColor', color, 'FaceAlpha', 0.1);
-    set(h, 'LineWidth', 2);
+function handle = plotQuiverOnAxes(ax, handle, xy1, xy2, color)
+uv = xy2 - xy1;
+if isempty(handle) || ~isgraphics(handle)
+    hold(ax, 'on');
+    handle = quiver(ax, xy1(:, 1), xy1(:, 2), uv(:, 1), uv(:, 2), 0, ...
+                    'Color', color);
+    hold(ax, 'off');
 else
-    set(handle, 'XData', X, 'YData', Y);
+    set(handle, 'XData', xy1(:, 1), 'YData', xy1(:, 2), ...
+        'UData', uv(:, 1), 'VData', uv(:, 2));
 end
 end
