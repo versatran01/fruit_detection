@@ -433,7 +433,10 @@ classdef FruitTracker < handle
                                  valid_bboxes, 'c', 0, 1);
                 
                 % Display total count
-                title(self.debug_axes, num2str(self.num_valid_tracks));
+                title_str = sprintf('frame: %g, count: %g', ...
+                                    self.frame_counter, ...
+                                    self.num_valid_tracks);
+                title(self.debug_axes, title_str);
                 drawnow
             end
         end
