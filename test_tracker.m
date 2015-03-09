@@ -1,6 +1,6 @@
 function test_tracker()
 close all
-load('models/dt_svc_ensemble.mat');
+load('models/cs_svc.mat');
 %bag = ros.Bag('/home/chao/Workspace/bag/booth/r1s_steadicam_v5_2015-02-18-11-56-32.bag');
 bag = ros.Bag('/Volumes/D512/ground/south/r1s_steadicam_v5_2015-02-18-11-56-32.bag');
 % bag = ros.Bag('/home/chao/Workspace/bag/booth/r13n_steadicam_v5_2015-02-18-19-53-00.bag');
@@ -10,6 +10,7 @@ tracker = FruitTracker();
 figure(1);
 handles(1) = subplot(1,2,1);
 handles(2) = subplot(1,2,2);
+count = 1;
 
 while bag.hasNext()
     [msg, meta] = bag.read();
@@ -32,6 +33,8 @@ while bag.hasNext()
         % mask
         imshow(CC.image, 'Parent', handles(2));
         set(handles(2), 'YDir', 'normal');
+        fprintf('Processed image %i\n', count);
+        count = count+1;
         drawnow;
     end
 end
