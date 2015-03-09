@@ -6,8 +6,10 @@ if ismac()  % terrible hack :P
 else
     bag = ros.Bag('/home/chao/Workspace/bag/booth/r1s_steadicam_v5_2015-02-18-11-56-32.bag');
 end
+use_pause = true;
+plot_tracker = true;
 bag.resetView(bag.topics);
-tracker = FruitTracker();
+tracker = FruitTracker(plot_tracker);
 
 figure(1);
 handles(1) = subplot(1,2,1);
@@ -53,6 +55,9 @@ while bag.hasNext()
         fprintf('Processed image %i\n', count);
         count = count+1;
         drawnow;
+        if use_pause
+            pause;
+        end
     end
 end
 end

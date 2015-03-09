@@ -413,7 +413,7 @@ classdef FruitTracker < handle
                 end
                 % Plot current detections in yellow
                 plotBboxOnAxes(self.debug_axes, self.detections_handle, ...
-                               self.detections.BoundingBox, 'y');
+                               self.detections.BoundingBox, [1 0 1]);
             end
             
             if isempty(self.tracks), return; end   
@@ -458,8 +458,9 @@ end
 function plotBboxOnAxes(ax, handle, bboxes, color)
 [X, Y] = bboxToPatchVertices(bboxes);
 if isempty(handle)
-    patch(X, Y, 'y', 'Parent', ax, ...
+    h = patch(X, Y, 'y', 'Parent', ax, ...
         'EdgeColor', color, 'FaceAlpha', 0.1);
+    set(h, 'LineWidth', 2);
 else
     set(handle, 'XData', X, 'YData', Y);
 end

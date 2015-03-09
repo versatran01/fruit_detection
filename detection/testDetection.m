@@ -4,12 +4,11 @@ home;
 
 viz = true;
 
-scale = 1;
+scale = 0.7;
 detector = @(image,s)detectFruit(model, image, s);
 tester = DetectionTester(dataset, detector, viz);
-tester.rotate = false;
+tester.rotate = true;
 tester.scale = scale;
-tester.setCurrentImage(1);
 
 times = [];
 while tester.hasNext()
