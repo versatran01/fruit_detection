@@ -7,9 +7,9 @@ viz = true;
 scale = 1;
 detector = @(image,s)detectFruit(model, image, s);
 tester = DetectionTester(dataset, detector, viz);
-tester.rotate = true;
+tester.rotate = false;
 tester.scale = scale;
-tester.setCurrentImage(19);
+tester.setCurrentImage(1);
 
 times = [];
 while tester.hasNext()
