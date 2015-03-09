@@ -23,6 +23,11 @@ for i=1:CC.size()
     submask = imcrop(CC.image, bbox(i,:));
     X = segmentCircles(pic,submask,scale);
     
+    % throw away if the total area of circles is too low
+    if sum(X(:,6)) < 0.2
+        X = [];
+    end
+    
     if ~isempty(X)
         % adjust to position of the bbox
         X(:,1:2) = bsxfun(@plus, X(:,1:2), bbox(i,1:2));

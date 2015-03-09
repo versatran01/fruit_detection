@@ -10,9 +10,9 @@ function [ X ] = segmentCircles( original, mask, scale )
 
 % todo: store all parameters in a struct
 
+X = zeros(0,6);
 if any(size(mask) <= 3*scale)
-    X = []; % mask too small to work with
-    return;
+    return; % mask too small to work with
 end
 
 % pad the image a bit
@@ -30,18 +30,19 @@ mask_pixels = find(mask_edges);
 points = [x y];
 if size(points,1) < 20*scale
     % too few points, we can't fit this very well
-    X = [];
     return;
 end
 % subtract padding
 points = bsxfun(@minus,points,[2 2]);
 
 % fit circles by random sampling
+num_points = size(points,1);
+num_iters = min(nchoosek(num_points, 3), 300000);
 if exist('fitCirclesFast','file') == 3
-    X = fitCirclesFast(points, 300000, 10*scale, 0.015, 500, 3*scale);
+    X = fitCirclesFast(points, num_iters, 10*scale, 0.03, 500, 3*scale);
 else
     warning('fitCirclesFast not found. Did you compile your mex?');
-    X = fitCircles(points, 300000, 10*scale, 0.015, 500, 3*scale);
+    X = fitCircles(points, num_iters, 10*scale, 0.03, 500, 3*scale);
 end
 X = sortrows(X,[4 3]);
 X = flipud(X);
@@ -96,8 +97,11 @@ if ~isempty(X)
         X = horzcat(X, area ./ boxArea); % col 6
         
         % throw away if circle fill ratio below threshold
-        keep = X(:,5) > 0.15;
+        keep = X(:,5) > 0.25;
         X = X(keep,:);
     end
+end
+if isempty(X)
+    X = zeros(0,6);
 end
 end
