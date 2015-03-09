@@ -350,21 +350,6 @@ classdef FruitTracker < handle
             % tracks_to_delete = self.tracks(lost_idx);
             % Delete lost tracks
             self.tracks = self.tracks(~lost_idx);
-            
-            % DEBUG_START %
-            % Plot tracks to delte
-            %{
-            delete_centroids = reshape([tracks_to_delete.last_centroid], ...
-                                       2, [])';
-            if ~isempty(delete_centroids)
-                
-                plot(self.debug_axes, ...
-                    delete_centroids(:, 1), delete_centroids(:, 2), 'm+', ...
-                    'MarkerSize', 10);
-                drawnow
-            end
-            %}
-            % DEBUG_STOP %
         end
         
         % Create new tracks for unassigned detections
@@ -405,15 +390,15 @@ classdef FruitTracker < handle
             
             if self.debug
                 % Plot current image
-                if isempty(self.image_handle)
+                if isempty(self.image_handle) || ~isgraphics(self.image_handle)
                     imshow(self.image, 'Parent', self.debug_axes);
                     set(self.debug_axes, 'YDir', 'normal');
                 else
                     set(self.image_handle, 'CData', self.image);
                 end
                 % Plot current detections in purple
-                plotBboxOnAxes(self.debug_axes, self.detections_handle, ...
-                               self.detections.BoundingBox, 'm');
+                plotBboxesOnAxes(self.debug_axes, self.detections_handle, ...
+                                 self.detections.BoundingBox, 'm');
             end
             
             if isempty(self.tracks), return; end   
@@ -424,8 +409,9 @@ classdef FruitTracker < handle
                 new_bboxes = ...
                     reshape([self.tracks(new_tracks_idx).last_bbox], ...
                             4, [])';
-                plotBboxOnAxes(self.debug_axes, self.new_tracks_handle, ...
-                               new_bboxes, 'r');
+                plotBboxesOnAxes(self.debug_axes, ...
+                                 self.new_tracks_handle, ...
+                                 new_bboxes, 'r');
                 
                 % Plot fruits in cyan
                 valid_tracks_idx = [self.tracks(:).age] >= ...
@@ -433,8 +419,9 @@ classdef FruitTracker < handle
                 valid_bboxes = ...
                     reshape([self.tracks(valid_tracks_idx).last_bbox], ...
                             4, [])';
-                plotBboxOnAxes(self.debug_axes, self.valid_tracks_handle, ...
-                               valid_bboxes, 'c');
+                plotBboxesOnAxes(self.debug_axes, ...
+                                 self.valid_tracks_handle, ...
+                                 valid_bboxes, 'c');
                 
                 % Display total count
                 title(self.debug_axes, num2str(self.num_valid_tracks));
@@ -453,15 +440,4 @@ classdef FruitTracker < handle
         end
     end
     
-end
-
-function plotBboxOnAxes(ax, handle, bboxes, color)
-[X, Y] = bboxToPatchVertices(bboxes);
-if isempty(handle)
-    h = patch(X, Y, 'y', 'Parent', ax, ...
-        'EdgeColor', color, 'FaceAlpha', 0.1);
-    set(h, 'LineWidth', 2);
-else
-    set(handle, 'XData', X, 'YData', Y);
-end
 end

@@ -39,8 +39,8 @@ while bag.hasNext()
         set(ax_handles(1), 'YDir', 'normal');
         
         
-        patch_handle = plotBboxOnAxes(ax_handles(1), patch_handle, ...
-                                      CC.BoundingBox, 'r');
+        patch_handle = plotBboxesOnAxes(ax_handles(1), patch_handle, ...
+                                        CC.BoundingBox, 'r');
         
         % mask
         im_handles(2) = plotImageOnAxes(ax_handles(2), ...
@@ -51,25 +51,5 @@ while bag.hasNext()
     image_count = image_count+1;
     drawnow;
     if use_pause, pause; end
-end
-end
-
-function handle = plotImageOnAxes(ax, handle, image)
-if ~isgraphics(handle)
-    disp('Creating new image handle');
-    handle = imshow(image, 'Parent', ax);
-else
-    set(handle, 'CData', image);
-end
-end
-
-function handle = plotBboxOnAxes(ax, handle, bboxes, color)
-[X, Y] = bboxToPatchVertices(bboxes);
-if ~isgraphics(handle)
-    disp('Creating new patch handle')
-    handle = patch(X, Y, 'y', 'Parent', ax, ...
-                   'EdgeColor', color, 'FaceAlpha', 0.1);
-else
-    set(handle, 'XData', X, 'YData', Y);
 end
 end
