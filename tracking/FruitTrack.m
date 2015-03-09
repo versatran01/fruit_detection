@@ -52,7 +52,7 @@ classdef FruitTrack < handle
         end
         
         % Predict new location of centroid and bounding box
-        function predict(self, prev_corners, optical_flow, block_size, debug_axes)
+        function predict(self, prev_corners, optical_flow, block_size)
             % Predict new centroid based on optical flow?
             % Get the last bonding box and centroid on this track
             last_bbox = self.last_bbox;
@@ -168,10 +168,6 @@ classdef FruitTrack < handle
         % Getter: last_centroid
         function centroid = get.last_centroid(self)
             centroid = self.centroids(end, :);
-        end
-        
-        % Visualize this track, not impelemented
-        function visualize(self)
         end
     end
 
