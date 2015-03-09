@@ -22,7 +22,7 @@ while bag.hasNext()
     [msg, meta] = bag.read();
     if strcmp(meta.topic, '/color/image_raw')
         image = rosImageToMatlabImage(msg);
-        scale = 1;
+        scale = 0.7;
         image = imresize(image, scale);
         
         CC = detectFruit(model, image, scale);
