@@ -6,9 +6,9 @@ if ismac()  % terrible hack :P
 else
     bag = ros.Bag('/home/chao/Workspace/bag/booth/r1s_steadicam_v5_2015-02-18-11-56-32.bag');
 end
-use_pause = true;
+use_pause = false;
 plot_tracker = true;
-plot_detections = false;
+plot_detections = true;
 bag.resetView(bag.topics);
 tracker = FruitTracker(plot_tracker);
 
@@ -25,7 +25,7 @@ while bag.hasNext()
     [msg, meta] = bag.read();
     if strcmp(meta.topic, '/color/image_raw')
         image = rosImageToMatlabImage(msg);
-        scale = 0.7;
+        scale = 0.5;
         image = imresize(image, scale);
         
         CC = detectFruit(model, image, scale);

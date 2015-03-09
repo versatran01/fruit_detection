@@ -38,11 +38,15 @@ points = bsxfun(@minus,points,[2 2]);
 % fit circles by random sampling
 num_points = size(points,1);
 num_iters = min(nchoosek(num_points, 3), 300000);
+
+% either 3% or 6 inliers, whichever is bigger
+inlier_frac = max(6 / num_points, 0.03);
+
 if exist('fitCirclesFast','file') == 3
-    X = fitCirclesFast(points, num_iters, 10*scale, 0.03, 500, 3*scale);
+    X = fitCirclesFast(points, num_iters, 10*scale, inlier_frac, 500, 3*scale*scale);
 else
     warning('fitCirclesFast not found. Did you compile your mex?');
-    X = fitCircles(points, num_iters, 10*scale, 0.03, 500, 3*scale);
+    X = fitCircles(points, num_iters, 10*scale, inlier_frac, 500, 3*scale*scale);
 end
 X = sortrows(X,[4 3]);
 X = flipud(X);

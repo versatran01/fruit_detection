@@ -54,6 +54,9 @@ classdef ConnectedComponents < handle
             if ~islogical(map)
                 error('map must be logical');
             end
+            if nnz(map) ~= size(map,1)
+                error('number of non-zeros must match size of map');
+            end
             % now update the CC structure
             nCC = struct('Connectivity', self.CC.Connectivity,...
                 'ImageSize', self.CC.ImageSize);
@@ -86,8 +89,15 @@ classdef ConnectedComponents < handle
             self.recompute();
         end
         
-        function [fig] = plot(self)
-            fig = figure;
+        function [fig] = plot(self, nfig)
+            if nargin < 2
+                nfig = true;
+            end
+            if nfig
+                fig = figure;
+            else
+                fig = gcf;
+            end
             imshow(self.image);
             hold on;
             bbox = self.BoundingBox();
@@ -117,7 +127,7 @@ classdef ConnectedComponents < handle
         function value = get.Centroid(self)
             value = vertcat(self.props.Centroid);
         end
-        
+                
         function value = get.size(self)
             value = self.CC.NumObjects;
         end
