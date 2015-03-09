@@ -23,36 +23,34 @@ image_count = 1;
 
 while bag.hasNext()
     [msg, meta] = bag.read();
-    if strcmp(meta.topic, '/color/image_raw')
-        image = rosImageToMatlabImage(msg);
-        scale = 0.5;
-        image = imresize(image, scale);
+    if ~strcmp(meta.topic, '/color/image_raw'), continue; end
+    
+    image = rosImageToMatlabImage(msg);
+    scale = 0.5;
+    image = imresize(image, scale);
+    
+    CC = detectFruit(model, image, scale);
+    
+    tracker.track(CC, image);
+    
+    if plot_detections
+        im_handles(1) = plotImageOnAxes(ax_handles(1), ...
+                                        im_handles(1), image);
+        set(ax_handles(1), 'YDir', 'normal');
         
-        CC = detectFruit(model, image, scale);
         
-        tracker.track(CC, image);
+        patch_handle = plotBboxOnAxes(ax_handles(1), patch_handle, ...
+                                      CC.BoundingBox, 'r');
         
-        if plot_detections
-            im_handles(1) = plotImageOnAxes(ax_handles(1), ...
-                                            im_handles(1), image);
-            set(ax_handles(1), 'YDir', 'normal');
-
-            
-            patch_handle = plotBboxOnAxes(ax_handles(1), patch_handle, ...
-                                          CC.BoundingBox, 'r');
-
-            % mask
-            im_handles(2) = plotImageOnAxes(ax_handles(2), ...
-                                            im_handles(2), CC.image);
-            set(ax_handles(2), 'YDir', 'normal');
-        end
-        fprintf('Processed image %i\n', image_count);
-        image_count = image_count+1;
-        drawnow;
-        if use_pause
-            pause;
-        end
+        % mask
+        im_handles(2) = plotImageOnAxes(ax_handles(2), ...
+                                        im_handles(2), CC.image);
+        set(ax_handles(2), 'YDir', 'normal');
     end
+    fprintf('Processed image %i\n', image_count);
+    image_count = image_count+1;
+    drawnow;
+    if use_pause, pause; end
 end
 end
 
