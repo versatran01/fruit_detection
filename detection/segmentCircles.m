@@ -19,7 +19,13 @@ end
 mask_padded = padarray(mask,[2 2]);    % adds 2 pixels on left,right,top,bottom
 
 % find masked pixel edges
-mask_pixels = find(edge(mask_padded));
+%mask_edges = edge(mask_padded);
+
+% approximate edge finder, much faster than built in `edge`
+mask_edges = imfilter(double(mask_padded),[1 1 1; 1 0 1; 1 1 1]) / 8;
+mask_edges = mask_edges >= 5/8 & mask_edges < 1;
+mask_pixels = find(mask_edges);
+
 [y,x] = ind2sub(size(mask_padded), mask_pixels);
 points = [x y];
 if size(points,1) < 20*scale
@@ -32,10 +38,10 @@ points = bsxfun(@minus,points,[2 2]);
 
 % fit circles by random sampling
 if exist('fitCirclesFast','file') == 3
-    X = fitCirclesFast(points, 300000, 10*scale, 0.02, 300, 3*scale);
+    X = fitCirclesFast(points, 300000, 10*scale, 0.015, 500, 3*scale);
 else
     warning('fitCirclesFast not found. Did you compile your mex?');
-    X = fitCircles(points, 300000, 10*scale, 0.02, 300, 3*scale);
+    X = fitCircles(points, 300000, 10*scale, 0.015, 500, 3*scale);
 end
 X = sortrows(X,[4 3]);
 X = flipud(X);

@@ -169,10 +169,6 @@ classdef FruitTrack < handle
         function centroid = get.last_centroid(self)
             centroid = self.centroids(end, :);
         end
-        
-        % Visualize this track, not impelemented
-        function visualize(self)
-        end
     end
 
 end

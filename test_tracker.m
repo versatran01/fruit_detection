@@ -4,16 +4,17 @@ load('models/dt_svc_ensemble.mat');
 bag = ros.Bag('/home/chao/Workspace/bag/booth/r1s_steadicam_v5_2015-02-18-11-56-32.bag');
 % bag = ros.Bag('/home/chao/Workspace/bag/booth/r13n_steadicam_v5_2015-02-18-19-53-00.bag');
 bag.resetView(bag.topics);
-tracker = FruitTracker();
+tracker = FruitTracker(true);
 
 figure(1);
 handles(1) = subplot(1,2,1);
 handles(2) = subplot(1,2,2);
-scale = 0.25;
+
 while bag.hasNext()
     [msg, meta] = bag.read();
     if strcmp(meta.topic, '/color/image_raw')
         image = rosImageToMatlabImage(msg);
+        scale = 0.25;
         image = imresize(image, scale);
         
         CC = detectFruit(model, image, scale);

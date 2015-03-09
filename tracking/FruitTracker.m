@@ -9,6 +9,9 @@ classdef FruitTracker < handle
         % created track
         track_counter
         
+        % An interger that will be incremented when track is called
+        frame_counter
+        
         % A set of unique track ids that are valid tracks
         valid_tracks_id
         
@@ -57,6 +60,7 @@ classdef FruitTracker < handle
         unassigned_detections
         
         % Debug
+        debug
         debug_axes
         debug_image
     end
@@ -68,44 +72,48 @@ classdef FruitTracker < handle
     
     methods
         % Constructor
-        function self = FruitTracker()
-            % disable gating for now
-            
+        function self = FruitTracker(debug)
+            if nargin < 1, debug = false; end
+            self.debug = debug;
             % Fruit tracker parameters
-            self.param.gating_thresh = 0.95;
+            self.param.gating_thresh = 0.97;
             self.param.gating_cost = 100;
             self.param.cost_non_assignment = 10;
             self.param.time_win_size = 4;
             self.param.confidence_thresh = 0.5;
             self.param.age_thresh = 5;
             self.param.visibility_thresh = 0.6;
-            
-            
+                        
             % KLT tracker parameters
             self.param.pyramid_levels = 3;
-            self.param.block_size = [1 1] * 17;
+            self.param.block_size = [1 1] * 21;
             self.param.corners_per_block = 1;
-            self.param.extract_thresh = 0.4;
             self.klt_tracker = ...
                 vision.PointTracker('BlockSize', self.param.block_size, ...
                 'NumPyramidLevels', ...
                 self.param.pyramid_levels);
             
-            self.track_counter = 1;
+            self.track_counter = 0;
+            self.frame_counter = 0;
             self.tracks = FruitTrack.empty;
             
             % Debug stuff
-            figure(2);
-            self.debug_axes = axes();
+            if self.debug
+                figure(2);
+                self.debug_axes = axes();
+            end
         end
         
         % Track detections
         % detections - ConnectedComponents
         function track(self, detections, image)
-            fprintf('========== Starting a new frame. ==========\n');
+            fprintf('========= Frame %g. =========\n', self.frame_counter);
+            self.frame_counter = self.frame_counter + 1;
+            self.image = image;
             self.detections = detections;
             
-            self.calculateOpticalFlow(image);
+            % Main tracking steps
+            self.calculateOpticalFlow();
             self.predictNewLocationsOfTracks();
             self.detectionsToTracksAssignment();
             self.updateAssignedTracks();
@@ -117,25 +125,18 @@ classdef FruitTracker < handle
         end
         
         % Optical flow
-        function calculateOpticalFlow(self, image)
-            self.image = image;
+        function calculateOpticalFlow(self)
             % Make current corners previous before start
             self.prev_corners = self.curr_corners;
-            fprintf('Number of old corners: %g.\n', size(self.prev_corners, 1));
+            fprintf('Number of old corners: %g.\n', ...
+                    size(self.prev_corners, 1));
             
-            [m, n, c] = size(image);
+            [m, n, c] = size(self.image);
             
             % Convert to gray scale image
-            if c == 3, gray = rgb2gray(image); end
+            if c == 3, gray = rgb2gray(self.image); end
             
-            % DEBUG_START %
-            % Plot original image
-            %{
-            imshow(image, 'Parent', self.debug_axes);
-            set(self.debug_axes, 'YDir', 'normal');
-            drawnow
-            %}
-            % DEBUG_STOP %
+
             
             % Calculate max corners
             max_corners = ceil(m * n / self.param.block_size(1)^2 * ...
@@ -176,9 +177,9 @@ classdef FruitTracker < handle
                 %{
                 hold on
                 plot(self.debug_axes, self.prev_corners(:, 1), ...
-                     self.prev_corners(:, 2), 'b.', 'MarkerSize', 10);
+                     self.prev_corners(:, 2), 'b.');
                 plot(self.debug_axes, self.curr_corners(:, 1), ...
-                     self.curr_corners(:, 2), 'r.', 'MarkerSize', 10);
+                     self.curr_corners(:, 2), 'r.');
                 quiver(self.debug_axes, ...
                        self.prev_corners(:, 1), self.prev_corners(:, 2), ...
                        self.flow(:, 1), self.flow(:, 2), 0, ...
@@ -203,7 +204,6 @@ classdef FruitTracker < handle
             
             fprintf('Number of new corners: %g.\n', ...
                     size(self.curr_corners, 1));
-            
             % DEBUG_START %
             %{
             hold on
@@ -348,7 +348,7 @@ classdef FruitTracker < handle
                           
             fprintf('Number of tracks to delete: %g.\n', nnz(lost_idx));
             
-            tracks_to_delete = self.tracks(lost_idx);
+            % tracks_to_delete = self.tracks(lost_idx);
             % Delete lost tracks
             self.tracks = self.tracks(~lost_idx);
             
@@ -403,36 +403,38 @@ classdef FruitTracker < handle
         
         % Draws a colored bounding box for each track on the frame
         function displayTrackingResults(self)
-            % Plot current image
-            imshow(self.image, 'Parent', self.debug_axes);
-            set(self.debug_axes, 'YDir', 'normal');
-            drawnow
             
-            if isempty(self.tracks), return; end
-            
-            
-            % Plot current detections in yellow
-            [X, Y] = bboxToPatchVertices(self.detections.BoundingBox);
-            patch(X, Y, 'y', 'Parent', self.debug_axes, ...
-                  'EdgeColor', 'y', 'FaceAlpha', 0.1);
-            
-            % Plot tracks in red
-            last_bboxes = reshape([self.tracks(:).last_bbox], 4, [])';
-            [X, Y] = bboxToPatchVertices(last_bboxes);
-            patch(X, Y, 'r', 'Parent', self.debug_axes, ...
-                  'EdgeColor', 'r', 'FaceAlpha', 0.1);          
-            
-            % Display total count
-            title(self.debug_axes, num2str(self.num_valid_tracks));
-            
-            %{
-            for i = 1:self.num_tracks
-                track = self.tracks(i);
-                text(track.last_centroid(1), track.last_centroid(2), ...
-                     num2str(track.id), 'Color', 'r', ...
-                     'Parent', self.debug_axes);
+            if self.debug
+                % Plot current image
+                imshow(self.image, 'Parent', self.debug_axes);
+                set(self.debug_axes, 'YDir', 'normal');
+                % Plot current detections in yellow
+                plotBboxOnAxes(self.debug_axes, ...
+                               self.detections.BoundingBox, 'y');
             end
-            %}
+            
+            if isempty(self.tracks), return; end   
+            
+            if self.debug
+                % Plot new tracks in red
+                new_tracks_idx = [self.tracks(:).age] == 1;
+                new_bboxes = ...
+                    reshape([self.tracks(new_tracks_idx).last_bbox], ...
+                            4, [])';
+                plotBboxOnAxes(self.debug_axes, new_bboxes, 'r');
+                
+                % Plot fruits in cyan
+                valid_tracks_idx = [self.tracks(:).age] >= ...
+                                   self.param.age_thresh;
+                valid_bboxes = ...
+                    reshape([self.tracks(valid_tracks_idx).last_bbox], ...
+                            4, [])';
+                plotBboxOnAxes(self.debug_axes, valid_bboxes, 'c');
+                
+                % Display total count
+                title(self.debug_axes, num2str(self.num_valid_tracks));
+                drawnow
+            end
         end
         
         % Getter: num_tracks
@@ -446,4 +448,10 @@ classdef FruitTracker < handle
         end
     end
     
+end
+
+function plotBboxOnAxes(ax, bboxes, color)
+[X, Y] = bboxToPatchVertices(bboxes);
+patch(X, Y, 'y', 'Parent', ax, ...
+      'EdgeColor', color, 'FaceAlpha', 0.1);
 end
