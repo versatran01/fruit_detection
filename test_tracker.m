@@ -1,9 +1,11 @@
 function test_tracker()
 close all
 load('models/cs_svc.mat');
-%bag = ros.Bag('/home/chao/Workspace/bag/booth/r1s_steadicam_v5_2015-02-18-11-56-32.bag');
-bag = ros.Bag('/Volumes/D512/ground/south/r1s_steadicam_v5_2015-02-18-11-56-32.bag');
-% bag = ros.Bag('/home/chao/Workspace/bag/booth/r13n_steadicam_v5_2015-02-18-19-53-00.bag');
+if ismac()  % terrible hack :P
+    bag = ros.Bag('/Volumes/D512/ground/south/r1s_steadicam_v5_2015-02-18-11-56-32.bag');
+else
+    bag = ros.Bag('/home/chao/Workspace/bag/booth/r1s_steadicam_v5_2015-02-18-11-56-32.bag');
+end
 bag.resetView(bag.topics);
 tracker = FruitTracker();
 
@@ -18,7 +20,7 @@ while bag.hasNext()
     [msg, meta] = bag.read();
     if strcmp(meta.topic, '/color/image_raw')
         image = rosImageToMatlabImage(msg);
-        scale = 0.2;
+        scale = 0.7;
         image = imresize(image, scale);
         
         CC = detectFruit(model, image, scale);
