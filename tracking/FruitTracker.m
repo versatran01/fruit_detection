@@ -41,11 +41,8 @@ classdef FruitTracker < handle
         klt_tracker
         
         % A N-by-2 matrix represents the previous corners from the previous
-        % frame.
+        % frame and the current frame
         prev_corners
-        
-        % A N-by-2 matrix represents the corners that are successfully
-        % tracked from previous frame to the current frame
         curr_corners
         
         % A N-by-2 matrix represents the flow vector at the tracked corners
@@ -62,7 +59,10 @@ classdef FruitTracker < handle
         % Debug
         debug
         debug_axes
-        debug_image
+        image_handle
+        new_tracks_handle
+        detections_handle
+        valid_tracks_handle
     end
     
     properties(Dependent)
@@ -222,8 +222,7 @@ classdef FruitTracker < handle
                 track = self.tracks(i);
                 % Predict the current location of the track
                 % Pass in the debug_axes for debugging
-                track.predict(self.prev_corners, self.flow, ...
-                              10, self.debug_axes);
+                track.predict(self.prev_corners, self.flow, 10);
             end
         end
         
@@ -406,10 +405,14 @@ classdef FruitTracker < handle
             
             if self.debug
                 % Plot current image
-                imshow(self.image, 'Parent', self.debug_axes);
-                set(self.debug_axes, 'YDir', 'normal');
+                if isempty(self.image_handle)
+                    imshow(self.image, 'Parent', self.debug_axes);
+                    set(self.debug_axes, 'YDir', 'normal');
+                else
+                    set(self.image_handle, 'CData', self.image);
+                end
                 % Plot current detections in yellow
-                plotBboxOnAxes(self.debug_axes, ...
+                plotBboxOnAxes(self.debug_axes, self.detections_handle, ...
                                self.detections.BoundingBox, 'y');
             end
             
@@ -421,7 +424,8 @@ classdef FruitTracker < handle
                 new_bboxes = ...
                     reshape([self.tracks(new_tracks_idx).last_bbox], ...
                             4, [])';
-                plotBboxOnAxes(self.debug_axes, new_bboxes, 'r');
+                plotBboxOnAxes(self.debug_axes, self.new_tracks_handle, ...
+                               new_bboxes, 'r');
                 
                 % Plot fruits in cyan
                 valid_tracks_idx = [self.tracks(:).age] >= ...
@@ -429,7 +433,8 @@ classdef FruitTracker < handle
                 valid_bboxes = ...
                     reshape([self.tracks(valid_tracks_idx).last_bbox], ...
                             4, [])';
-                plotBboxOnAxes(self.debug_axes, valid_bboxes, 'c');
+                plotBboxOnAxes(self.debug_axes, self.valid_tracks_handle, ...
+                               valid_bboxes, 'c');
                 
                 % Display total count
                 title(self.debug_axes, num2str(self.num_valid_tracks));
@@ -450,8 +455,12 @@ classdef FruitTracker < handle
     
 end
 
-function plotBboxOnAxes(ax, bboxes, color)
+function plotBboxOnAxes(ax, handle, bboxes, color)
 [X, Y] = bboxToPatchVertices(bboxes);
-patch(X, Y, 'y', 'Parent', ax, ...
-      'EdgeColor', color, 'FaceAlpha', 0.1);
+if isempty(handle)
+    patch(X, Y, 'y', 'Parent', ax, ...
+        'EdgeColor', color, 'FaceAlpha', 0.1);
+else
+    set(handle, 'XData', X, 'YData', Y);
+end
 end
