@@ -8,61 +8,70 @@ else
 end
 use_pause = true;
 plot_tracker = true;
-plot_detections = false;
+plot_detections = true;
 bag.resetView(bag.topics);
 tracker = FruitTracker(plot_tracker);
 
 if plot_detections
     figure(1);
-    handles(1) = subplot(1,2,1);
-    handles(2) = subplot(1,2,2);
-    imhandles = {[],[]};
-    patchhandle = [];
+    ax_handles(1) = subplot(1,2,1);
+    ax_handles(2) = subplot(1,2,2);
+    im_handles = gobjects(2, 1);
+    patch_handle = gobjects(1);
 end
-count = 1;
+image_count = 1;
 
 while bag.hasNext()
     [msg, meta] = bag.read();
     if strcmp(meta.topic, '/color/image_raw')
         image = rosImageToMatlabImage(msg);
-        scale = 0.7;
+        scale = 0.5;
         image = imresize(image, scale);
         
         CC = detectFruit(model, image, scale);
-        [X, Y] = bboxToPatchVertices(CC.BoundingBox);
         
         tracker.track(CC, image);
         
         if plot_detections
-            if isempty(imhandles{1})
-                imhandles{1} = imshow(image, 'Parent', handles(1));
-            else
-                set(imhandles{1}, 'cdata', image);
-            end
-            set(handles(1), 'YDir', 'normal');
-            hold on;
+            im_handles(1) = plotImageOnAxes(ax_handles(1), ...
+                                            im_handles(1), image);
+            set(ax_handles(1), 'YDir', 'normal');
 
-            if isempty(patchhandle)
-                patchhandle = patch(X, Y, 'r', 'Parent', handles(1), ...
-                      'EdgeColor', 'r', 'FaceAlpha', '0.1');
-            else
-                set(patchhandle,'xdata',X,'ydata',Y);
-            end
+            
+            patch_handle = plotBboxOnAxes(ax_handles(1), patch_handle, ...
+                                          CC.BoundingBox, 'r');
 
             % mask
-            if isempty(imhandles{2})
-                imhandles{2} = imshow(CC.image, 'Parent', handles(2));
-            else
-                set(imhandles{2}, 'cdata', CC.image);
-            end
-            set(handles(2), 'YDir', 'normal');
+            im_handles(2) = plotImageOnAxes(ax_handles(2), ...
+                                            im_handles(2), CC.image);
+            set(ax_handles(2), 'YDir', 'normal');
         end
-        fprintf('Processed image %i\n', count);
-        count = count+1;
+        fprintf('Processed image %i\n', image_count);
+        image_count = image_count+1;
         drawnow;
         if use_pause
             pause;
         end
     end
+end
+end
+
+function handle = plotImageOnAxes(ax, handle, image)
+if ~isgraphics(handle)
+    disp('Creating new image handle');
+    handle = imshow(image, 'Parent', ax);
+else
+    set(handle, 'CData', image);
+end
+end
+
+function handle = plotBboxOnAxes(ax, handle, bboxes, color)
+[X, Y] = bboxToPatchVertices(bboxes);
+if ~isgraphics(handle)
+    disp('Creating new patch handle')
+    handle = patch(X, Y, 'y', 'Parent', ax, ...
+                   'EdgeColor', color, 'FaceAlpha', 0.1);
+else
+    set(handle, 'XData', X, 'YData', Y);
 end
 end

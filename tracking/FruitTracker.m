@@ -411,9 +411,9 @@ classdef FruitTracker < handle
                 else
                     set(self.image_handle, 'CData', self.image);
                 end
-                % Plot current detections in yellow
+                % Plot current detections in purple
                 plotBboxOnAxes(self.debug_axes, self.detections_handle, ...
-                               self.detections.BoundingBox, [1 0 1]);
+                               self.detections.BoundingBox, 'm');
             end
             
             if isempty(self.tracks), return; end   
