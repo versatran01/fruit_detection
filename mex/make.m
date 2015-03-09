@@ -1,2 +1,5 @@
+setenv('LD_LIBRARY_PATH', '/usr/lib/x86_64-linux-gnu')
 mex CFLAGS="\$CFLAGS -Wall -Werror -O3 -std=c99" -largeArrayDims fastig.cpp
-
+mex CFLAGS="\$CFLAGS -Wall -Werror -O3 -std=c99" ...
+    CXXFLAGS="\$CXXFLAGS -std=c++11 -I/usr/local/include/eigen3 -fPIC" ...
+    -largeArrayDims fitCirclesFast.cpp

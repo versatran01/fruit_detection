@@ -1,9 +1,10 @@
 function test_tracker()
 close all
-load('models/cs_svc.mat');
+load('models/dt_svc_ensemble.mat');
 bag = ros.Bag('/home/chao/Workspace/bag/booth/r1s_steadicam_v5_2015-02-18-11-56-32.bag');
+% bag = ros.Bag('/home/chao/Workspace/bag/booth/r13n_steadicam_v5_2015-02-18-19-53-00.bag');
 bag.resetView(bag.topics);
-tracker = FruitTracker();
+tracker = FruitTracker(true);
 
 figure(1);
 handles(1) = subplot(1,2,1);
@@ -13,9 +14,10 @@ while bag.hasNext()
     [msg, meta] = bag.read();
     if strcmp(meta.topic, '/color/image_raw')
         image = rosImageToMatlabImage(msg);
-        image = imresize(image, 0.4);
+        scale = 0.2;
+        image = imresize(image, scale);
         
-        [mask, CC] = detectFruit(model, image);
+        CC = detectFruit(model, image, scale);
         [X, Y] = bboxToPatchVertices(CC.BoundingBox);
         
         tracker.track(CC, image);
@@ -27,7 +29,7 @@ while bag.hasNext()
         hold on;
         
         % mask
-        imshow(mask, 'Parent', handles(2));
+        imshow(CC.image, 'Parent', handles(2));
         set(handles(2), 'YDir', 'normal');
         drawnow;
     end

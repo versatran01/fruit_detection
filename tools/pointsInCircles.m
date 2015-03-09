@@ -6,16 +6,6 @@ N = size(points,1);
 if size(circles,2) ~= 3 || size(points,2) ~= 2
     error('Check the dimensions of your inputs');
 end
-inside = false(M,N);
-for i=1:M
-    center = circles(i,1:2);
-    radius = circles(i,3);
-    
-    dist = bsxfun(@minus,center,points);
-    dist = sqrt( sum(dist.^2, 2) );
-    
-    in = dist < radius;
-    inside(i,:) = in;
+dist = pdist2(circles(:,1:2), points);
+inside = bsxfun(@le, dist, circles(:,3));
 end
-end
-
