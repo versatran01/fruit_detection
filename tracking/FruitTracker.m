@@ -10,13 +10,13 @@ classdef FruitTracker < handle
         % created track
         track_counter
         
-        % Number of fruit in each bounding box
+        % Number of fruits in each bounding box
         fruit_counts
         
         % An interger that will be incremented when track is called
         frame_counter
         
-        % A set of unique track ids that are valid tracks
+        % Total number of fruits
         total_fruit_counts
         
         % param.gating_thresh - A threshold to reject a candidate match
