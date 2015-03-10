@@ -4,10 +4,10 @@ load('models/cs_svc.mat');
 if ismac()  % terrible hack :P
     bag = ros.Bag('/Volumes/D512/ground/rectified/r1s_2015-03-09-15-33-01.bag');
 else
-    bag = ros.Bag('/home/chao/Workspace/bag/booth/r1s_steadicam_v5_2015-02-18-11-56-32.bag');
+    bag = ros.Bag('/home/chao/Workspace/bag/booth/r1s_steadicam_v5.bag');
 end
 topic = '/color/image_rect_color';
-use_pause = true;
+use_pause = false;
 plot_tracker = true;
 plot_detections = false;
 bag.resetView(bag.topics);
@@ -35,7 +35,7 @@ while bag.hasNext()
     end
     
     image = rosImageToMatlabImage(msg);
-    scale = 0.7;
+    scale = 0.4;
     image = imresize(image, scale);
     image = flipud(image);
     

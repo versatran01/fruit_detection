@@ -9,6 +9,9 @@ classdef FruitTrack < handle
         % current centroid at the last row
         centroids
         
+        % The number of fruit in this track
+        fruit_count
+        
         % A N-by-4 matrix to represent the bounding boxes of the object 
         % with the current box at the last row
         bboxes
@@ -59,6 +62,7 @@ classdef FruitTrack < handle
             self.predicted_bbox = bbox;
             self.prev_centroid = centroid;
             self.prev_bbox = bbox;
+            self.fruit_count = 1;
         end
         
         % Predict new location of centroid and bounding box
@@ -90,7 +94,7 @@ classdef FruitTrack < handle
         % If stabilize is bigger than 0, this will take the average of up
         % to that number of frames with the new one and append it to the
         % track
-        function updateAssigned(self, centroid, bbox, stabilize)
+        function updateAssigned(self, centroid, bbox, count, stabilize)
             if nargin < 4, stabilize = 0; end
             
             if stabilize
@@ -104,6 +108,8 @@ classdef FruitTrack < handle
             
             % Update age
             self.incAge();
+            % Update count in this track
+            self.fruit_count = count;
             % Update visibility if this is an assigned track
             self.incVisibleCount();
             self.scores(end + 1, :) = 1; % detection score is 1
