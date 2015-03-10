@@ -30,11 +30,13 @@ area = CC.Area();
 large = area > ceil(3*areaScale);
 CC.discard(~large);
 
+%CC.sort('BoundingArea', 'descend');
+
 % calculate distance between centroids
 centroids = CC.Centroid();
 dist = pdist2(centroids, centroids, 'euclidean');
 
-nearby = dist < 30*scale;  % take the closest that also satisfy the threshold
+nearby = dist < 20*scale;  % take the closest that also satisfy the threshold
 nearby = triu(nearby,1);    
 smallest = smallestDistance(dist);
 nearby = nearby & smallest;
