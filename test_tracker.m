@@ -2,7 +2,7 @@ function test_tracker()
 close all
 load('models/cs_svc.mat');
 if ismac()  % terrible hack :P
-    bag = ros.Bag('/Volumes/D512/ground/rectified/r1s_2015-03-09-15-33-01.bag');
+    bag = ros.Bag('/Volumes/D512/ground/rectified/r1s_2015-03-09-15-33-01.bag'); %r13n_2015-03-10-17-44-36.bag');
 else
     bag = ros.Bag('/home/chao/Workspace/bag/booth/r1s_steadicam_v5.bag');
 end
@@ -35,13 +35,13 @@ while bag.hasNext()
     end
     
     image = rosImageToMatlabImage(msg);
-    scale = 0.4;
+    scale = 0.5;
     image = imresize(image, scale);
     image = flipud(image);
     
-    CC = detectFruit(model, image, scale);
+    [CC,counts,~] = detectFruit(model, image, scale);
     
-    tracker.track(CC, image);
+    tracker.track(CC, image,counts);
     % get tracks
     prevCentroids = reshape([tracker.tracks.prev_centroid], 2, [])';
     curCentroids = reshape([tracker.tracks.last_centroid], 2, [])';
