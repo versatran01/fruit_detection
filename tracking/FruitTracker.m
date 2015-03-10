@@ -67,6 +67,7 @@ classdef FruitTracker < handle
         valid_tracks_handle
         predicted_tracks_handle
         predictions_handle
+        flow_handle
     end
     
     properties(Dependent)
@@ -161,10 +162,10 @@ classdef FruitTracker < handle
                         estimateFundamentalMatrix(...
                         prev_points, curr_points, ...
                         'Method', 'MSAC', ...
-                        'NumTrials', 200, ...
-                        'Confidence', 95, ...
-                        'OutputClass', 'single', ...
-                        'DistanceType', 'Algebraic');
+                        'NumTrials', 500, ...
+                        'Confidence', 99, ...
+                        'OutputClass', 'single');% ...
+                        %'DistanceType', 'Algebraic');
                     prev_points = prev_points(inlier_ind, :);
                     curr_points = curr_points(inlier_ind, :);
                     self.flow = curr_points - prev_points;
@@ -175,32 +176,36 @@ classdef FruitTracker < handle
                 else
                     % If something's wrong with optical flow, just use the
                     % previous average flow as the current flow
-                    self.flow = mean(self.flow, 1);
+                    self.flow = mean(self.flow, 1); 
                 end
                 
                 % DEBUG_START %
                 fprintf('Number of flow: %g\n', size(self.flow, 1));
                 % Plot optical flow
-                %{
-                hold on
-                plot(self.debug_axes, self.prev_corners(:, 1), ...
-                     self.prev_corners(:, 2), 'b.');
-                plot(self.debug_axes, self.curr_corners(:, 1), ...
-                     self.curr_corners(:, 2), 'r.');
-                quiver(self.debug_axes, ...
-                       self.prev_corners(:, 1), self.prev_corners(:, 2), ...
-                       self.flow(:, 1), self.flow(:, 2), 0, ...
-                       'm');
-                drawnow;
-                %}
-                % DEBUG_STOP %
+                
+                if true && ~isempty(self.prev_corners)
+                    self.flow_handle = ...
+                        plotQuiverOnAxes(self.debug_axes, ...
+                                        self.flow_handle, ...
+                                        self.prev_corners, self.curr_corners, ...
+                                        'm');
+                end
             end
             
             % Extract new features at every frame
-            new_corners = detectFASTFeatures(gray );
-            new_corners = new_corners.selectStrongest(max_corners);
+            %new_corners = detectFASTFeatures(gray );
+            %new_corners = detectMinEigenFeatures(gray);
+            
+            new_corners = goodfeaturestotrack(gray, max_corners, ...
+                0.01, 10);
+            new_corners = new_corners';
+            
+            %new_corners = new_corners.selectStrongest(max_corners);
             % Assign new corners to tracked
-            self.curr_corners = new_corners.Location;
+            %self.curr_corners = new_corners.Location;
+            
+            self.curr_corners = new_corners;
+            
             % Reinitialize klt_tracker
             self.klt_tracker.release();
             self.klt_tracker = ...
@@ -420,6 +425,7 @@ classdef FruitTracker < handle
                                         prev_centroids, last_centroids, ...
                                         'b');
                 end
+           
                 
                 % Plot new tracks bounding box in red
                 young_bboxes = reshape([self.young_tracks.last_bbox], ...

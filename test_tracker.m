@@ -29,27 +29,36 @@ detectionPlotter = DetectionPlotter();
 while bag.hasNext()
     [msg, meta] = bag.read();
     if ~strcmp(meta.topic, topic), continue; end
+    image_count = image_count+1;
+    if image_count < 50
+        continue;
+    end
     
     image = rosImageToMatlabImage(msg);
-    scale = 0.5;
+    scale = 0.7;
     image = imresize(image, scale);
     image = flipud(image);
     
     CC = detectFruit(model, image, scale);
     
+    tracker.track(CC, image);
+    % get tracks
+    prevCentroids = reshape([tracker.tracks.prev_centroid], 2, [])';
+    curCentroids = reshape([tracker.tracks.last_centroid], 2, [])';
+    
     % plot detections side by side
     if ~isempty(CCprev)
-        detectionPlotter.setFrame(imagePrev,CCprev,image,CC);
+%         detectionPlotter.setFrame(imagePrev,CCprev,image,CC,...
+%             prevCentroids,...
+%             curCentroids);
+%     end
     end
     CCprev = CC;
     imagePrev = image;
     
-    tracker.track(CC, image);
-    
     if plot_detections
         im_handles(1) = plotImageOnAxes(ax_handles(1), ...
                                         im_handles(1), image);
-        %set(ax_handles(1), 'YDir', 'normal');
         
         
         patch_handle = plotBboxesOnAxes(ax_handles(1), patch_handle, ...
@@ -58,10 +67,8 @@ while bag.hasNext()
         % mask
         im_handles(2) = plotImageOnAxes(ax_handles(2), ...
                                         im_handles(2), CC.image);
-        %set(ax_handles(2), 'YDir', 'normal');
     end
     fprintf('Processed image %i\n', image_count);
-    image_count = image_count+1;
     drawnow;
     if use_pause, pause; end
 end
