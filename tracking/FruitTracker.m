@@ -2,6 +2,7 @@ classdef FruitTracker < handle
     
     properties
         tracks  % Collection of tracks
+        deleted_tracks  % Colelction of deleted tracks
         
         image  % Current image
         
@@ -9,15 +10,14 @@ classdef FruitTracker < handle
         % created track
         track_counter
         
+        % Number of fruit in each bounding box
+        fruit_counts
+        
         % An interger that will be incremented when track is called
         frame_counter
         
         % A set of unique track ids that are valid tracks
-        valid_tracks_id
-        
-        % An integer that represents the total number of valid tracks, this
-        % will be the same number as the entire fruit count
-        num_valid_tracks
+        total_fruit_counts
         
         % param.gating_thresh - A threshold to reject a candidate match
         % between a detection and a track
@@ -32,9 +32,9 @@ classdef FruitTracker < handle
         % param.confidence_thresh
         
         % param.pyramid_levels - Number of pyramid levels in klt tracker
-        % param.block_size - TODO
-        % param.corners_per_block - TODO
-        % param.extract_thresh - TODO
+        % param.block_size - Block size of klt tracker
+        % param.corners_per_block - A parameter for calculating max corners
+        % to extract
         param
         
         % Point tracker using Kanade-Lucas-Tomasi algorithm
@@ -75,7 +75,9 @@ classdef FruitTracker < handle
         function self = FruitTracker(debug_status)
             if nargin < 1, debug_status = false; end
             self.debug.status = debug_status;
+            
             % Fruit tracker parameters
+            % TODO: improve these parameters
             self.param.gating_thresh = 0.97;
             self.param.gating_cost = 100;
             self.param.cost_non_assignment = 10;
@@ -85,16 +87,17 @@ classdef FruitTracker < handle
             self.param.visibility_thresh = 0.6;
                         
             % KLT tracker parameters
-            self.param.pyramid_levels = 3;
-            self.param.block_size = [1 1] * 21;
-            self.param.corners_per_block = 0.6;
+            self.param.pyramid_levels = 4;
+            self.param.block_size = [1 1] * 23;
+            self.param.corners_per_block = 1.2;
             self.klt_tracker = ...
                 vision.PointTracker('BlockSize', self.param.block_size, ...
-                'NumPyramidLevels', ...
-                self.param.pyramid_levels);
+                                    'NumPyramidLevels', ...
+                                    self.param.pyramid_levels);
             
             self.track_counter = 0;
             self.frame_counter = 0;
+            self.total_fruit_counts = 0;
             self.tracks = FruitTrack.empty;
             
             % Debug stuff
@@ -119,11 +122,12 @@ classdef FruitTracker < handle
         
         % Track detections
         % detections - ConnectedComponents
-        function track(self, detections, image)
+        function track(self, detections, image, counts)
             fprintf('========= Frame %g. =========\n', self.frame_counter);
             self.frame_counter = self.frame_counter + 1;
             self.image = image;
             self.detections = detections;
+            self.fruit_counts = counts;
             
             % Main tracking steps
             self.calculateOpticalFlow();
@@ -133,7 +137,7 @@ classdef FruitTracker < handle
             self.updateUnassignedTracks();
             self.deleteLostTracks();
             self.createNewTracks();
-            self.updateValidTracks();
+            self.updateTotalFruitCounts();
             self.displayTrackingResults(true);
         end
         
@@ -149,8 +153,6 @@ classdef FruitTracker < handle
             % Convert to gray scale image
             if c == 3, gray = rgb2gray(self.image); end
             
-
-            
             % Calculate max corners
             max_corners = ceil(m * n / self.param.block_size(1)^2 * ...
                                self.param.corners_per_block);
@@ -165,24 +167,28 @@ classdef FruitTracker < handle
                 self.debug.num_matches(end + 1) = nnz(match_ind);
                 
                 % Fundamental matrix outlier rejection
-                [~, inlier_ind, status] = estimateFundamentalMatrix(...
-                    prev_points, curr_points, ...
-                    'Method', 'MSAC', ...
-                    'NumTrials', 500, ...
-                    'Confidence', 99.5, ...
-                    'DistanceThreshold', 0.25, ...
-                    'OutputClass', 'single', ...
-                    'DistanceType', 'Sampson');
-                prev_points = prev_points(inlier_ind, :);
-                curr_points = curr_points(inlier_ind, :);
-                self.flow = curr_points - prev_points;
-                % Update prev corners so that its size matches that of
-                % flow
-                self.prev_corners = prev_points;
-                self.curr_corners = curr_points;
+                if nnz(match_ind) > 8 * 2.5
+                    [~, inlier_ind, status] = estimateFundamentalMatrix(...
+                        prev_points, curr_points, ...
+                        'Method', 'MSAC', ...
+                        'NumTrials', 500, ...
+                        'Confidence', 99.5, ...
+                        'DistanceThreshold', 0.64, ...
+                        'OutputClass', 'single', ...
+                        'DistanceType', 'Sampson');
+                    prev_points = prev_points(inlier_ind, :);
+                    curr_points = curr_points(inlier_ind, :);
+                    self.flow = curr_points - prev_points;
+                    % Update prev corners so that its size matches that of
+                    % flow
+                    self.prev_corners = prev_points;
+                    self.curr_corners = curr_points;
+                else 
+                    self.flow = mean(self.flow, 1);
+                    inlier_ind = match_ind;
+                end
                 
                 self.debug.num_inliers(end + 1) = nnz(inlier_ind);
-
                 
                 % DEBUG_START %
                 fprintf('Number of flow: %g\n', size(self.flow, 1));
@@ -198,7 +204,8 @@ classdef FruitTracker < handle
             end
             
             % Extract new features at every frame
-            new_corners = detectFASTFeatures(gray);
+            new_corners = detectMinEigenFeatures(gray, ...
+                                                 'MinQuality', 0.1);
             new_corners = new_corners.selectStrongest(max_corners);
             % Assign new corners to tracked
             self.curr_corners = new_corners.Location;
@@ -206,8 +213,8 @@ classdef FruitTracker < handle
             self.klt_tracker.release();
             self.klt_tracker = ...
                 vision.PointTracker('BlockSize', self.param.block_size, ...
-                'NumPyramidLevels', ...
-                self.param.pyramid_levels);
+                                    'NumPyramidLevels', ...
+                                    self.param.pyramid_levels);
             self.klt_tracker.initialize(self.curr_corners, gray);
             
             fprintf('Number of new corners: %g.\n', ...
@@ -279,10 +286,11 @@ classdef FruitTracker < handle
                 track = self.tracks(track_idx);
                 centroid = self.detections.Centroid(detection_idx, :);
                 bbox = self.detections.BoundingBox(detection_idx, :);
+                fruit_count = self.fruit_counts(detection_idx);
                 
                 % Stabilize the bounding box by taking the average of the
                 % size [?], don't stablize for now
-                track.updateAssigned(centroid, bbox);
+                track.updateAssigned(centroid, bbox, fruit_count, 0);
                 
                 % Adjust track confidence score based on the maximum
                 % detection score in the past few frames
@@ -345,7 +353,8 @@ classdef FruitTracker < handle
                           
             fprintf('Number of tracks to delete: %g.\n', nnz(lost_idx));
             
-            % tracks_to_delete = self.tracks(lost_idx);
+            % Collect deleted tracks
+            self.deleted_tracks = self.tracks(lost_idx);
             % Delete lost tracks
             self.tracks = self.tracks(~lost_idx);
         end
@@ -375,12 +384,13 @@ classdef FruitTracker < handle
         end
         
         % Update total valid tracks id
-        function updateValidTracks(self)
-            ages = [self.tracks.age]';
-            new_tracks_id = [self.tracks(ages > self.param.age_thresh).id];
-            self.valid_tracks_id = ...
-                union(self.valid_tracks_id, new_tracks_id);
-            self.num_valid_tracks = numel(self.valid_tracks_id);
+        function updateTotalFruitCounts(self)
+            if isempty(self.deleted_tracks), return; end;
+            ages = [self.deleted_tracks.age]';
+            deleted_tracks_counts = ...
+                [self.deleted_tracks(ages > self.param.age_thresh).fruit_count];
+            self.total_fruit_counts = self.total_fruit_counts + ...
+                                      sum(deleted_tracks_counts);
         end
         
         % Draws a colored bounding box for each track on the frame
@@ -442,7 +452,7 @@ classdef FruitTracker < handle
                 title_str = ...
                     sprintf('frame: %g, total count: %g, detections: %g', ...
                             self.frame_counter, ...
-                            self.num_valid_tracks, ...
+                            self.total_fruit_counts, ...
                             size(self.detections.Centroid, 1));
                 title(self.debug.axes, title_str);
                 drawnow
