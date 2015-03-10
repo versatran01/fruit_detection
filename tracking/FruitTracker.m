@@ -198,7 +198,7 @@ classdef FruitTracker < handle
             end
             
             % Extract new features at every frame
-            new_corners = detectFASTFeatures(gray );
+            new_corners = detectFASTFeatures(gray);
             new_corners = new_corners.selectStrongest(max_corners);
             % Assign new corners to tracked
             self.curr_corners = new_corners.Location;

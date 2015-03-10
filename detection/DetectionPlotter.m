@@ -3,10 +3,12 @@ classdef DetectionPlotter < handle
     % their detections.
     
     properties(Access=private)
+        width
         % gui elements
         hFig
         hImages
         hBoxes
+        hLines
     end
     
     methods(Access=private)
@@ -23,7 +25,7 @@ classdef DetectionPlotter < handle
             end
         end
         
-        function updatePlots(self, imagePrev, ccPrev,...
+        function updatePatches(self, imagePrev, ccPrev,...
                 imageCur, ccCur)
             boxPrev = ccPrev.BoundingBox();
             boxCur = ccCur.BoundingBox();
@@ -49,6 +51,16 @@ classdef DetectionPlotter < handle
                 self.plotBoundingBoxes(boxCur, self.hBoxes(2));
             end
         end
+        
+        function updateLines(self, centroidsPrev, centroidsCur)
+            if ~isempty(self.hLines)
+                delete(self.hLines);
+            end
+            X = [centroidsPrev(:,1) centroidsCur(:,1)+self.width];
+            Y = [centroidsPrev(:,2) centroidsCur(:,2)];
+            self.hLines = plot(X',Y');
+            set(self.hLines, 'LineWidth', 1);
+        end
     end
     
     methods
@@ -56,8 +68,12 @@ classdef DetectionPlotter < handle
         end
         
         function setFrame(self, imagePrev, ccPrev,...
-                imageCur, ccCur)
-            self.updatePlots(imagePrev, ccPrev, imageCur, ccCur);
+                imageCur, ccCur, centroidsPrev, centroidsCur)
+            self.width = size(imagePrev,2);
+            self.updatePatches(imagePrev, ccPrev, imageCur, ccCur);
+            if nargin >= 7
+                self.updateLines(centroidsPrev, centroidsCur);
+            end
         end
     end
 end
