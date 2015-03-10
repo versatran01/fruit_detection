@@ -53,6 +53,7 @@ classdef DetectionPlotter < handle
         end
         
         function updateLines(self, centroidsPrev, centroidsCur)
+            set(0,'CurrentFigure',self.hFig);
             if ~isempty(self.hLines)
                 delete(self.hLines);
             end
