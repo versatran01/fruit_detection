@@ -6,7 +6,7 @@ if ismac()  % terrible hack :P
 else
     bag = ros.Bag('/home/chao/Workspace/bag/booth/r1s_steadicam_v5.bag');
 end
-topic = '/color/image_rect_color';
+topic_name = '/color/image_rect_color';
 use_pause = false;
 plot_tracker = true;
 plot_detections = false;
@@ -28,20 +28,17 @@ detectionPlotter = DetectionPlotter();
 
 while bag.hasNext()
     [msg, meta] = bag.read();
-    if ~strcmp(meta.topic, topic), continue; end
-    image_count = image_count+1;
-    if image_count < 50
-        continue;
-    end
+    if ~strcmp(meta.topic, topic_name), continue; end
+    image_count = image_count + 1;
     
     image = rosImageToMatlabImage(msg);
-    scale = 0.4;
+    scale = 0.5;
     image = imresize(image, scale);
     image = flipud(image);
     
-    CC = detectFruit(model, image, scale);
+    [CC, counts] = detectFruit(model, image, scale);
     
-    tracker.track(CC, image);
+    tracker.track(CC, image, counts);
     % get tracks
     prevCentroids = reshape([tracker.tracks.prev_centroid], 2, [])';
     curCentroids = reshape([tracker.tracks.last_centroid], 2, [])';
