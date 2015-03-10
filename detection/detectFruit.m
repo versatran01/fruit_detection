@@ -30,6 +30,7 @@ area = CC.Area();
 large = area > ceil(3*areaScale);
 CC.discard(~large);
 
+%CC.sort('BoundingArea', 'descend');
 
 % calculate distance between centroids
 centroids = CC.Centroid();
@@ -76,5 +77,4 @@ end
 
 % perform segmentation of blobs...
 [CC,counts,circles] = segmentComponents(CC, image, scale);
-
 end

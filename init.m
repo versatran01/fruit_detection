@@ -9,7 +9,7 @@ DATASET_PATH = getenv('BOOTH_DATASET_PATH');
 % path for generated observation dataset
 OBSERVATION_PATH = getenv('BOOTH_OBSERVATION_PATH');
 OBSERVATION_NAME = 'observations_28-Feb-2015.mat';
-LOAD_OBSERVATIONS = true;
+LOAD_OBSERVATIONS = false;
 NUM_OBSERVATIONS = [];
 
 addpath('./descriptors');
@@ -24,9 +24,10 @@ addpath('./tracking');
 addpath('./train');
 addpath('./tune');
 addpath('./vendor/fkmeans');
-addpath('./vendor/liblinear/matlab')
+addpath('./vendor/liblinear/matlab');
 addpath('./vendor/libsvm/matlab');
-addpath('./vendor/vlfeat')
+addpath('./vendor/vlfeat');
+addpath('./vendor/munkres');
 if ~ismac()
     addpath('./vendor/matlab_rosbag-linux64');
 else
@@ -40,9 +41,6 @@ if LOAD_OBSERVATIONS
           NUM_OBSERVATIONS, 0.8);
     end
 end
-
-% load descriptors
-load('descriptors/kmeans.mat');
 
 % Re-seed random
 rng('shuffle', 'twister');

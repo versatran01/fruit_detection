@@ -4,11 +4,13 @@ classdef DetectionPlotter < handle
     
     properties(Access=private)
         width
+        text
         % gui elements
         hFig
         hImages
         hBoxes
         hLines
+        hText
     end
     
     methods(Access=private)
@@ -53,6 +55,7 @@ classdef DetectionPlotter < handle
         end
         
         function updateLines(self, centroidsPrev, centroidsCur)
+            set(0,'CurrentFigure',self.hFig);
             if ~isempty(self.hLines)
                 delete(self.hLines);
             end
@@ -61,10 +64,30 @@ classdef DetectionPlotter < handle
             self.hLines = plot(X',Y');
             set(self.hLines, 'LineWidth', 1);
         end
+        
+        function updateText(self, ccPrev)
+            set(0,'CurrentFigure',self.hFig);
+            bbox = ccPrev.BoundingBox();
+            br = bsxfun(@plus, bbox(:,1:2), bbox(:,3:4));
+            if ~isempty(self.hText)
+                delete(self.hText);
+                self.hText = [];
+            end
+            % todo: remove loop
+            for i=1:ccPrev.size()
+                self.hText(i) = text(br(i,1),br(i,2),num2str(i));
+                set(self.hText(i),'Color',[0 1 1]);
+            end
+        end
     end
     
     methods
-        function self = DetectionPlotter()
+        function self = DetectionPlotter(text)
+            if nargin > 0
+                self.text = text;
+            else
+                self.text = false;
+            end
         end
         
         function setFrame(self, imagePrev, ccPrev,...
@@ -73,6 +96,9 @@ classdef DetectionPlotter < handle
             self.updatePatches(imagePrev, ccPrev, imageCur, ccCur);
             if nargin >= 7
                 self.updateLines(centroidsPrev, centroidsCur);
+            end
+            if self.text
+                self.updateText(ccPrev);
             end
         end
     end
