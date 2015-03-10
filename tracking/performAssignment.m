@@ -1,11 +1,26 @@
-function [ matches ] = performAssignment( cost )
+function [ assignment, unassignedTracks, unassignedDetections ] = ...
+    performAssignment( cost, CC, beta )
 %PERFORMASSIGNMENT Given MxN `cost` matrix, find the optimal assignment of
 % rows to columns.
+% `CC` are the detections in the new image.
 %
-% Matches is a Kx2 vector, where K = min(M,N). The values in the first
-% column correspond to rows while the second column correspond to columns.
+% M is the dimension of the tracks.
+% N is the dimension of the fruits.
+%
 
-assignment = munkres(cost); % hungarian assignment method
-idx = assignment ~= 0;
-matches = [find(idx); assignment(idx)]';
+% todo: try to scale beta using CC.Centroids
+
+if nargin < 3
+    beta = 0.4;
+end
+
+% find min/max cost per-fruit
+cmin = min(cost,[],1);
+cmax = max(cost,[],1);
+
+c0 = cmin + (cmax - cmin)*beta;
+
+[assignment, unassignedTracks, unassignedDetections] ...
+    = assignDetectionsToTracks( cost, c0 );
+
 end
