@@ -2,6 +2,7 @@ classdef FruitTracker < handle
     
     properties
         tracks  % Collection of tracks
+        deleted_tracks  % Colelction of deleted tracks
         
         image  % Current image
         
@@ -9,15 +10,14 @@ classdef FruitTracker < handle
         % created track
         track_counter
         
+        % Number of fruits in each bounding box
+        fruit_counts
+        
         % An interger that will be incremented when track is called
         frame_counter
         
-        % A set of unique track ids that are valid tracks
-        valid_tracks_id
-        
-        % An integer that represents the total number of valid tracks, this
-        % will be the same number as the entire fruit count
-        num_valid_tracks
+        % Total number of fruits
+        total_fruit_counts
         
         % param.gating_thresh - A threshold to reject a candidate match
         % between a detection and a track
@@ -32,9 +32,9 @@ classdef FruitTracker < handle
         % param.confidence_thresh
         
         % param.pyramid_levels - Number of pyramid levels in klt tracker
-        % param.block_size - TODO
-        % param.corners_per_block - TODO
-        % param.extract_thresh - TODO
+        % param.block_size - Block size of klt tracker
+        % param.corners_per_block - A parameter for calculating max corners
+        % to extract
         param
         
         % Point tracker using Kanade-Lucas-Tomasi algorithm
@@ -58,16 +58,8 @@ classdef FruitTracker < handle
         
         % Debug
         debug
-        debug_axes
         
-        image_handle
-        detections_handle
-        new_tracks_handle
-        young_tracks_handle
-        valid_tracks_handle
-        predicted_tracks_handle
-        predictions_handle
-        flow_handle
+        handles
     end
     
     properties(Dependent)
@@ -80,10 +72,12 @@ classdef FruitTracker < handle
     
     methods
         % Constructor
-        function self = FruitTracker(debug)
-            if nargin < 1, debug = false; end
-            self.debug = debug;
+        function self = FruitTracker(debug_status)
+            if nargin < 1, debug_status = false; end
+            self.debug.status = debug_status;
+            
             % Fruit tracker parameters
+            % TODO: improve these parameters
             self.param.gating_thresh = 0.97;
             self.param.gating_cost = 100;
             self.param.cost_non_assignment = 10;
@@ -93,32 +87,47 @@ classdef FruitTracker < handle
             self.param.visibility_thresh = 0.6;
                         
             % KLT tracker parameters
-            self.param.pyramid_levels = 3;
-            self.param.block_size = [1 1] * 21;
-            self.param.corners_per_block = 0.6;
+            self.param.pyramid_levels = 4;
+            self.param.block_size = [1 1] * 23;
+            self.param.corners_per_block = 1.2;
             self.klt_tracker = ...
                 vision.PointTracker('BlockSize', self.param.block_size, ...
-                'NumPyramidLevels', ...
-                self.param.pyramid_levels);
+                                    'NumPyramidLevels', ...
+                                    self.param.pyramid_levels);
             
             self.track_counter = 0;
             self.frame_counter = 0;
+            self.total_fruit_counts = 0;
             self.tracks = FruitTrack.empty;
             
             % Debug stuff
-            if self.debug
+            if self.debug.status
                 figure(2);
-                self.debug_axes = axes();
+                self.debug.axes = axes();
+                % Number of matches before estimateFundamentalMatrix
+                self.debug.num_matches = [];
+                % Number of matches after estimateFundamentalMatrix
+                self.debug.num_inliers = [];
+                % All graphic handles
+                self.handles.image = [];
+                self.handles.detections = [];
+                self.handles.new_tracks = [];
+                self.handles.young_tracks = [];
+                self.handles.valid_tracks = [];
+                self.handles.predicted_tracks = [];
+                self.handles.predictions = [];
+                self.handles.flow = [];
             end
         end
         
         % Track detections
         % detections - ConnectedComponents
-        function track(self, detections, image)
+        function track(self, detections, image, counts)
             fprintf('========= Frame %g. =========\n', self.frame_counter);
             self.frame_counter = self.frame_counter + 1;
             self.image = image;
             self.detections = detections;
+            self.fruit_counts = counts;
             
             % Main tracking steps
             self.calculateOpticalFlow();
@@ -128,7 +137,7 @@ classdef FruitTracker < handle
             self.updateUnassignedTracks();
             self.deleteLostTracks();
             self.createNewTracks();
-            self.updateValidTracks();
+            self.updateTotalFruitCounts();
             self.displayTrackingResults(true);
         end
         
@@ -144,8 +153,6 @@ classdef FruitTracker < handle
             % Convert to gray scale image
             if c == 3, gray = rgb2gray(self.image); end
             
-
-            
             % Calculate max corners
             max_corners = ceil(m * n / self.param.block_size(1)^2 * ...
                                self.param.corners_per_block);
@@ -156,16 +163,19 @@ classdef FruitTracker < handle
                 [curr_points, match_ind] = self.klt_tracker.step(gray);
                 prev_points = self.prev_corners(match_ind, :);
                 curr_points = curr_points(match_ind, :);
-                if nnz(match_ind) > 20
-                    % Fundamental matrix outlier rejection
-                    [~, inlier_ind, status] = ...
-                        estimateFundamentalMatrix(...
+                
+                self.debug.num_matches(end + 1) = nnz(match_ind);
+                
+                % Fundamental matrix outlier rejection
+                if nnz(match_ind) > 8 * 2.5
+                    [~, inlier_ind, status] = estimateFundamentalMatrix(...
                         prev_points, curr_points, ...
                         'Method', 'MSAC', ...
                         'NumTrials', 500, ...
-                        'Confidence', 99, ...
-                        'OutputClass', 'single');% ...
-                        %'DistanceType', 'Algebraic');
+                        'Confidence', 99.5, ...
+                        'DistanceThreshold', 0.64, ...
+                        'OutputClass', 'single', ...
+                        'DistanceType', 'Sampson');
                     prev_points = prev_points(inlier_ind, :);
                     curr_points = curr_points(inlier_ind, :);
                     self.flow = curr_points - prev_points;
@@ -173,45 +183,38 @@ classdef FruitTracker < handle
                     % flow
                     self.prev_corners = prev_points;
                     self.curr_corners = curr_points;
-                else
-                    % If something's wrong with optical flow, just use the
-                    % previous average flow as the current flow
-                    self.flow = mean(self.flow, 1); 
+                else 
+                    self.flow = mean(self.flow, 1);
+                    inlier_ind = match_ind;
                 end
+                
+                self.debug.num_inliers(end + 1) = nnz(inlier_ind);
                 
                 % DEBUG_START %
                 fprintf('Number of flow: %g\n', size(self.flow, 1));
                 % Plot optical flow
-                
-                if true && ~isempty(self.prev_corners)
-                    self.flow_handle = ...
-                        plotQuiverOnAxes(self.debug_axes, ...
-                                        self.flow_handle, ...
-                                        self.prev_corners, self.curr_corners, ...
-                                        'm');
+                if self.debug.status
+                    self.handles.flow = ...
+                        plotQuiverOnAxes(self.debug.axes, ...
+                                         self.handles.flow, ...
+                                         self.prev_corners, ...
+                                         self.curr_corners, ...
+                                         'm');
                 end
             end
             
             % Extract new features at every frame
-            %new_corners = detectFASTFeatures(gray );
-            %new_corners = detectMinEigenFeatures(gray);
-            
-            new_corners = goodfeaturestotrack(gray, max_corners, ...
-                0.01, 10);
-            new_corners = new_corners';
-            
-            %new_corners = new_corners.selectStrongest(max_corners);
+            new_corners = detectMinEigenFeatures(gray, ...
+                                                 'MinQuality', 0.1);
+            new_corners = new_corners.selectStrongest(max_corners);
             % Assign new corners to tracked
-            %self.curr_corners = new_corners.Location;
-            
-            self.curr_corners = new_corners;
-            
+            self.curr_corners = new_corners.Location;
             % Reinitialize klt_tracker
             self.klt_tracker.release();
             self.klt_tracker = ...
                 vision.PointTracker('BlockSize', self.param.block_size, ...
-                'NumPyramidLevels', ...
-                self.param.pyramid_levels);
+                                    'NumPyramidLevels', ...
+                                    self.param.pyramid_levels);
             self.klt_tracker.initialize(self.curr_corners, gray);
             
             fprintf('Number of new corners: %g.\n', ...
@@ -283,10 +286,11 @@ classdef FruitTracker < handle
                 track = self.tracks(track_idx);
                 centroid = self.detections.Centroid(detection_idx, :);
                 bbox = self.detections.BoundingBox(detection_idx, :);
+                fruit_count = self.fruit_counts(detection_idx);
                 
                 % Stabilize the bounding box by taking the average of the
                 % size [?], don't stablize for now
-                track.updateAssigned(centroid, bbox);
+                track.updateAssigned(centroid, bbox, fruit_count, 0);
                 
                 % Adjust track confidence score based on the maximum
                 % detection score in the past few frames
@@ -349,7 +353,8 @@ classdef FruitTracker < handle
                           
             fprintf('Number of tracks to delete: %g.\n', nnz(lost_idx));
             
-            % tracks_to_delete = self.tracks(lost_idx);
+            % Collect deleted tracks
+            self.deleted_tracks = self.tracks(lost_idx);
             % Delete lost tracks
             self.tracks = self.tracks(~lost_idx);
         end
@@ -379,75 +384,77 @@ classdef FruitTracker < handle
         end
         
         % Update total valid tracks id
-        function updateValidTracks(self)
-            ages = [self.tracks.age]';
-            new_tracks_id = [self.tracks(ages > self.param.age_thresh).id];
-            self.valid_tracks_id = ...
-                union(self.valid_tracks_id, new_tracks_id);
-            self.num_valid_tracks = numel(self.valid_tracks_id);
+        function updateTotalFruitCounts(self)
+            if isempty(self.deleted_tracks), return; end;
+            ages = [self.deleted_tracks.age]';
+            deleted_tracks_counts = ...
+                [self.deleted_tracks(ages > self.param.age_thresh).fruit_count];
+            self.total_fruit_counts = self.total_fruit_counts + ...
+                                      sum(deleted_tracks_counts);
         end
         
         % Draws a colored bounding box for each track on the frame
         function displayTrackingResults(self, show_predict)
             if nargin < 2, show_predict = false; end
             
-            if self.debug
-                self.image_handle = ...
-                    plotImageOnAxes(self.debug_axes, self.image_handle, ...
+            if self.debug.status
+                self.handles.image = ...
+                    plotImageOnAxes(self.debug.axes, self.handles.image, ...
                                     self.image);
-               % set(self.debug_axes, 'YDir', 'Normal');
+               % set(self.debug.axes, 'YDir', 'Normal');
                 % Plot current detections in purple
-                self.detections_handle = ...
-                    plotCentroidsOnAxes(self.debug_axes, ...
-                                        self.detections_handle, ...
+                self.handles.detections = ...
+                    plotCentroidsOnAxes(self.debug.axes, ...
+                                        self.handles.detections, ...
                                         self.detections.Centroid, 'm+', 3);
             end
             
             if isempty(self.tracks), return; end   
             
-            if self.debug
+            if self.debug.status
                 
                 if show_predict
                     % Plot predicted bounding box in yellow
                    predicted_bboxes = ...
                        reshape([self.tracks.predicted_bbox], 4, [])';
-                   self.predicted_tracks_handle = ...
-                       plotBboxesOnAxes(self.debug_axes, ...
-                                        self.predicted_tracks_handle, ...
+                   self.handles.predicted_tracks = ...
+                       plotBboxesOnAxes(self.debug.axes, ...
+                                        self.handles.predicted_tracks, ...
                                         predicted_bboxes, 'b', 0, 1);
                    prev_centroids = ...
                        reshape([self.tracks.prev_centroid], 2, [])';
                    last_centroids = ...
                        reshape([self.tracks.last_centroid], 2, [])';
-                   self.predictions_handle = ...
-                       plotQuiverOnAxes(self.debug_axes, ...
-                                        self.predictions_handle, ...
+                   self.handles.predictions = ...
+                       plotQuiverOnAxes(self.debug.axes, ...
+                                        self.handles.predictions, ...
                                         prev_centroids, last_centroids, ...
                                         'b');
                 end
-           
                 
                 % Plot new tracks bounding box in red
                 young_bboxes = reshape([self.young_tracks.last_bbox], ...
                                        4, [])';
-                self.young_tracks_handle = ...
-                    plotBboxesOnAxes(self.debug_axes, ...
-                                     self.young_tracks_handle, ...
+                self.handles.young_tracks = ...
+                    plotBboxesOnAxes(self.debug.axes, ...
+                                     self.handles.young_tracks, ...
                                      young_bboxes, 'r', 0, 1);
                 
                 % Plot valid tracks in cyan
                 valid_bboxes = reshape([self.valid_tracks.last_bbox], ...
                                        4, [])';
-                self.valid_tracks_handle = ...
-                    plotBboxesOnAxes(self.debug_axes, ...
-                                     self.valid_tracks_handle, ...
+                self.handles.valid_tracks = ...
+                    plotBboxesOnAxes(self.debug.axes, ...
+                                     self.handles.valid_tracks, ...
                                      valid_bboxes, 'c', 0, 1);
                 
                 % Display total count
-                title_str = sprintf('frame: %g, count: %g', ...
-                                    self.frame_counter, ...
-                                    self.num_valid_tracks);
-                title(self.debug_axes, title_str);
+                title_str = ...
+                    sprintf('frame: %g, total count: %g, detections: %g', ...
+                            self.frame_counter, ...
+                            self.total_fruit_counts, ...
+                            size(self.detections.Centroid, 1));
+                title(self.debug.axes, title_str);
                 drawnow
             end
         end
