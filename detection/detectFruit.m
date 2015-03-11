@@ -24,7 +24,7 @@ params.min_inliers_frac = 0.03; % 0.03
 % Total max iterations allowed when fitting circles.
 params.max_iterations_absolute = 300000;
 % Inlier threshold when fitting, in pixels.
-params.inlier_threshold = 7; % 10
+params.inlier_threshold = 9; % 10
 % Number of successful fits to trigger early exit.
 params.early_exit_threshold = 500;
 % Threshold below which circles are merged when fitting.
@@ -37,7 +37,7 @@ params.circle_min_radius = 8;
 % circle radius.
 params.circle_max_displacement = 0.5;
 % Absolute min 'inlier score' required in the circle fit
-params.circle_min_inlier_score = 80;
+params.circle_min_inlier_score = 40;
 % Fraction of circle which must be filled with positive pixels.
 params.circle_min_fill_ratio = 0.35;
 % Minimum amount of a bbox which must be filled by circles.
