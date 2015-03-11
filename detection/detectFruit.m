@@ -4,6 +4,12 @@ function [ CC, counts, circles ] = detectFruit( pixel_model, image, scale )
 % `image` is the input image in the RGB color space.
 
 % NOTE: all these parameters tuned at scale of 1
+params.mask_threshold = 0.5;
+params.erode_size = 0;
+params.area_thresh = 5;
+params.merge_distance_thresh = 30;
+params.merge_overlap_thresh = 0.1;
+
 if nargin < 3
     scale = 1;
 end
@@ -13,30 +19,30 @@ areaScale = scale*scale;
 image_full = rgb2fullcs(image);
 % calculate the mask with the pixel-level model, then round it
 mask = detectPixels(pixel_model, image_full);
-mask = mask > 0.5;
+mask = mask > params.mask_threshold;
 
 % fill holes
 mask = imfill(mask,'holes');
 
 % erode a bit
-se = strel('disk', 1);
-mask = imerode(mask, se);
+if params.erode_size
+    se = strel('disk', params.erode_size);
+    mask = imerode(mask, se);
+end
 
 % find connected components
 CC = ConnectedComponents(mask);
 
 % throw away components below a very low threshold of area
 area = CC.Area();
-large = area > ceil(3*areaScale);
+large = area > ceil(params.area_thresh * areaScale);
 CC.discard(~large);
-
-%CC.sort('BoundingArea', 'descend');
 
 % calculate distance between centroids
 centroids = CC.Centroid();
 dist = pdist2(centroids, centroids, 'euclidean');
 
-nearby = dist < 30*scale;  % take the closest that also satisfy the threshold
+nearby = dist < params.merge_distance_thresh * scale;
 nearby = triu(nearby,1);    
 smallest = smallestDistance(dist);
 nearby = nearby & smallest;
@@ -56,7 +62,7 @@ while true && ~CC.isempty()
     overlap = triu(overlap,1);  % take everything above diagonal
 
     % find boxes which overlap more than some percentage
-    overlap = overlap > 0.10;
+    overlap = overlap > params.merge_overlap_thresh;
     if ~any(overlap)
         % no more overlap, stop
         break;

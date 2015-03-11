@@ -15,39 +15,27 @@ if any(size(mask) <= 3*scale)
     return; % mask too small to work with
 end
 
-% pad the image a bit
-mask_padded = padarray(mask,[2 2]);    % adds 2 pixels on left,right,top,bottom
-
-% find masked pixel edges
-%mask_edges = edge(mask_padded);
-
 % approximate edge finder, much faster than built in `edge`
-mask_edges = imfilter(double(mask_padded),[1 1 1; 1 0 1; 1 1 1]) / 8;
+mask_edges = conv2(double(mask),[1 1 1; 1 0 1; 1 1 1],'full') / 8;
 mask_edges = mask_edges >= 5/8 & mask_edges < 1;
 mask_pixels = find(mask_edges);
 
-[y,x] = ind2sub(size(mask_padded), mask_pixels);
+[y,x] = ind2sub(size(mask_edges), mask_pixels);
 points = [x y];
-if size(points,1) < 20*scale
+num_points = size(points,1);
+if size(points,1) <= max( 20 * scale, 6 )
     % too few points, we can't fit this very well
     return;
 end
-% subtract padding
-points = bsxfun(@minus,points,[2 2]);
+% subtract padding from the conv2 operation
+points = bsxfun(@minus,points,[1 1]);
 
-% fit circles by random sampling
-num_points = size(points,1);
 num_iters = min(nchoosek(num_points, 3), 300000);
 
 % either 3% or 6 inliers, whichever is bigger
 inlier_frac = max(6 / num_points, 0.03);
 
-if exist('fitCirclesFast','file') == 3
-    X = fitCirclesFast(points, num_iters, 10*scale, inlier_frac, 500, 3*scale*scale);
-else
-    warning('fitCirclesFast not found. Did you compile your mex?');
-    X = fitCircles(points, num_iters, 10*scale, inlier_frac, 500, 3*scale*scale);
-end
+X = fitCirclesFast(points, num_iters, 10*scale, inlier_frac, 500, 3*scale*scale);
 X = sortrows(X,[4 3]);
 X = flipud(X);
 
