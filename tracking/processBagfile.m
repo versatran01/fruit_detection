@@ -1,6 +1,6 @@
-function [ total_count ] = processBagfile( path, scale, model )
+function [ tracker ] = processBagfile( path, scale, model )
 %PROCESSBAGFILE Process a bagfile.
-
+% todo: call this from test_tracker...
 if nargin < 3
     % default to support vector classification
     load('models/cs_svc.mat');
@@ -39,5 +39,4 @@ while bag.hasNext()
     [CC,counts,~] = detectFruit(model, image, scale);
     tracker.track(CC, image, counts);
 end
-total_count = tracker.total_fruit_counts;
 end

@@ -1,4 +1,4 @@
-function test_tracker()
+function [tracker] = test_tracker()
 close all
 load('models/cs_svc.mat');
 if ismac()  % terrible hack :P
@@ -11,7 +11,7 @@ use_pause = false;
 plot_tracker = true;
 plot_detections = false;
 bag.resetView(bag.topics);
-tracker = FruitTracker(plot_tracker);
+tracker = FruitTracker(plot_tracker,true);
 
 if plot_detections
     figure(1);

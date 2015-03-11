@@ -18,6 +18,7 @@ classdef FruitTracker < handle
         
         % Total number of fruits
         total_fruit_counts
+        total_fruit_counts_variance
         
         % param.gating_thresh - A threshold to reject a candidate match
         % between a detection and a track
@@ -101,6 +102,7 @@ classdef FruitTracker < handle
             self.track_counter = 0;
             self.frame_counter = 0;
             self.total_fruit_counts = 0;
+            self.total_fruit_counts_variance = 0;
             self.tracks = FruitTrack.empty;
             
             % Debug stuff
@@ -391,15 +393,18 @@ classdef FruitTracker < handle
                 self.detections.Centroid(self.unassigned_detections, :);
             unassigned_bboxes = ...
                 self.detections.BoundingBox(self.unassigned_detections, :);
+            unassigned_counts = ...
+                self.fruit_counts(self.unassigned_detections, :);
             
             for i = 1:num_unassigned_detections
                 centroid = unassigned_centroids(i, :);
                 bbox = unassigned_bboxes(i, :);
                 score = 1;
+                count = unassigned_counts(i, :);
                 
                 % Create a new track
                 new_track = FruitTrack(self.track_counter, centroid, ...
-                                       bbox, score);
+                                       bbox, score, count);
                 % Add it to the array of tracks
                 self.tracks(end + 1) = new_track;
                 self.track_counter = self.track_counter + 1;
@@ -410,10 +415,26 @@ classdef FruitTracker < handle
         function updateTotalFruitCounts(self)
             if isempty(self.deleted_tracks), return; end;
             ages = [self.deleted_tracks.age]';
-            deleted_tracks_counts = ...
-                [self.deleted_tracks(ages >= self.param.age_thresh).fruit_count];
+            % get all tracks which meet age threshold
+            count_indices = ages >= self.param.age_thresh;
+            countable_tracks = self.deleted_tracks(count_indices);
+            
+            deleted_tracks_count = 0;
+            deleted_tracks_var = 0;
+            
+            % take all the counts from this track and combine them
+            for i=1:numel(countable_tracks)
+                total = mean(countable_tracks(i).fruit_count);
+                variance = var(countable_tracks(i).fruit_count);
+                
+                % increment both count and the variance
+                deleted_tracks_count = deleted_tracks_count + total;
+                deleted_tracks_var = deleted_tracks_var + variance;
+            end
             self.total_fruit_counts = self.total_fruit_counts + ...
-                                      sum(deleted_tracks_counts);
+                                      deleted_tracks_count;
+            self.total_fruit_counts_variance = self.total_fruit_counts_variance + ...
+                deleted_tracks_var;
         end
         
         % Draws a colored bounding box for each track on the frame
