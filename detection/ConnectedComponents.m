@@ -67,6 +67,13 @@ classdef ConnectedComponents < handle
             self.CC = nCC;
         end
         
+        function reorder(self, indices)
+            if numel(indices) ~= self.CC.NumObjects
+                error('Dimension mismatch');
+            end
+            self.CC.PixelIdxList = self.CC.PixelIdxList(indices);
+        end
+        
         function sort(self, key, order)
             if nargin < 3
                 order = 'descend';

@@ -262,7 +262,7 @@ classdef FruitTracker < handle
             % detected boox (overlap ratio is 1)
             if ~self.initialized,
                 self.unassigned_detections = ...
-                    1:size(self.detections.Centroid, 1);
+                    1:self.detections.size();
                 return;
             end
             predicted_bboxes = reshape([self.tracks.predicted_bbox], ...
@@ -278,7 +278,7 @@ classdef FruitTracker < handle
             % Solve the assignment problem
             if self.verbose
                 fprintf('Assigning %g detections to %g tracks.\n', ...
-                        size(self.detections.BoundingBox, 1), ...
+                        self.detections.size(), ...
                         self.num_tracks);
             end
                 
@@ -302,13 +302,15 @@ classdef FruitTracker < handle
         % Increase the age and total visible count of each track
         function updateAssignedTracks(self)
             num_assigned_tracks = size(self.assignments, 1);
+            centroids = self.detections.Centroid();
+            bboxes = self.detections.BoundingBox();
             for i = 1:num_assigned_tracks
                 track_idx = self.assignments(i, 1);
                 detection_idx = self.assignments(i ,2);
                 
                 track = self.tracks(track_idx);
-                centroid = self.detections.Centroid(detection_idx, :);
-                bbox = self.detections.BoundingBox(detection_idx, :);
+                centroid = centroids(detection_idx, :);
+                bbox = bboxes(detection_idx, :);
                 fruit_count = self.fruit_counts(detection_idx);
                 
                 % Stabilize the bounding box by taking the average of the
@@ -506,7 +508,7 @@ classdef FruitTracker < handle
                     sprintf('frame: %g, total count: %.2f, detections: %g', ...
                             self.frame_counter, ...
                             self.total_fruit_counts, ...
-                            size(self.detections.Centroid, 1));
+                            self.detections.size());
                 title(self.debug.axes, title_str);
                 drawnow
             end

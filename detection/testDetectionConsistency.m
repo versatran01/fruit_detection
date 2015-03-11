@@ -4,7 +4,7 @@ close all;
 
 load('models/cs_svc.mat');
 
-image_index = 30;
+image_index = 20;
 image = dataset.images{image_index};
 image = rot90(image,1);
 
@@ -19,7 +19,7 @@ masks = [];
 %time = CTimeleft(niters);
 %    time.timeleft();
 tic;
-for i=1:niters
+parfor i=1:niters
     [CC,counts,circles] = detectFruit(model,image,scale);
     total = sum(counts);
     totals(i) = total;

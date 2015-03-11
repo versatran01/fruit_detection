@@ -28,16 +28,16 @@ while bag.hasNext()
     end
     image_count = image_count + 1;
     
-    if ~mod(image_count,100) && image_count > 0
-        fprintf('Processed image %i\n', image_count);
-    end
-    
     image = rosImageToMatlabImage(msg);
     image = imresize(image, scale);
     image = flipud(image);
     
+    tic;
     [CC,counts,~] = detectFruit(model, image, scale);
     tracker.track(CC, image, counts);
+    T = toc;
+    
+    fprintf('Time per iteration: %.3f\n', T);
 end
 tracker.finish();
 end
