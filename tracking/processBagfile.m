@@ -1,6 +1,7 @@
-function [ tracker ] = processBagfile( path, scale, model_name, duration )
+function tracker = processBagfile(path, scale, model_name, duration, visualize)
 %PROCESSBAGFILE Process a bagfile.
 % todo: call this from test_tracker...
+if nargin < 5, visualize = false; end;
 if nargin < 4, 
     duration = [0.0 double(intmax())];
 end
@@ -27,7 +28,7 @@ end
 load(['models/', model_name]);
 
 image_count = 0;
-tracker = FruitTracker(false);  % hide gui
+tracker = FruitTracker(visualize);  % hide gui
 
 while bag.hasNext()
     [msg, meta] = bag.read();
