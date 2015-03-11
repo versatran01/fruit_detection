@@ -16,7 +16,7 @@ default_rows = unique([bag_helpers.row]);
 default_scales = 0.75;
 default_iterations = 1;
 default_model_name = 'cs_svc';
-default_visualize = false;
+default_verbose = false;
 
 input_parser.addParameter('rows', default_rows, ...
                           @(x) (all(isnumeric(x)) && all(x >= 1) && ...
@@ -27,7 +27,7 @@ input_parser.addParameter('scales', default_scales, ...
 input_parser.addParameter('iterations', default_iterations, ...
                           @(x) (isnumeric(x) && x >= 1));
 input_parser.addParameter('model', default_model_name);
-input_parser.addParameter('visualize', default_visualize);
+input_parser.addParameter('verbose', default_verbose);
                       
 input_parser.parse(varargin{:});
 
@@ -36,8 +36,7 @@ rows = input_parser.Results.rows;
 scales = input_parser.Results.scales;
 iterations = input_parser.Results.iterations;
 model_name = input_parser.Results.model;
-visualize = input_parser.Results.visualize;
-
+verbose = input_parser.Results.verbose;
 
 % Notice that counts is a M-by-N matrix, where M is the size of scales and
 % N is the size of iterations
@@ -46,7 +45,6 @@ bag_results = struct('row', {}, ...
                      'counts', {}, ...
                      'scales', {}, ...
                      'iterations', {});
-
                  
 all_rows = [bag_helpers.row];
 
@@ -85,7 +83,7 @@ for i_row = 1:numel(rows)
                  bag_helper = bag_helper_side;
                  duration = [bag_helper.startTime, bag_helper.endTime];
                  tracker = processBagfile(bag_helper.path, scale, ...
-                                          model_name, duration, visualize);
+                                          model_name, duration, verbose);
                  
                  bag_result.counts(i_scale, i_iter) = ...
                      tracker.total_fruit_counts;

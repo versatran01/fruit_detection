@@ -1,7 +1,7 @@
-function tracker = processBagfile(path, scale, model_name, duration, visualize)
+function tracker = processBagfile(path, scale, model_name, duration, verbose)
 %PROCESSBAGFILE Process a bagfile.
 % todo: call this from test_tracker...
-if nargin < 5, visualize = false; end;
+if nargin < 5, verbose = false; end;
 if nargin < 4, 
     duration = [0.0 double(intmax())];
 end
@@ -28,7 +28,7 @@ end
 load(['models/', model_name]);
 
 image_count = 0;
-tracker = FruitTracker(visualize);  % hide gui
+tracker = FruitTracker(verbose);  % hide gui
 
 while bag.hasNext()
     [msg, meta] = bag.read();
@@ -46,8 +46,10 @@ while bag.hasNext()
     tracker.track(CC, image, counts);
     elapsed_time = toc;
     
-    fprintf('frame: %g, Time per iteration: %.3f, total counts: %.1f.\n', ...
-            image_count, elapsed_time, tracker.total_fruit_counts);
+    if verbose
+        fprintf('frame: %g, Time per iteration: %.3f, total counts: %.1f.\n', ...
+                image_count, elapsed_time, tracker.total_fruit_counts);
+    end
 end
 tracker.finish();
 end
