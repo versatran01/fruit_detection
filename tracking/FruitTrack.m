@@ -49,7 +49,7 @@ classdef FruitTrack < handle
     
     methods
         % Constructor
-        function self = FruitTrack(id, centroid, bbox, score)
+        function self = FruitTrack(id, centroid, bbox, score, count)
             self.id = id;
             self.color = 255 * rand(1, 3);
             self.centroids = centroid;
@@ -62,7 +62,7 @@ classdef FruitTrack < handle
             self.predicted_bbox = bbox;
             self.prev_centroid = centroid;
             self.prev_bbox = bbox;
-            self.fruit_count = 1;
+            self.fruit_count = count;
         end
         
         % Predict new location of centroid and bounding box
@@ -109,7 +109,7 @@ classdef FruitTrack < handle
             % Update age
             self.incAge();
             % Update count in this track
-            self.fruit_count = count;
+            self.fruit_count = horzcat(self.fruit_count, count);
             % Update visibility if this is an assigned track
             self.incVisibleCount();
             self.scores(end + 1, :) = 1; % detection score is 1

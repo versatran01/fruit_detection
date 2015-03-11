@@ -4,11 +4,14 @@ home;
 
 viz = true;
 
-scale = 0.7;
+load('models/cs_svc.mat');
+
+scale = 0.5;
 detector = @(image,s)detectFruit(model, image, s);
 tester = DetectionTester(dataset, detector, viz);
-tester.rotate = true;
+tester.rotate = false;
 tester.scale = scale;
+tester.setCurrentImage(19);
 
 times = [];
 while tester.hasNext()

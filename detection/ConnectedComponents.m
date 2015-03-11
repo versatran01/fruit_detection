@@ -7,7 +7,6 @@ classdef ConnectedComponents < handle
     
     properties(Access=private)
         CC
-        props
     end
     
     properties(Dependent)
@@ -20,10 +19,6 @@ classdef ConnectedComponents < handle
     end
     
     methods(Access=private)
-        function recompute(self)
-            self.props = regionprops(self.CC, 'Area', ...
-                'Centroid', 'BoundingBox');
-        end
     end
     
     methods
@@ -33,7 +28,6 @@ classdef ConnectedComponents < handle
             end
             self.image = image;
             self.CC = bwconncomp(image,8);
-            self.recompute();
         end
         
         function discard(self, index)
@@ -43,7 +37,6 @@ classdef ConnectedComponents < handle
             % update CC
             self.CC.PixelIdxList(index) = [];
             self.CC.NumObjects = numel(self.CC.PixelIdxList);
-            self.recompute();
         end
         
         function merge(self, map)
@@ -72,7 +65,13 @@ classdef ConnectedComponents < handle
             end
             nCC.NumObjects = numel(nCC.PixelIdxList);
             self.CC = nCC;
-            self.recompute();
+        end
+        
+        function reorder(self, indices)
+            if numel(indices) ~= self.CC.NumObjects
+                error('Dimension mismatch');
+            end
+            self.CC.PixelIdxList = self.CC.PixelIdxList(indices);
         end
         
         function sort(self, key, order)
@@ -86,19 +85,18 @@ classdef ConnectedComponents < handle
             % sort by values
             [~,idx] = sort(value, order);
             self.CC.PixelIdxList = self.CC.PixelIdxList(idx);
-            self.recompute();
         end
         
-        function [fig] = plot(self, nfig)
-            if nargin < 2
-                nfig = true;
-            end
-            if nfig
+        function [fig] = plot(self, bgimage, fig)
+            if nargin < 3
                 fig = figure;
             else
-                fig = gcf;
+                set(0,'CurrentFigure',fig);
             end
-            imshow(self.image);
+            if nargin < 2
+                bgimage = self.image;
+            end
+            imshow(bgimage);
             hold on;
             bbox = self.BoundingBox();
             for i=1:self.size()
@@ -108,15 +106,23 @@ classdef ConnectedComponents < handle
                 pts_y = squeeze(pts(:,2,:));
                 h = plot(pts_x,pts_y,'b');
                 set(h,'LineWidth',2);
+                
+                cx = bbox(i,1) + bbox(i,3)*0.5;
+                cy = bbox(i,2) + bbox(i,4)*0.5;
+                h = text(cx,cy,num2str(i));
+                set(h, 'Color', [0 1 0]);
+                set(h, 'FontSize', 13);
             end
         end
         
         function value = get.Area(self)
-            value = [self.props.Area]';
+            props = regionprops(self.CC, 'Area');
+            value = [props.Area]';
         end
         
         function value = get.BoundingBox(self)
-            value = vertcat(self.props.BoundingBox);
+            props = regionprops(self.CC, 'BoundingBox');
+            value = vertcat(props.BoundingBox);
         end
         
         function value = get.BoundingArea(self)
@@ -125,7 +131,8 @@ classdef ConnectedComponents < handle
         end
         
         function value = get.Centroid(self)
-            value = vertcat(self.props.Centroid);
+            props = regionprops(self.CC, 'Centroid');
+            value = vertcat(props.Centroid);
         end
                 
         function value = get.size(self)

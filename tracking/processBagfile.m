@@ -1,6 +1,6 @@
-function [ total_count ] = processBagfile( path, scale, model )
+function [ tracker ] = processBagfile( path, scale, model )
 %PROCESSBAGFILE Process a bagfile.
-
+% todo: call this from test_tracker...
 if nargin < 3
     % default to support vector classification
     load('models/cs_svc.mat');
@@ -28,16 +28,16 @@ while bag.hasNext()
     end
     image_count = image_count + 1;
     
-    if ~mod(image_count,100) && image_count > 0
-        fprintf('Processed image %i\n', image_count);
-    end
-    
     image = rosImageToMatlabImage(msg);
     image = imresize(image, scale);
     image = flipud(image);
     
+    tic;
     [CC,counts,~] = detectFruit(model, image, scale);
     tracker.track(CC, image, counts);
+    T = toc;
+    
+    fprintf('Time per iteration: %.3f\n', T);
 end
-total_count = tracker.total_fruit_counts;
+tracker.finish();
 end

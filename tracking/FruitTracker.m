@@ -18,6 +18,7 @@ classdef FruitTracker < handle
         
         % Total number of fruits
         total_fruit_counts
+        total_fruit_counts_variance
         
         % param.gating_thresh - A threshold to reject a candidate match
         % between a detection and a track
@@ -101,6 +102,7 @@ classdef FruitTracker < handle
             self.track_counter = 0;
             self.frame_counter = 0;
             self.total_fruit_counts = 0;
+            self.total_fruit_counts_variance = 0;
             self.tracks = FruitTrack.empty;
             
             % Debug stuff
@@ -260,7 +262,7 @@ classdef FruitTracker < handle
             % detected boox (overlap ratio is 1)
             if ~self.initialized,
                 self.unassigned_detections = ...
-                    1:size(self.detections.Centroid, 1);
+                    1:self.detections.size();
                 return;
             end
             predicted_bboxes = reshape([self.tracks.predicted_bbox], ...
@@ -276,7 +278,7 @@ classdef FruitTracker < handle
             % Solve the assignment problem
             if self.verbose
                 fprintf('Assigning %g detections to %g tracks.\n', ...
-                        size(self.detections.BoundingBox, 1), ...
+                        self.detections.size(), ...
                         self.num_tracks);
             end
                 
@@ -300,13 +302,15 @@ classdef FruitTracker < handle
         % Increase the age and total visible count of each track
         function updateAssignedTracks(self)
             num_assigned_tracks = size(self.assignments, 1);
+            centroids = self.detections.Centroid();
+            bboxes = self.detections.BoundingBox();
             for i = 1:num_assigned_tracks
                 track_idx = self.assignments(i, 1);
                 detection_idx = self.assignments(i ,2);
                 
                 track = self.tracks(track_idx);
-                centroid = self.detections.Centroid(detection_idx, :);
-                bbox = self.detections.BoundingBox(detection_idx, :);
+                centroid = centroids(detection_idx, :);
+                bbox = bboxes(detection_idx, :);
                 fruit_count = self.fruit_counts(detection_idx);
                 
                 % Stabilize the bounding box by taking the average of the
@@ -391,15 +395,18 @@ classdef FruitTracker < handle
                 self.detections.Centroid(self.unassigned_detections, :);
             unassigned_bboxes = ...
                 self.detections.BoundingBox(self.unassigned_detections, :);
+            unassigned_counts = ...
+                self.fruit_counts(self.unassigned_detections, :);
             
             for i = 1:num_unassigned_detections
                 centroid = unassigned_centroids(i, :);
                 bbox = unassigned_bboxes(i, :);
                 score = 1;
+                count = unassigned_counts(i, :);
                 
                 % Create a new track
                 new_track = FruitTrack(self.track_counter, centroid, ...
-                                       bbox, score);
+                                       bbox, score, count);
                 % Add it to the array of tracks
                 self.tracks(end + 1) = new_track;
                 self.track_counter = self.track_counter + 1;
@@ -410,18 +417,35 @@ classdef FruitTracker < handle
         function updateTotalFruitCounts(self)
             if isempty(self.deleted_tracks), return; end;
             ages = [self.deleted_tracks.age]';
-            deleted_tracks_counts = ...
-                [self.deleted_tracks(ages >= self.param.age_thresh).fruit_count];
+            % get all tracks which meet age threshold
+            count_indices = ages >= self.param.age_thresh;
+            countable_tracks = self.deleted_tracks(count_indices);
+            self.countTracks(countable_tracks);
+        end
+        
+        function countTracks(self, countable_tracks)
+            tracks_count = 0;
+            tracks_var = 0;
+            
+            % take all the counts from this track and combine them
+            for i=1:numel(countable_tracks)
+                total = mean(countable_tracks(i).fruit_count);
+                variance = var(countable_tracks(i).fruit_count);
+                
+                % increment both count and the variance
+                tracks_count = tracks_count + total;
+                tracks_var = tracks_var + variance;
+            end
             self.total_fruit_counts = self.total_fruit_counts + ...
-                                      sum(deleted_tracks_counts);
+                                      tracks_count;
+            self.total_fruit_counts_variance = self.total_fruit_counts_variance + ...
+                tracks_var;
         end
         
         % Delete all existing counts and add it to total fruit counts
         function finish(self)
             if isempty(self.tracks), return; end
-            remaining_counts = sum([self.tracks.fruit_count]);
-            self.total_fruit_counts = self.total_fruit_counts + ...
-                                      remaining_counts;            
+            self.countTracks(self.tracks);          
         end
         
         % Draws a colored bounding box for each track on the frame
@@ -481,10 +505,10 @@ classdef FruitTracker < handle
                 
                 % Display total count
                 title_str = ...
-                    sprintf('frame: %g, total count: %g, detections: %g', ...
+                    sprintf('frame: %g, total count: %.2f, detections: %g', ...
                             self.frame_counter, ...
                             self.total_fruit_counts, ...
-                            size(self.detections.Centroid, 1));
+                            self.detections.size());
                 title(self.debug.axes, title_str);
                 drawnow
             end
