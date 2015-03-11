@@ -411,7 +411,7 @@ classdef FruitTracker < handle
             if isempty(self.deleted_tracks), return; end;
             ages = [self.deleted_tracks.age]';
             deleted_tracks_counts = ...
-                [self.deleted_tracks(ages > self.param.age_thresh).fruit_count];
+                [self.deleted_tracks(ages >= self.param.age_thresh).fruit_count];
             self.total_fruit_counts = self.total_fruit_counts + ...
                                       sum(deleted_tracks_counts);
         end
