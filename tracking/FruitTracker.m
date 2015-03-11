@@ -418,9 +418,12 @@ classdef FruitTracker < handle
             % get all tracks which meet age threshold
             count_indices = ages >= self.param.age_thresh;
             countable_tracks = self.deleted_tracks(count_indices);
-            
-            deleted_tracks_count = 0;
-            deleted_tracks_var = 0;
+            self.countTracks(countable_tracks);
+        end
+        
+        function countTracks(self, countable_tracks)
+            tracks_count = 0;
+            tracks_var = 0;
             
             % take all the counts from this track and combine them
             for i=1:numel(countable_tracks)
@@ -428,13 +431,19 @@ classdef FruitTracker < handle
                 variance = var(countable_tracks(i).fruit_count);
                 
                 % increment both count and the variance
-                deleted_tracks_count = deleted_tracks_count + total;
-                deleted_tracks_var = deleted_tracks_var + variance;
+                tracks_count = tracks_count + total;
+                tracks_var = tracks_var + variance;
             end
             self.total_fruit_counts = self.total_fruit_counts + ...
-                                      deleted_tracks_count;
+                                      tracks_count;
             self.total_fruit_counts_variance = self.total_fruit_counts_variance + ...
-                deleted_tracks_var;
+                tracks_var;
+        end
+        
+        % Delete all existing counts and add it to total fruit counts
+        function finish(self)
+            if isempty(self.tracks), return; end
+            self.countTracks(self.tracks);          
         end
         
         % Draws a colored bounding box for each track on the frame

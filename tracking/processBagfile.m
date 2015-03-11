@@ -39,4 +39,5 @@ while bag.hasNext()
     [CC,counts,~] = detectFruit(model, image, scale);
     tracker.track(CC, image, counts);
 end
+tracker.finish();
 end

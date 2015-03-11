@@ -36,8 +36,8 @@ while bag.hasNext()
     image = imresize(image, scale);
     image = flipud(image);
     
-        [CC,counts,~] = detectFruit(model, image, scale);
-    tracker.track(CC, image,counts);
+    [CC, counts] = detectFruit(model, image, scale);
+    tracker.track(CC, image, counts);
     % get tracks
     prevCentroids = reshape([tracker.tracks.prev_centroid], 2, [])';
     curCentroids = reshape([tracker.tracks.last_centroid], 2, [])';
@@ -68,4 +68,7 @@ while bag.hasNext()
     drawnow;
     if use_pause, pause; end
 end
+
+tracker.finish();
+fprintf('Total counts: %g.\n', tracker.total_fruit_counts);
 end
