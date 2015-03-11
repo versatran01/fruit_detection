@@ -388,9 +388,17 @@ classdef FruitTracker < handle
             if isempty(self.deleted_tracks), return; end;
             ages = [self.deleted_tracks.age]';
             deleted_tracks_counts = ...
-                [self.deleted_tracks(ages > self.param.age_thresh).fruit_count];
+                [self.deleted_tracks(ages >= self.param.age_thresh).fruit_count];
             self.total_fruit_counts = self.total_fruit_counts + ...
                                       sum(deleted_tracks_counts);
+        end
+        
+        % Delete all existing counts and add it to total fruit counts
+        function finish(self)
+            if isempty(self.tracks), return; end
+            remaining_counts = sum([self.tracks.fruit_count]);
+            self.total_fruit_counts = self.total_fruit_counts + ...
+                                      remaining_counts;            
         end
         
         % Draws a colored bounding box for each track on the frame

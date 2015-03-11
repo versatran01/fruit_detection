@@ -171,7 +171,7 @@ corners = corners(inlier_ind, :);
 flow = flow(inlier_ind, :);
 
 % Just take the average if block_size is small enough
-if i == 1
+if i <= 2
     offset = mean(flow, 1);
     return;
 end
@@ -184,9 +184,10 @@ offset = flow(min_distance_ind, :);
 end
 
 function inlier_ind = findCornersWithinBlock(centroid, corners, block_size)
+block_size = block_size / 2;
 inlier_ind = ...
-    (centroid(1) < corners(:, 1) + block_size) & ...
-    (centroid(1) > corners(:, 1) - block_size) & ...
-    (centroid(2) < corners(:, 2) + block_size) & ...
-    (centroid(2) > corners(:, 2) - block_size);
+    (centroid(1) < (corners(:, 1) + block_size)) & ...
+    (centroid(1) > (corners(:, 1) - block_size)) & ...
+    (centroid(2) < (corners(:, 2) + block_size)) & ...
+    (centroid(2) > (corners(:, 2) - block_size));
 end
