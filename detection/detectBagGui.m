@@ -54,11 +54,15 @@ function detectBagGui_OpeningFcn(hObject, eventdata, handles, varargin)
 
 % Choose default command line output for detectBagGui
 handles.output = hObject;
-handles.data.model_dir = 'models';
-handles.data.original_image = [];
-handles.data.detection_image = [];
-handles.data.bboxPlots = [];
 
+% All custom variables will go into struct 'data'
+% All custom graphic objects will go into struct 'graphics'
+handles.data.model_dir = 'models';
+handles.graphics.original_image = [];
+handles.graphics.detection_image = [];
+handles.graphics.bboxes = [];
+
+% Initialize some ui components
 set(handles.play_pause_togglebutton, 'Enable', 'off')
 set(handles.time_slider, 'Enable', 'off')
 set(handles.reset_pushbutton, 'Enable', 'off')
@@ -167,20 +171,22 @@ guidata(hObject, handles)
 function handles = process_image(image, handles)
 scale = 0.4;
 image = imresize(image, scale);
-CC = detectFruit(handles.data.model, image, scale);
-mask = CC.image;
+[detections, counts] = detectFruit(handles.data.model, image, scale);
+mask = detections.image;
 
 % draw original image
-handles.data.original_image = ...
-    draw_image_on(handles.original_axes, ...
-                  handles.data.original_image, image);
+handles.graphics.original_image = ...
+    plotImageOnAxes(handles.original_axes, ...
+                    handles.graphics.original_image, image);
+set(handles.original_axes, 'YDir', 'Normal');
 
 %handles.data.tracker.track(CC, image);
 
 % draw mask
-handles.data.detection_image = ...
-    draw_image_on(handles.detection_axes, ...
-                  handles.data.detection_image, mask);
+handles.graphics.detection_image = ...
+    plotImageOnAxes(handles.detection_axes, ...
+                    handles.graphics.detection_image, mask);
+set(handles.detection_axes, 'YDir', 'Normal');
 
 function bag_path_text_CreateFcn(hObject, eventdata, handles)
 
@@ -296,15 +302,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), ...
 end
 
 %% Helper functions
-function image_handle = draw_image_on(axes, image_handle, image)
-if isempty(image_handle)
-    image_handle = imagesc(image, 'Parent', axes);
-    set(axes, 'YDir', 'normal');
-else
-    set(image_handle, 'CData', image);
-end
-drawnow;
-
 function model_name = getModelFromModelListbox(handle)
 model_ind = get(handle, 'Value');
 all_models = get(handle, 'String');
@@ -324,21 +321,6 @@ errors_string = ...
             model.errors(4));
 set(handles.model_errors_text, 'String', errors_string)
 set(handles.model_text, 'String', handles.data.model_name)
-
-
-function model_names = getAllModelNames(model_directory)
-model_names = {};
-listings = dir(model_directory);
-k = 1;
-for i = 1:numel(listings)
-    listing = listings(i);
-    if ~listing.isdir
-        if ~isempty(strfind(listing.name, '.mat'))
-            model_names{k} = listing.name;
-            k = k + 1;
-        end
-    end
-end
 
 
 % --- Executes on button press in show_bbox_checkbox.
