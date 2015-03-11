@@ -58,6 +58,7 @@ classdef FruitTracker < handle
         
         % Debug
         debug
+        verbose
         
         handles
     end
@@ -72,9 +73,11 @@ classdef FruitTracker < handle
     
     methods
         % Constructor
-        function self = FruitTracker(debug_status)
+        function self = FruitTracker(debug_status, verbose)
             if nargin < 1, debug_status = false; end
+            if nargin < 2, verbose = false; end
             self.debug.status = debug_status;
+            self.verbose = verbose;
             
             % Fruit tracker parameters
             % TODO: improve these parameters
@@ -123,7 +126,9 @@ classdef FruitTracker < handle
         % Track detections
         % detections - ConnectedComponents
         function track(self, detections, image, counts)
-            fprintf('========= Frame %g. =========\n', self.frame_counter);
+            if self.verbose
+                fprintf('========= Frame %g. =========\n', self.frame_counter);
+            end
             self.frame_counter = self.frame_counter + 1;
             self.image = image;
             self.detections = detections;
@@ -145,8 +150,10 @@ classdef FruitTracker < handle
         function calculateOpticalFlow(self)
             % Make current corners previous before start
             self.prev_corners = self.curr_corners;
-            fprintf('Number of old corners: %g.\n', ...
-                    size(self.prev_corners, 1));
+            if self.verbose
+             fprintf('Number of old corners: %g.\n', ...
+                        size(self.prev_corners, 1));
+            end
             
             [m, n, c] = size(self.image);
             
@@ -164,7 +171,9 @@ classdef FruitTracker < handle
                 prev_points = self.prev_corners(match_ind, :);
                 curr_points = curr_points(match_ind, :);
                 
-                self.debug.num_matches(end + 1) = nnz(match_ind);
+                if self.debug.status
+                    self.debug.num_matches(end + 1) = nnz(match_ind);
+                end
                 
                 % Fundamental matrix outlier rejection
                 if nnz(match_ind) > 8 * 2.5
@@ -188,10 +197,14 @@ classdef FruitTracker < handle
                     inlier_ind = match_ind;
                 end
                 
-                self.debug.num_inliers(end + 1) = nnz(inlier_ind);
+                if self.debug.status
+                    self.debug.num_inliers(end + 1) = nnz(inlier_ind);
+                end
                 
                 % DEBUG_START %
-                fprintf('Number of flow: %g\n', size(self.flow, 1));
+                if self.verbose
+                    fprintf('Number of flow: %g\n', size(self.flow, 1));
+                end
                 % Plot optical flow
                 if self.debug.status
                     self.handles.flow = ...
@@ -217,14 +230,18 @@ classdef FruitTracker < handle
                                     self.param.pyramid_levels);
             self.klt_tracker.initialize(self.curr_corners, gray);
             
-            fprintf('Number of new corners: %g.\n', ...
+            if self.verbose
+                fprintf('Number of new corners: %g.\n', ...
                     size(self.curr_corners, 1));
+            end
         end
         
         % Predict new locations of each track using kalman filter
         function predictNewLocationsOfTracks(self)
-            fprintf('Predicting new locations for %g tracks.\n', ...
+            if self.verbose
+             fprintf('Predicting new locations for %g tracks.\n', ...
                     self.num_tracks);
+            end
             for i = 1:self.num_tracks
                 track = self.tracks(i);
                 % Predict the current location of the track
@@ -257,21 +274,25 @@ classdef FruitTracker < handle
                 1 + self.param.gating_cost;
             
             % Solve the assignment problem
-            fprintf('Assigning %g detections to %g tracks.\n', ...
-                    size(self.detections.BoundingBox, 1), ...
-                    self.num_tracks);
+            if self.verbose
+                fprintf('Assigning %g detections to %g tracks.\n', ...
+                        size(self.detections.BoundingBox, 1), ...
+                        self.num_tracks);
+            end
                 
             [self.assignments, ...
              self.unassigned_tracks, ...
              self.unassigned_detections] = ...
                 assignDetectionsToTracks(cost, ...
                                          self.param.cost_non_assignment);
-                                     
-            fprintf('%g detections assgined to %g tracks.\n', ...
-                    size(self.assignments, 1), size(self.assignments, 1));
-            fprintf('%g unassigned tracks, %g unassigned detections.\n' , ...
-                    numel(self.unassigned_tracks), ...
-                    numel(self.unassigned_detections));
+                             
+            if self.verbose
+                fprintf('%g detections assgined to %g tracks.\n', ...
+                        size(self.assignments, 1), size(self.assignments, 1));
+                fprintf('%g unassigned tracks, %g unassigned detections.\n' , ...
+                        numel(self.unassigned_tracks), ...
+                        numel(self.unassigned_detections));
+            end
         end
         
         % Updates each assigned track with the corresponding detection
@@ -350,8 +371,10 @@ classdef FruitTracker < handle
                          (out_of_image | ...
                          ave_confidences < self.param.confidence_thresh);
             lost_idx = lost_idx_1 | lost_idx_2;
-                          
-            fprintf('Number of tracks to delete: %g.\n', nnz(lost_idx));
+                  
+            if self.verbose
+                fprintf('Number of tracks to delete: %g.\n', nnz(lost_idx));
+            end
             
             % Collect deleted tracks
             self.deleted_tracks = self.tracks(lost_idx);
