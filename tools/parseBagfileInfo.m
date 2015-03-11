@@ -98,6 +98,11 @@ for i=1:numInputs
 end
 
 % generate output
+rows = num2cell(rows);
+startTimes = num2cell(startTimes);
+endTimes = num2cell(endTimes);
+found = num2cell(found);
+directions = num2cell(directions);
 info = struct('inputName', inputNames, 'direction', directions,...
     'fileName', fileNames, 'path', paths, 'found', found, 'row', rows, ...
     'startTime', startTimes, 'endTime', endTimes);
