@@ -76,8 +76,8 @@ classdef FruitTracker < handle
     methods
         % Constructor
         function self = FruitTracker(debug_status, verbose)
-            if nargin < 1, debug_status = false; end
-            if nargin < 2, verbose = false; end
+            if nargin < 2, debug_status = false; end
+            if nargin < 3, verbose = false; end
             self.debug.status = debug_status;
             self.verbose = verbose;
             
@@ -108,22 +108,20 @@ classdef FruitTracker < handle
             
             % Debug stuff
             if self.debug.status
-                self.handles.fig = figure();
-                self.debug.axes = axes();
                 % Number of matches before estimateFundamentalMatrix
                 self.debug.num_matches = [];
                 % Number of matches after estimateFundamentalMatrix
                 self.debug.num_inliers = [];
-                % All graphic handles
-                self.handles.image = [];
-                self.handles.detections = [];
-                self.handles.new_tracks = [];
-                self.handles.young_tracks = [];
-                self.handles.valid_tracks = [];
-                self.handles.predicted_tracks = [];
-                self.handles.predictions = [];
-                self.handles.flow = [];
             end
+            
+            % All graphic handles
+            self.handles.axes = [];
+            self.handles.optical_flow = [];
+            self.handles.detections = [];
+            self.handles.predictions = [];
+            self.handles.new_tracks = [];
+            self.handles.young_tracks = [];
+            self.handles.valid_tracks = [];
         end
         
         % Track detections
@@ -132,6 +130,7 @@ classdef FruitTracker < handle
             if self.verbose
                 fprintf('========= Frame %g. =========\n', self.frame_counter);
             end
+            if nargin < 4, counts = ones(detections.size(), 1); end
             self.frame_counter = self.frame_counter + 1;
             self.image = image;
             self.detections = detections;
@@ -146,7 +145,7 @@ classdef FruitTracker < handle
             self.deleteLostTracks();
             self.createNewTracks();
             self.updateTotalFruitCounts();
-            self.displayTrackingResults(true);
+%             self.displayTrackingResults(true);
         end
         
         % Optical flow
@@ -207,15 +206,6 @@ classdef FruitTracker < handle
                 % DEBUG_START %
                 if self.verbose
                     fprintf('Number of flow: %g\n', size(self.flow, 1));
-                end
-                % Plot optical flow
-                if self.debug.status
-                    self.handles.flow = ...
-                        plotQuiverOnAxes(self.debug.axes, ...
-                                         self.handles.flow, ...
-                                         self.prev_corners, ...
-                                         self.curr_corners, ...
-                                         'm');
                 end
             end
             
@@ -300,7 +290,8 @@ classdef FruitTracker < handle
                              
             if self.verbose
                 fprintf('%g detections assgined to %g tracks.\n', ...
-                        size(self.assignments, 1), size(self.assignments, 1));
+                        size(self.assignments, 1), ...
+                        size(self.assignments, 1));
                 fprintf('%g unassigned tracks, %g unassigned detections.\n' , ...
                         numel(self.unassigned_tracks), ...
                         numel(self.unassigned_detections));
@@ -387,7 +378,8 @@ classdef FruitTracker < handle
             lost_idx = lost_idx_1 | lost_idx_2;
                   
             if self.verbose
-                fprintf('Number of tracks to delete: %g.\n', nnz(lost_idx));
+                fprintf('Number of tracks to delete: %g.\n', ...
+                        nnz(lost_idx));
             end
             
             % Collect deleted tracks
@@ -435,7 +427,7 @@ classdef FruitTracker < handle
         
         function countTracks(self, countable_tracks)
             tracks_count = 0;
-            tracks_var = 0;
+            tracks_variance = 0;
             
             % take all the counts from this track and combine them
             for i=1:numel(countable_tracks)
@@ -444,38 +436,92 @@ classdef FruitTracker < handle
                 
                 % increment both count and the variance
                 tracks_count = tracks_count + total;
-                tracks_var = tracks_var + variance;
+                tracks_variance = tracks_variance + variance;
             end
             self.total_fruit_counts = self.total_fruit_counts + ...
                                       tracks_count;
-            self.total_fruit_counts_variance = self.total_fruit_counts_variance + ...
-                tracks_var;
+            self.total_fruit_counts_variance = ...
+                self.total_fruit_counts_variance + tracks_variance;
         end
         
         % Delete all existing counts and add it to total fruit counts
         function finish(self)
-            if self.debug.status, close(self.handles.fig); end
             if isempty(self.tracks), return; end
             self.countTracks(self.tracks);          
         end
         
-        % Draws a colored bounding box for each track on the frame
-        function displayTrackingResults(self, show_predict)
-            if nargin < 2, show_predict = false; end
+        
+        % Visualize tracker
+        function visualize(self, ax, option)
+            if nargin < 3
+                option.show_detection_bbox = true;
+                option.show_predicted_bbox = true;
+                option.show_track = true;
+                option.show_last_bbox = true;
+                option.show_optical_flow = true;
+            end
+            if nargin < 2, ax = axes(); end
             
-            if self.debug.status
-                self.handles.image = ...
-                    plotImageOnAxes(self.debug.axes, self.handles.image, ...
-                                    self.image);
-               % set(self.debug.axes, 'YDir', 'Normal');
-                % Plot current detections in purple
+            self.handles.axes = ax;
+            
+            % Optical flow
+            if option.show_optical_flow
+                self.plotOpticalFlow();
+            end
+            
+            % Detection bounding box
+            if option.show_detection_bbox
                 if ~self.detections.isempty()
+                    detection_bboxes = ...
+                        reshape(self.detections.BoundingBox, 4, [])';
                     self.handles.detections = ...
-                        plotCentroidsOnAxes(self.debug.axes, ...
-                                            self.handles.detections, ...
-                                            self.detections.Centroid, 'm+', 3);
+                        plotBboxesOnAxes(self.handles.axes, ...
+                                         self.handles.detections, ...
+                                         detection_bboxes, 'y');
                 end
             end
+            
+            % Prediction bounding box
+            if option.show_predicted_bbox
+                if ~isempty(self.tracks)
+                    % Plot predicted bbox
+                    predicted_bboxes = ...
+                        reshape([self.tracks.predicted_bbox], 4, [])';
+                    self.handles.predicted_tracks = ...
+                        plotBboxesOnAxes(self.handles.axes, ...
+                                         self.handles.predicted_tracks, ...
+                                         predicted_bboxes, 'b', 0, 1);
+                    % Plot arrows
+                    prev_centroids = ...
+                        reshape([self.tracks.prev_centroid], 2, [])';
+                    last_centroids = ...
+                        reshape([self.tracks.last_centroid], 2, [])';
+                    self.handles.predictions = ...
+                        plotQuiverOnAxes(self.handles.axes, ...
+                                         self.handles.predictions, ...
+                                         prev_centroids, ...
+                                         last_centroids - prev_centroids, ...
+                                         'b');
+                end
+            end
+        end
+        
+        % Plot optical flow
+        function plotOpticalFlow(self)
+            if isempty(self.prev_corners) || size(self.flow, 1) == 1,
+                return
+            end
+            self.handles.optical_flow = ...
+                       plotQuiverOnAxes(self.handles.axes, ...
+                                        self.handles.optical_flow, ...
+                                        self.prev_corners, ...
+                                        self.flow, ...
+                                        'm');
+        end
+        
+        % Draws a colored bounding box for each track on the frame
+        function displayTrackingResults(self, show_predict)
+           
             
             if isempty(self.tracks), return; end   
             
@@ -555,15 +601,15 @@ classdef FruitTracker < handle
     
 end
 
-function handle = plotQuiverOnAxes(ax, handle, xy1, xy2, color)
-uv = xy2 - xy1;
+function handle = plotQuiverOnAxes(ax, handle, xy, uv, color)
 if isempty(handle) || ~isgraphics(handle)
     hold(ax, 'on');
-    handle = quiver(ax, xy1(:, 1), xy1(:, 2), uv(:, 1), uv(:, 2), 0, ...
-                    'Color', color);
+    handle = quiver(ax, xy(:, 1), xy(:, 2), uv(:, 1), uv(:, 2), ...
+                    0, 'Color', color);
     hold(ax, 'off');
 else
-    set(handle, 'XData', xy1(:, 1), 'YData', xy1(:, 2), ...
+    set(handle, ...
+        'XData', xy(:, 1), 'YData', xy(:, 2), ...
         'UData', uv(:, 1), 'VData', uv(:, 2));
 end
 end
