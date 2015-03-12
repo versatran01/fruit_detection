@@ -117,11 +117,11 @@ classdef FruitTracker < handle
             % All graphic handles
             self.handles.axes = [];
             self.handles.optical_flow = [];
-            self.handles.detections = [];
+            self.handles.detection_bbox = [];
+            self.handles.predicted_bbox = [];
             self.handles.predictions = [];
-            self.handles.new_tracks = [];
-            self.handles.young_tracks = [];
-            self.handles.valid_tracks = [];
+            self.handles.young_bbox = [];
+            self.handles.valid_bbox = [];
         end
         
         % Track detections
@@ -467,33 +467,65 @@ classdef FruitTracker < handle
             self.handles.axes = ax;
             
             % Optical flow
-            if option.show_optical_flow
-                self.plotOpticalFlow();
-            end
+            self.plotOpticalFlow(option.show_optical_flow);
             
             % Detection bounding box
-            if option.show_detection_bbox
-                if ~self.detections.isempty()
-                    detection_bboxes = ...
-                        reshape(self.detections.BoundingBox, 4, [])';
-                    self.handles.detections = ...
-                        plotBboxesOnAxes(self.handles.axes, ...
-                                         self.handles.detections, ...
-                                         detection_bboxes, 'y');
-                end
-            end
+            self.plotDetectionBbox(option.show_detection_bbox);
             
             % Prediction bounding box
-            if option.show_predicted_bbox
+            self.plotPredictedBbox(option.show_predicted_bbox);
+           
+            % Last bounding box
+            self.plotLastBbox(option.show_last_bbox);
+        end
+        
+        % Plot optical flow
+        function plotOpticalFlow(self, enable)
+            if isempty(self.prev_corners) || size(self.flow, 1) == 1,
+                return
+            end
+            if enable
+                set(self.handles.optical_flow, 'Visible', 'on');
+                self.handles.optical_flow = ...
+                    plotQuiverOnAxes(self.handles.axes, ...
+                                     self.handles.optical_flow, ...
+                                     self.prev_corners, ...
+                                     self.flow, ...
+                                     'm');
+            else
+                setXYDataEmpty(self.handles.optical_flow);
+                setUVDataEmpty(self.handles.optical_flow);
+                set(self.handles.optical_flow, 'Visible', 'off');
+            end
+        end
+        
+        % Plot detection bounding box
+        function plotDetectionBbox(self, enable)
+            if enable
+                if ~self.detections.isempty()
+                    self.handles.detection_bbox = ...
+                        plotBboxesOnAxes(self.handles.axes, ...
+                                         self.handles.detection_bbox, ...
+                                         self.detections.BoundingBox, 'y');
+                end
+            else
+                setXYDataEmpty(self.handles.detection_bbox);
+            end
+        end
+        
+        % Plot predicted bounding box and arrow
+        function plotPredictedBbox(self, enable)
+            if enable
                 if ~isempty(self.tracks)
                     % Plot predicted bbox
                     predicted_bboxes = ...
                         reshape([self.tracks.predicted_bbox], 4, [])';
-                    self.handles.predicted_tracks = ...
+                    self.handles.predicted_bbox = ...
                         plotBboxesOnAxes(self.handles.axes, ...
-                                         self.handles.predicted_tracks, ...
+                                         self.handles.predicted_bbox, ...
                                          predicted_bboxes, 'b', 0, 1);
                     % Plot arrows
+                    set(self.handles.predictions, 'Visible', 'on');
                     prev_centroids = ...
                         reshape([self.tracks.prev_centroid], 2, [])';
                     last_centroids = ...
@@ -505,22 +537,39 @@ classdef FruitTracker < handle
                                          last_centroids - prev_centroids, ...
                                          'b');
                 end
+            else
+                setXYDataEmpty(self.handles.predictions);
+                setUVDataEmpty(self.handles.predictions);
+                setXYDataEmpty(self.handles.predicted_bbox);
+                set(self.handles.predictions, 'Visible', 'off');
             end
         end
         
-        % Plot optical flow
-        function plotOpticalFlow(self)
-            if isempty(self.prev_corners) || size(self.flow, 1) == 1,
-                return
+        function plotLastBbox(self, enable)
+            if enable
+                if ~isempty(self.tracks)
+                    if ~isempty(self.young_tracks)
+                        young_bboxes = ...
+                            reshape([self.young_tracks.last_bbox], 4, [])';
+                        self.handles.young_bbox = ...
+                            plotBboxesOnAxes(self.handles.axes, ...
+                            self.handles.young_bbox, ...
+                            young_bboxes, 'r', 0, 1);
+                    end
+                    if ~isempty(self.valid_tracks)
+                        valid_bboxes = ...
+                            reshape([self.valid_tracks.last_bbox], 4, [])';
+                        self.handles.valid_bbox = ...
+                            plotBboxesOnAxes(self.handles.axes, ...
+                            self.handles.valid_bbox, ...
+                            valid_bboxes, 'c', 0, 1);
+                    end
+                end
+            else
+                setXYDataEmpty(self.handles.young_bbox);
+                setXYDataEmpty(self.handles.valid_bbox);
             end
-            self.handles.optical_flow = ...
-                       plotQuiverOnAxes(self.handles.axes, ...
-                                        self.handles.optical_flow, ...
-                                        self.prev_corners, ...
-                                        self.flow, ...
-                                        'm');
         end
-        
         % Draws a colored bounding box for each track on the frame
         function displayTrackingResults(self, show_predict)
            
@@ -613,5 +662,17 @@ else
     set(handle, ...
         'XData', xy(:, 1), 'YData', xy(:, 2), ...
         'UData', uv(:, 1), 'VData', uv(:, 2));
+end
+end
+
+function setXYDataEmpty(handle)
+if isgraphics(handle)
+    set(handle, 'Xdata', [], 'YData', []);
+end
+end
+
+function setUVDataEmpty(handle)
+if isgraphics(handle)
+    set(handle, 'UData', [], 'VData', []);
 end
 end
