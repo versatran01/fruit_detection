@@ -127,6 +127,10 @@ classdef ConnectedComponents < handle
         
         function value = get.BoundingArea(self)
             bbox = self.BoundingBox();
+            if isempty(bbox)
+                value  = [];
+                return;
+            end
             value = bbox(:,3) .* bbox(:,4);
         end
         
