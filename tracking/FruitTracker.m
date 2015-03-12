@@ -62,6 +62,7 @@ classdef FruitTracker < handle
         verbose
         
         handles
+        initialized = false;
     end
     
     properties(Dependent)
@@ -69,7 +70,6 @@ classdef FruitTracker < handle
         young_tracks
         valid_tracks
         num_tracks
-        initialized
     end
     
     methods
@@ -260,9 +260,9 @@ classdef FruitTracker < handle
             % of assigning each detection to each track. The cost is
             % minimum when the predicted bbox is perfectly aligned with the
             % detected boox (overlap ratio is 1)
-            if ~self.initialized,
-                self.unassigned_detections = ...
-                    1:self.detections.size();
+            if ~self.initialized && ~self.detections.isempty()
+                self.unassigned_detections = 1:self.detections.size();
+                self.initialized = true;
                 return;
             end
             
@@ -353,7 +353,7 @@ classdef FruitTracker < handle
         % 3. It failed to receive a strong detection within the past few
         % frames
         function deleteLostTracks(self)
-            if ~self.initialized, return; end
+            if isempty(self.tracks), return; end
             
             % Compute the fraction of the track's age for which it was
             % visible
@@ -526,11 +526,6 @@ classdef FruitTracker < handle
         % Getter: num_tracks
         function n = get.num_tracks(self)
             n = numel(self.tracks);
-        end
-        
-        % Getter: initialized
-        function init = get.initialized(self)
-            init = ~isempty(self.tracks);
         end
         
         % Getter: new_tracks
