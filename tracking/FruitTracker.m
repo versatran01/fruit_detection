@@ -108,7 +108,7 @@ classdef FruitTracker < handle
             
             % Debug stuff
             if self.debug.status
-                figure(2);
+                self.handles.fig = figure();
                 self.debug.axes = axes();
                 % Number of matches before estimateFundamentalMatrix
                 self.debug.num_matches = [];
@@ -454,6 +454,7 @@ classdef FruitTracker < handle
         
         % Delete all existing counts and add it to total fruit counts
         function finish(self)
+            if self.debug.status, close(self.handles.fig); end
             if isempty(self.tracks), return; end
             self.countTracks(self.tracks);          
         end
