@@ -265,6 +265,15 @@ classdef FruitTracker < handle
                     1:self.detections.size();
                 return;
             end
+            
+            % Handle 0 detections
+            if self.detections.isempty()
+                self.assignments = [];
+                self.unassigned_tracks = 1:numel(self.tracks);
+                self.unassigned_detections = [];
+                return;
+            end
+            
             predicted_bboxes = reshape([self.tracks.predicted_bbox], ...
                                        4, [])';
             cost = 1 - bboxOverlapRatio(predicted_bboxes, ...
