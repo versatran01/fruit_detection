@@ -6,7 +6,7 @@ viz = true;
 
 load('models/cs_svc.mat');
 
-scale = 0.5;
+scale = 0.7;
 detector = @(image,s)detectFruit(model, image, s);
 tester = DetectionTester(dataset, detector, viz);
 tester.rotate = false;
