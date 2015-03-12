@@ -1,0 +1,53 @@
+Row	Side	Bagfile	start time	end time	comments
+26	N	t26n_steadicam_v5_2015-02-19-19-36-19.bag	0.55	5.47	good
+26	S	t26s_steadicam_v5_2015-02-19-19-36-50.bag	1.74	6.91	good 
+25	N	t25n_steadicam_v5_2015-02-19-13-30-43.bag	2.94	7.98	sunglare
+25	S	t25s_steadicam_v5_2015-02-19-13-29-09.bag	4.05	8.55	bright (might have false positives due to leaves)
+24	N	t24n_steadicam_v5_2015-02-19-19-37-51.bag	1.21	5.85	good 
+24	S	t24s_steadicam_v5_2015-02-19-19-38-30.bag	0.3	4.16	bright (might have false positives due to leaves)
+23	N	t23n_steadicam_v5_2015-02-19-19-34-22.bag	1.46	5.9	good 
+23	S	t23s_steadicam_v5_2015-02-19-19-33-40.bag	0.53	5.4	a bit bright/overexposed
+22	N	t22n_steadicam_v5_2015-02-19-19-39-01.bag	0.8	5.48	good expposure, a bit close to canopy
+22	S	t22s_steadicam_v5_2015-02-19-19-39-26.bag	0.567	4.97	bright/parts overexposed
+21	N	t21n_steadicam_v5_2015-02-19-13-27-20.bag	3.63	8.21	some sun glare
+21	S	t21s_steadicam_v5_2015-02-19-13-25-39.bag	1.8	6.77	bright/parts overexposed
+20	N	t20n_steadicam_v5_2015-02-19-19-39-59.bag	0.499	4.05	good
+20	S	t20s_steadicam_v5_2015-02-19-19-40-21.bag	5.75	9.37	
+19	N	t19n_steadicam_v5_2015-02-19-19-32-39.bag	7.25	12.17	good
+19	S	t19s_steadicam_v5_2015-02-19-19-32-06.bag	1.76	6.26	bright/ partly overexposed
+18	N	t18n_steadicam_v5_2015-02-19-19-41-56.bag	0.89	5.84	good
+18	S	t18s_steadicam_v5_2015-02-19-19-42-27.bag	1.42	6.04	bright/partly overexposed 
+17	N	t17n_steadicam_v5_2015-02-19-13-22-59.bag	6.91	14	shadow
+17	S	t17s_steadicam_v5_2015-02-19-13-21-45.bag	8.6	13.37	bright/partly overexposed 
+16	N	t16n_steadicam_v5_2015-02-19-19-43-04.bag	0.93	4.73	good
+16	S	t16s_steadicam_v5_2015-02-19-19-43-29.bag	6.6	11.37	bright/partly overexposed
+15	N	t15n_steadicam_v5_2015-02-19-19-31-22.bag	6.63	11.2	good, motion a bit fast
+15	S	t15s_steadicam_v5_2015-02-19-19-30-42.bag	0	6.28	good
+14	N	t14n_steadicam_v5_2015-02-19-19-43-54.bag  	6.27	10.96	good, canopy too close. vertically, not all fruits visible 
+14	S	t14s_steadicam_v5_2015-02-19-19-44-21.bag	1	5.53	good, motion a bit fast
+13	N	t13n_steadicam_v5_2015-02-19-13-20-08.bag  	2.17	7.92	moderate sunglare
+13	S	t13s_steadicam_v5_2015-02-19-13-18-24.bag  	3.62	8.05	bright/partly overexposed 
+12	N	t12n_steadicam_v5_2015-02-19-19-44-50.bag 	0.46	4.4	good
+12	S	t12s_steadicam_v5_2015-02-19-19-45-12.bag	1.46	5.88	good
+11	N	t11n_steadicam_v5_2015-02-19-19-29-55.bag	1	5.3	good
+11	S	t11s_steadicam_v5_2015-02-19-19-29-06.bag	1.3	6.1	bright/partly overexposed 
+10	N	t10n_steadicam_v5_2015-02-19-19-45-36.bag   	1.8	6.5	good
+10	S	t10s_steadicam_v5_2015-02-19-19-45-59.bag	0.499	5.39	bright/partly overexposed
+9	N	t9n_steadicam_v5_2015-02-19-13-16-27.bag 	3.06	8.09	some sunglare
+9	S	t9s_steadicam_v5_2015-02-19-13-14-35.bag	3.02	6.85	bright/partly overexposed
+8	N	t8n_steadicam_v5_2015-02-19-19-46-39.bag 	0.6	5.52	good
+8	S	t8s_steadicam_v5_2015-02-19-19-47-07.bag	0.45	5.43	good
+7	N	t7n_steadicam_v5_2015-02-19-19-27-53.bag 	1.94	6.2	good
+7	S	t7s_steadicam_v5_2015-02-19-19-26-56.bag	1.41	5.35	bright/overexposed
+6	N	t6n_steadicam_v5_2015-02-19-19-47-39.bag	1.46	5.74	good
+6	S	t6s_steadicam_v5_2015-02-19-19-48-06.bag	1.09	5.17	bit bright, not too bad 
+5	N	t5n_steadicam_v5_2015-02-19-13-11-57.bag	2.63	8.68	sunglare
+5	S	t5s_steadicam_v5_2015-02-19-13-09-46.bag	9.05	15.26	shadows
+4	N	t4n_steadicam_v5_2015-02-19-19-48-33.bag  	0.64	5.33	good
+4	S	t4s_steadicam_v5_2015-02-19-19-48-59.bag	0.7	4.35	good, some bright overexposed oranges and leaves
+3	N	t3n_steadicam_v5_2015-02-19-19-25-50.bag 	0.41	5.85	good
+3	S	t3s_steadicam_v5_2015-02-19-19-24-26.bag	0.33	5.09	bright/overexposed
+2	N	t2n_steadicam_v5_2015-02-19-19-49-35.bag 	0.66	5.29	good
+2	S	t2s_steadicam_v5_2015-02-19-19-49-56.bag	0.46	5.02	bright/overexposed
+1	N	t1n_steadicam_v5_2015-02-19-12-57-15.bag	10.3	16.13	some sun glare
+1	S	t1s_steadicam_v5_2015-02-19-12-55-10.bag	5.17	8.44	lot of sunlight, bright, interesting test case. 

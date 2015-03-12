@@ -10,7 +10,9 @@ params.mask_threshold = 0.5;
 % Size of the erosion filter to apply before processing.
 params.erode_size = 0;
 % Minimum filled number of pixels to retain a blob.
-params.area_thresh = 5;
+params.min_area_thresh = 5;
+% Maximum filled number of pixels, above which blobs are discarded.
+params.max_area_thresh = 100000;
 % Distance between centroids below which merging will occur (once).
 params.merge_distance_thresh = 30;
 % Minimum bbox overlap required to trigger merging of blobs.
@@ -41,7 +43,7 @@ params.circle_min_inlier_score = 0;
 % Fraction of circle which must be filled with positive pixels.
 params.circle_min_fill_ratio = 0.35;
 % Minimum amount of a bbox which must be filled by circles.
-params.min_bbox_circle_frac = 0.1;
+params.min_bbox_circle_frac = 0.10;
 % Enables some debug-only components.
 params.debug = false;
 
@@ -70,7 +72,7 @@ CC = ConnectedComponents(mask);
 
 % throw away components below a very low threshold of area
 area = CC.Area();
-large = area > ceil(params.area_thresh * areaScale);
+large = area > ceil(params.min_area_thresh * areaScale);
 CC.discard(~large);
 
 % calculate distance between centroids
@@ -117,6 +119,11 @@ while true && ~CC.isempty()
     % merge them...
     CC.merge(overlap);
 end
+
+% throw away large stuff
+area = CC.Area();
+small = area < ceil(params.max_area_thresh * areaScale);
+CC.discard(~small);
 
 % perform segmentation of blobs...
 [CC,counts,circles] = segmentComponents(CC, image, scale, params);
