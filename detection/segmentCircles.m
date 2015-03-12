@@ -26,7 +26,7 @@ points = [x y];
 points = bsxfun(@minus,points,[1 1]);
 
 num_points = size(points,1);
-if num_points < max( params.min_edge_points * scale, params.min_inliers_absolute )
+if num_points <= max( params.min_edge_points * scale, params.min_inliers_absolute )
     % too few points, we can't fit this very well
     return;
 end
