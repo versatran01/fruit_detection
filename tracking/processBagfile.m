@@ -17,7 +17,11 @@ assert(duration(1) < duration(2), 'Invalid duration');
 
 bag = ros.Bag(path);
 duration = duration + bag.time_begin;
-bag.resetView(bag.topics, duration(1), duration(2));
+if duration(2) == 0
+    bag.resetView(bag.topics);
+else
+    bag.resetView(bag.topics, duration(1), duration(2));
+end
 
 topic_name = '/color/image_rect_color';
 idx = ismember(bag.topics, topic_name);
