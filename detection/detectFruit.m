@@ -9,10 +9,12 @@ function [ CC, counts, circles ] = detectFruit( pixel_model, image, scale )
 params.mask_threshold = 0.5;
 % Size of the erosion filter to apply before processing.
 params.erode_size = 0;
-% Minimum filled number of pixels to retain a blob.
-params.min_area_thresh = 8;
-% Maximum filled number of pixels, above which blobs are discarded.
-params.max_area_thresh = 100000;
+% Minimum filled number of pixels to retain a blob. (used to be 5)
+params.min_area_thresh = 35;
+% Maximum number of pixels in bbox, above which blobs are discarded.
+params.max_area_thresh = 75000;
+% Number of merged blobs considered 'too many'. These are removed.
+params.max_merged_blobs = 10;
 % Distance between centroids below which merging will occur (once).
 params.merge_distance_thresh = 30;
 % Minimum bbox overlap required to trigger merging of blobs.
@@ -22,11 +24,11 @@ params.min_edge_points = 20;
 % Minimum number of inliers required to fit a circle (pixels).
 params.min_inliers_absolute = 6;
 % Minimum number of inliers required to fit a circle (percentage).
-params.min_inliers_frac = 0.03; % 0.03
+params.min_inliers_frac = 0.03;
 % Total max iterations allowed when fitting circles.
 params.max_iterations_absolute = 300000;
-% Inlier threshold when fitting, in pixels.
-params.inlier_threshold = 8; % 10
+% Inlier error threshold when fitting, in pixels.
+params.inlier_threshold = 8;
 % Number of successful fits to trigger early exit.
 params.early_exit_threshold = 500;
 % Threshold below which circles are merged when fitting.
@@ -69,13 +71,13 @@ end
 
 % find connected components
 CC = ConnectedComponents(mask);
+CC.sort('Area', 'descend');
 
 % throw away components below a very low threshold of area
 area = CC.Area();
-large = area > ceil(params.min_area_thresh^2 * areaScale);
+large = area > ceil(params.min_area_thresh * areaScale);
 CC.discard(~large);
 
-%{
 % calculate distance between centroids
 centroids = CC.Centroid();
 dist = pdist2(centroids, centroids, 'euclidean');
@@ -122,11 +124,11 @@ while true && ~CC.isempty()
 end
 
 % throw away large stuff
-area = CC.Area();
+area = CC.BoundingArea();
 small = area < ceil(params.max_area_thresh * areaScale);
-CC.discard(~small);
+busy = CC.counts() >= params.max_merged_blobs;
+CC.discard(~small | busy);
 
 % perform segmentation of blobs...
 [CC,counts,circles] = segmentComponents(CC, image, scale, params);
-%}
 end
