@@ -187,7 +187,7 @@ guidata(hObject, handles)
 
 function handles = process_image(image, handles)
 image = imresize(image, handles.data.scale);
-[detections] = detectFruit(handles.data.model, image, handles.data.scale);
+[detections, counts] = detectFruit(handles.data.model, image, handles.data.scale);
 mask = detections.image;
 
 % draw original image
@@ -196,7 +196,7 @@ handles.graphics.original_image = ...
                     handles.graphics.original_image, image);
 set(handles.original_axes, 'YDir', 'Normal');
 
-handles.data.tracker.track(detections, image);
+handles.data.tracker.track(detections, image, counts);
 handles.data.tracker.visualize(handles.original_axes, ...
                                handles.option);
 
