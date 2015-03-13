@@ -6,6 +6,9 @@ classdef FruitTracker < handle
         
         image  % Current image
         
+        % Cost calculator method, see overlapCost for example
+        cost_calculator = @overlapCost;
+        
         % An integer that will be incremented and assigned to each newly
         % created track
         track_counter
@@ -277,15 +280,22 @@ classdef FruitTracker < handle
                 return;
             end
             
+            % convert into Nx4 format...
+            previous_bboxes = reshape([self.tracks.prev_bbox], ...
+                4, [])';
             predicted_bboxes = reshape([self.tracks.predicted_bbox], ...
                                        4, [])';
-            cost = 1 - bboxOverlapRatio(predicted_bboxes, ...
-                                        self.detections.BoundingBox);
+                                   
+            % delegate cost calculation
+            [cost,use_gating] = self.cost_calculator(previous_bboxes,...
+                predicted_bboxes, self.detections);
             
             % Force the optimization step to ignore some matches by setting
             % the associated cost to be a large number.
-            cost(cost > self.param.gating_thresh) = ...
-                1 + self.param.gating_cost;
+            if use_gating
+                cost(cost > self.param.gating_thresh) = ...
+                    1 + self.param.gating_cost;
+            end
             
             % Solve the assignment problem
             if self.verbose
