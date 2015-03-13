@@ -9,7 +9,7 @@ function [ bag_results ] = countBagfiles(bagfiles_dir, varargin)
 input_parser = inputParser;
 
 % We need to know how many rows are there
-bag_helpers = parseBagfileInfo('data/trees.tsv', bagfiles_dir);
+bag_helpers = parseBagfileInfo('data/trees_n.tsv', bagfiles_dir);
 
 % Parse input arguments
 default_rows = unique([bag_helpers.row]);

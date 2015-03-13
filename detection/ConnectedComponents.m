@@ -3,6 +3,7 @@ classdef ConnectedComponents < handle
     
     properties
         image       % mask of pixels used to find components
+        counts      % number of (connected) blobs in each component
     end
     
     properties(Access=private)
@@ -28,6 +29,7 @@ classdef ConnectedComponents < handle
             end
             self.image = image;
             self.CC = bwconncomp(image,8);
+            self.counts = ones(self.CC.NumObjects, 1);
         end
         
         function discard(self, index)
@@ -37,6 +39,7 @@ classdef ConnectedComponents < handle
             % update CC
             self.CC.PixelIdxList(index) = [];
             self.CC.NumObjects = numel(self.CC.PixelIdxList);
+            self.counts(index) = [];
         end
         
         function merge(self, map)
@@ -54,6 +57,7 @@ classdef ConnectedComponents < handle
             nCC = struct('Connectivity', self.CC.Connectivity,...
                 'ImageSize', self.CC.ImageSize);
             nCC.PixelIdxList = {};
+            totals = [];
             for i=1:size(map,1)
                 cols = find(map(i,:));
                 if ~isempty(cols)
@@ -61,10 +65,12 @@ classdef ConnectedComponents < handle
                     cells = self.CC.PixelIdxList(cols)';
                     % merge them
                     nCC.PixelIdxList{end+1} = cell2mat(cells);
+                    totals(end+1) = sum(self.counts(cols));
                 end
             end
             nCC.NumObjects = numel(nCC.PixelIdxList);
             self.CC = nCC;
+            self.counts = reshape(totals, numel(totals), 1);
         end
         
         function reorder(self, indices)
@@ -72,6 +78,7 @@ classdef ConnectedComponents < handle
                 error('Dimension mismatch');
             end
             self.CC.PixelIdxList = self.CC.PixelIdxList(indices);
+            self.counts = self.counts(indices);
         end
         
         function sort(self, key, order)
@@ -84,7 +91,7 @@ classdef ConnectedComponents < handle
             value = self.(key);
             % sort by values
             [~,idx] = sort(value, order);
-            self.CC.PixelIdxList = self.CC.PixelIdxList(idx);
+            self.reorder(idx);
         end
         
         function [fig] = plot(self, bgimage, fig)
@@ -109,10 +116,16 @@ classdef ConnectedComponents < handle
                 
                 cx = bbox(i,1) + bbox(i,3)*0.5;
                 cy = bbox(i,2) + bbox(i,4)*0.5;
-                h = text(cx,cy,num2str(i));
+                h = text(cx,cy,sprintf('%i, %i', i, ...
+                    self.counts(i)));
                 set(h, 'Color', [0 1 0]);
                 set(h, 'FontSize', 13);
             end
+        end
+        
+        function subimg = extractRegion(self, index)
+            bbox = self.BoundingBox(index,:);
+            subimg = imcrop(self.image, bbox);
         end
         
         function value = get.Area(self)
