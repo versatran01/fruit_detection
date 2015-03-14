@@ -13,14 +13,15 @@ if scale <= 0 || scale > 1
     error('Scale must be in range (0,1]');
 end
 
-assert(duration(1) < duration(2), 'Invalid duration');
+assert(duration(1) <= duration(2), 'Invalid duration');
 
 bag = ros.Bag(path);
-duration = duration + bag.time_begin;
+duration_unix = duration + bag.time_begin;
+
 if duration(2) == 0
     bag.resetView(bag.topics);
 else
-    bag.resetView(bag.topics, duration(1), duration(2));
+    bag.resetView(bag.topics, duration_unix(1), duration_unix(2));
 end
 
 topic_name = '/color/image_rect_color';

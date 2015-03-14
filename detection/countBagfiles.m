@@ -9,7 +9,7 @@ function [ bag_results ] = countBagfiles(bagfiles_dir, varargin)
 input_parser = inputParser;
 
 % We need to know how many rows are there
-bag_helpers = parseBagfileInfo('data/trees_n.tsv', bagfiles_dir);
+bag_helpers = parseBagfileInfo('data/north.tsv', bagfiles_dir);
 
 % Parse input arguments
 default_rows = unique([bag_helpers.row]);
@@ -82,11 +82,18 @@ for i_row = 1:numel(rows)
                  % Call main processing function
                  bag_helper = bag_helper_side;
                  duration = [bag_helper.startTime, bag_helper.endTime];
-                 tracker = processBagfile(bag_helper.path, scale, ...
-                                          model_name, duration, verbose);
+                 try
+                     tracker = processBagfile(bag_helper.path, scale, ...
+                         model_name, duration, verbose);
+                     bag_result.counts(i_scale, i_iter) = ...
+                         tracker.total_fruit_counts;
+                     fprintf('Count %0.2f.\n', tracker.total_fruit_counts);
+                 catch me
+                     disp(me)
+                     fprintf('Failed row: %g, side: %s, scale, %0.2f, iter: %g.\n', ...
+                             row, side, scale, iter);
+                 end
                  
-                 bag_result.counts(i_scale, i_iter) = ...
-                     tracker.total_fruit_counts;
              end  % end each iteration
              
         end  % end each scale
