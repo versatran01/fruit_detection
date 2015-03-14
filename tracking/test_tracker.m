@@ -13,6 +13,11 @@ plot_detections = false;
 bag.resetView(bag.topics);
 tracker = FruitTracker(plot_tracker,true);
 
+option.show_detection_bbox = true;
+                option.show_predicted_bbox = true;
+                option.show_track = true;
+                option.show_last_bbox = true;
+                option.show_optical_flow = true;
 if plot_detections
     figure(1);
     ax_handles(1) = subplot(1,2,1);

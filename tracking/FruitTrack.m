@@ -37,6 +37,8 @@ classdef FruitTrack < handle
         % Previous centroid and bounding box
         prev_centroid
         prev_bbox
+        
+        track_handle
     end
     
     properties(Dependent)
@@ -63,6 +65,7 @@ classdef FruitTrack < handle
             self.prev_centroid = centroid;
             self.prev_bbox = bbox;
             self.fruit_count = count;
+            self.track_handle = [];
         end
         
         % Predict new location of centroid and bounding box
@@ -135,6 +138,22 @@ classdef FruitTrack < handle
                                mean(scores_in_window)];
         end
         
+        function plotTrack(self, ax, enable)
+            if enable
+                if isempty(self.track_handle) || ~isgraphics(self.track_handle)
+                    self.track_handle = plot(ax, ...
+                                             self.centroids(:, 1), ...
+                                             self.centroids(:, 2), 'c--');
+                else
+                    set(self.track_handle, ...
+                        'XData', self.centroids(:, 1), ...
+                        'YData', self.centroids(:, 2));
+                end
+            else
+                
+            end
+        end
+        
         % Increment age by 1
         function incAge(self)
             self.age = self.age + 1;
@@ -153,6 +172,11 @@ classdef FruitTrack < handle
         % Getter: last_centroid
         function centroid = get.last_centroid(self)
             centroid = self.centroids(end, :);
+        end
+        
+        % Destructor
+        function delete(self)
+            delete(self.track_handle);
         end
     end
 
