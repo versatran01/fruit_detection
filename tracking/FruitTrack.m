@@ -140,7 +140,8 @@ classdef FruitTrack < handle
         
         function plotTrack(self, ax, enable)
             if enable
-                if isempty(self.track_handle) || ~isgraphics(self.track_handle)
+                if isempty(self.track_handle) || ...
+                        ~isgraphics(self.track_handle)
                     self.track_handle = plot(ax, ...
                                              self.centroids(:, 1), ...
                                              self.centroids(:, 2), 'c--');
