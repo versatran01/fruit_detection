@@ -77,6 +77,12 @@ CC.sort('Area', 'descend');
 area = CC.Area();
 large = area > ceil(params.min_area_thresh * areaScale);
 CC.discard(~large);
+if CC.isempty()
+    % no blobs left
+    counts = [];
+    circles = {};
+    return;
+end
 
 % calculate distance between centroids
 centroids = CC.Centroid();
@@ -128,6 +134,11 @@ area = CC.BoundingArea();
 small = area < ceil(params.max_area_thresh * areaScale);
 busy = CC.counts() >= params.max_merged_blobs;
 CC.discard(~small | busy);
+if CC.isempty()
+    counts = [];
+    circles = {};
+    return;
+end
 
 % perform segmentation of blobs...
 [CC,counts,circles] = segmentComponents(CC, image, scale, params);
