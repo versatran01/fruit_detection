@@ -148,7 +148,6 @@ classdef FruitTracker < handle
             self.deleteLostTracks();
             self.createNewTracks();
             self.updateTotalFruitCounts();
-%             self.displayTrackingResults(true);
         end
         
         % Optical flow
@@ -472,6 +471,7 @@ classdef FruitTracker < handle
                 option.show_last_bbox = true;
                 option.show_optical_flow = true;
             end
+            
             if nargin < 2, ax = axes(); end
             
             self.handles.axes = ax;
@@ -487,6 +487,17 @@ classdef FruitTracker < handle
            
             % Last bounding box
             self.plotLastBbox(option.show_last_bbox);
+            
+            % Track
+            self.plotTracks(option.show_track);
+        end
+        
+        function plotTracks(self, enable)
+            hold(self.handles.axes, 'on');
+            for i = 1:numel(self.tracks)
+                self.tracks(i).plotTrack(self.handles.axes, enable);
+            end
+            hold(self.handles.axes, 'off');
         end
         
         % Plot optical flow
@@ -501,7 +512,7 @@ classdef FruitTracker < handle
                                      self.handles.optical_flow, ...
                                      self.prev_corners, ...
                                      self.flow, ...
-                                     'm');
+                                     'b');
             else
                 setXYDataEmpty(self.handles.optical_flow);
                 setUVDataEmpty(self.handles.optical_flow);
@@ -516,7 +527,8 @@ classdef FruitTracker < handle
                     self.handles.detection_bbox = ...
                         plotBboxesOnAxes(self.handles.axes, ...
                                          self.handles.detection_bbox, ...
-                                         self.detections.BoundingBox, 'y');
+                                         self.detections.BoundingBox, ...
+                                         'y', 0);
                 end
             else
                 setXYDataEmpty(self.handles.detection_bbox);
@@ -533,9 +545,9 @@ classdef FruitTracker < handle
                     self.handles.predicted_bbox = ...
                         plotBboxesOnAxes(self.handles.axes, ...
                                          self.handles.predicted_bbox, ...
-                                         predicted_bboxes, 'b', 0, 1);
+                                         predicted_bboxes, 'm', 0, 1);
                     % Plot arrows
-                    set(self.handles.predictions, 'Visible', 'on');
+                    
                     prev_centroids = ...
                         reshape([self.tracks.prev_centroid], 2, [])';
                     last_centroids = ...
@@ -545,7 +557,9 @@ classdef FruitTracker < handle
                                          self.handles.predictions, ...
                                          prev_centroids, ...
                                          last_centroids - prev_centroids, ...
-                                         'b');
+                                         'm');
+                                     
+                    set(self.handles.predictions, 'Visible', 'on');
                 end
             else
                 setXYDataEmpty(self.handles.predictions);
