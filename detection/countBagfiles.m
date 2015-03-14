@@ -9,7 +9,7 @@ function [ bag_results ] = countBagfiles(bagfiles_dir, varargin)
 input_parser = inputParser;
 
 % We need to know how many rows are there
-bag_helpers = parseBagfileInfo('data/trees_n.tsv', bagfiles_dir);
+bag_helpers = parseBagfileInfo('data/north.tsv', bagfiles_dir);
 
 % Parse input arguments
 default_rows = unique([bag_helpers.row]);
@@ -28,7 +28,7 @@ input_parser.addParameter('iterations', default_iterations, ...
                           @(x) (isnumeric(x) && x >= 1));
 input_parser.addParameter('model', default_model_name);
 input_parser.addParameter('verbose', default_verbose);
-                      
+
 input_parser.parse(varargin{:});
 
 % Get parsed input arguments
@@ -46,23 +46,23 @@ bag_results = struct('row', {}, ...
                      'scales', {}, ...
                      'iterations', {}, ...
                      'counts_per_image', {});
-                 
+
 all_rows = [bag_helpers.row];
 
 % For each row
 for i_row = 1:numel(rows)
     row = rows(i_row);
     bag_helper_row = bag_helpers(all_rows == row);
-    
+
     checkBagHelper(bag_helper_row, row);
-    
+
     % For each side
     for i_side = 1:numel(bag_helper_row)
-        
+
         bag_helper_side = bag_helper_row(i_side);
-        
+
         if ~bag_helper_side.found, continue; end
-        
+
         side = bag_helper_side.direction;
 
         bag_result = struct('row', row, ...
@@ -71,7 +71,7 @@ for i_row = 1:numel(rows)
                             'scales', scales, ...
                             'iterations', iterations, ...
                             'counts_per_image', cell(iterations, 1));
-            
+
         % For each scale
         for i_scale = 1:numel(scales)
             scale = scales(i_scale);
@@ -86,20 +86,20 @@ for i_row = 1:numel(rows)
                  duration = [bag_helper.startTime, bag_helper.endTime];
                  tracker = processBagfile(bag_helper.path, scale, ...
                                           model_name, duration, verbose);
-                 
+
                  bag_result.counts(i_scale, i_iter) = ...
                      tracker.total_fruit_counts;
                  bag_result.counts_per_image{iter} = ...
                      tracker.counts_per_image;
              end  % end each iteration
-             
+
         end  % end each scale
-        
+
         % Add to final results
         bag_results(end + 1) = bag_result;
-        
+
     end  % end each side
-                        
+
 end  % end each row
 
 end

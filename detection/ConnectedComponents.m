@@ -33,6 +33,9 @@ classdef ConnectedComponents < handle
         end
         
         function discard(self, index)
+            if isempty(index)
+                return;
+            end
             % update image
             strip = cell2mat( self.CC.PixelIdxList(index)' );
             self.image(strip) = false;
