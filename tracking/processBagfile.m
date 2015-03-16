@@ -48,7 +48,7 @@ while bag.hasNext()
     
     tic;
     [CC,counts,~] = detectFruit(model, image, scale);
-    tracker.track(CC, image, counts);
+    tracker.track(CC, image, msg.header.stamp, counts);
     elapsed_time = toc;
     
     if verbose

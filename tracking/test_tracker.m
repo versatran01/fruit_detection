@@ -4,7 +4,7 @@ load('models/cs_svc.mat');
 if ismac()  % terrible hack :P
     bag = ros.Bag('/Volumes/D512/ground/rectified/r1s_2015-03-09-15-33-01.bag'); %r13n_2015-03-10-17-44-36.bag');
 else
-    bag = ros.Bag('/home/chao/Workspace/bag/booth/r1s_steadicam_v5.bag');
+    bag = ros.Bag('/home/chao/Workspace/bag/booth/r1n_steadicam_v5_2015-03-13-18-16-22_fixed.bag');
 end
 topic_name = '/color/image_rect_color';
 use_pause = false;
@@ -42,7 +42,7 @@ while bag.hasNext()
     image = flipud(image);
     
     [CC, counts] = detectFruit(model, image, scale);
-    tracker.track(CC, image, counts);
+    tracker.track(CC, image, msg.header.stamp, counts);
     % get tracks
     prevCentroids = reshape([tracker.tracks.prev_centroid], 2, [])';
     curCentroids = reshape([tracker.tracks.last_centroid], 2, [])';

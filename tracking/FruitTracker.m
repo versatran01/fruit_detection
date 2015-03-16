@@ -5,6 +5,7 @@ classdef FruitTracker < handle
         deleted_tracks  % Colelction of deleted tracks
         
         image  % Current image
+        stamp  % Current timestamp
         
         % Cost calculator method, see overlapCost for example
         cost_calculator = @overlapCost;
@@ -60,6 +61,8 @@ classdef FruitTracker < handle
         unassigned_tracks
         unassigned_detections
         
+        counts_per_image
+        
         % Debug
         debug
         verbose
@@ -108,6 +111,8 @@ classdef FruitTracker < handle
             self.total_fruit_counts = 0;
             self.total_fruit_counts_variance = 0;
             self.tracks = FruitTrack.empty;
+            self.counts_per_image = struct('sec', {}, 'nsec', {}, ...
+                                           'time', {}, 'counts', {});
             
             % Debug stuff
             if self.debug.status
@@ -129,13 +134,14 @@ classdef FruitTracker < handle
         
         % Track detections
         % detections - ConnectedComponents
-        function track(self, detections, image, counts)
+        function track(self, detections, image, stamp, counts)
             if self.verbose
-                fprintf('========= Frame %g. =========\n', self.frame_counter);
+                fprintf('======= Frame %g. =======\n', self.frame_counter);
             end
             if nargin < 4, counts = ones(detections.size(), 1); end
             self.frame_counter = self.frame_counter + 1;
             self.image = image;
+            self.stamp = stamp;
             self.detections = detections;
             self.fruit_counts = counts;
             
@@ -428,15 +434,22 @@ classdef FruitTracker < handle
         
         % Update total valid tracks id
         function updateTotalFruitCounts(self)
-            if isempty(self.deleted_tracks), return; end;
+            if isempty(self.deleted_tracks),
+                self.stamp.counts = 0;
+                self.counts_per_image(end + 1) = self.stamp;
+                return; 
+            end;
             ages = [self.deleted_tracks.age]';
             % get all tracks which meet age threshold
             count_indices = ages >= self.param.age_thresh;
             countable_tracks = self.deleted_tracks(count_indices);
-            self.countTracks(countable_tracks);
+            track_counts = self.countTracks(countable_tracks);
+            % Hack counts per image into stamp struct
+            self.stamp.counts = track_counts;
+            self.counts_per_image(end + 1) = self.stamp;
         end
         
-        function countTracks(self, countable_tracks)
+        function tracks_count = countTracks(self, countable_tracks)
             tracks_count = 0;
             tracks_variance = 0;
             
