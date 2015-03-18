@@ -169,7 +169,7 @@ if get(hObject, 'Value') == get(hObject, 'Max')
         [msg, meta] = handles.data.bag.read();
         if strcmp(meta.topic, handles.data.image_topic)
             image = rosImageToMatlabImage(msg);
-            handles = process_image(image, handles);
+            handles = process_image(image, msg.header.stamp, handles);
             drawnow;
             pause(0.001);
             % Update time_slider value
@@ -185,7 +185,7 @@ else
 end
 guidata(hObject, handles)
 
-function handles = process_image(image, handles)
+function handles = process_image(image, stamp, handles)
 image = imresize(image, handles.data.scale);
 [detections, counts] = detectFruit(handles.data.model, image, handles.data.scale);
 mask = detections.image;
@@ -196,7 +196,7 @@ handles.graphics.original_image = ...
                     handles.graphics.original_image, image);
 set(handles.original_axes, 'YDir', 'Normal');
 
-handles.data.tracker.track(detections, image, counts);
+handles.data.tracker.track(detections, image, stamp);
 handles.data.tracker.visualize(handles.original_axes, ...
                                handles.option);
 

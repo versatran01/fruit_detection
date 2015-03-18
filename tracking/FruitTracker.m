@@ -138,7 +138,7 @@ classdef FruitTracker < handle
             if self.verbose
                 fprintf('======= Frame %g. =======\n', self.frame_counter);
             end
-            if nargin < 4, counts = ones(detections.size(), 1); end
+            if nargin < 5, counts = ones(detections.size(), 1); end
             self.frame_counter = self.frame_counter + 1;
             self.image = image;
             self.stamp = stamp;
